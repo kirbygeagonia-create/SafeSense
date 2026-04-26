@@ -1,5 +1,5 @@
 {
-    "name": "hospital-management-system",
+    "name": "safesense/hospital-management-system",
     "description": "A comprehensive hospital management system built with PHP",
     "type": "project",
     "require": {
