@@ -1,1 +1,40 @@
-[['patients'], "    public function run() {\n        // Sample patient data\n        $patients = [\n            [\n                'name' => 'John Doe',\n                'email' => 'john.doe@example.com',\n                'phone' => '123-456-7890',\n                'address' => '123 Main St, City, State 12345',\n                'date_of_birth' => '1980-01-15',\n                'gender' => 'male'\n            ],\n            [\n                'name' => 'Jane Smith',\n                'email' => 'jane.smith@example.com',\n                'phone' => '098-765-4321',\n                'address' => '456 Oak Ave, Town, State 67890',\n                'date_of_birth' => '1990-05-22',\n                'gender' => 'female'\n            ],\n            [\n                'name' => 'Robert Johnson',\n                'email' => 'robert.j@example.com',\n                'phone' => '555-123-4567',\n                'address' => '789 Pine Rd, Village, State 11223',\n                'date_of_birth' => '1975-11-30',\n                'gender' => 'male'\n            ]\n        ];\n        \n        // Insert sample data\n        foreach ($patients as $patient) {\n            $sql = 'INSERT INTO patients (name, email, phone, address, date_of_birth, gender) \n                    VALUES (:name, :email, :phone, :address, :date_of_birth, :gender)';\n            \n            $stmt = $pdo->prepare($sql);\n            $stmt->execute($patient);\n        }\n        \n        echo 'Patients seeded successfully';\n    }"]
+    public function run() {
+        // Sample patient data
+        $patients = [
+            [
+                'name' => 'John Doe',
+                'email' => 'john.doe@example.com',
+                'phone' => '123-456-7890',
+                'address' => '123 Main St, City, State 12345',
+                'date_of_birth' => '1980-01-15',
+                'gender' => 'male'
+            ],
+            [
+                'name' => 'Jane Smith',
+                'email' => 'jane.smith@example.com',
+                'phone' => '098-765-4321',
+                'address' => '456 Oak Ave, Town, State 67890',
+                'date_of_birth' => '1990-05-22',
+                'gender' => 'female'
+            ],
+            [
+                'name' => 'Robert Johnson',
+                'email' => 'robert.j@example.com',
+                'phone' => '555-123-4567',
+                'address' => '789 Pine Rd, Village, State 11223',
+                'date_of_birth' => '1975-11-30',
+                'gender' => 'male'
+            ]
+        ];
+        
+        // Insert sample data
+        foreach ($patients as $patient) {
+            $sql = 'INSERT INTO patients (name, email, phone, address, date_of_birth, gender) 
+                    VALUES (:name, :email, :phone, :address, :date_of_birth, :gender)';
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($patient);
+        }
+        
+        echo 'Patients seeded successfully';
+    }

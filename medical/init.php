@@ -1,1 +1,21 @@
-[['init'], ['config', 'database'], '<?php\n\n// Initialization script for Hospital Management System\n\n// Load configuration\nrequire_once \'app/Config/config.php\';\n\n// Load dependencies\nrequire_once \'vendor/autoload.php\';\n\n// Initialize session\nsession_start();\n\n// Load environment variables (if using vlucas/phpdotenv)\nif (file_exists(\'.env\')) {\n    $dotenv = Dotenv\\Dotenv::createImmutable(__DIR__);\n    $dotenv->load();\n}\n\necho "Hospital Management System initialized successfully!";\n?>']
+<?php
+
+// Initialization script for Hospital Management System
+
+// Load configuration
+require_once 'app/Config/config.php';
+
+// Load dependencies
+require_once 'vendor/autoload.php';
+
+// Initialize session
+session_start();
+
+// Load environment variables (if using vlucas/phpdotenv)
+if (file_exists('.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
+
+echo "Hospital Management System initialized successfully!";
+?>

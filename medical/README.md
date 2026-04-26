@@ -1,1 +1,52 @@
-[['# Hospital Management System'], ['## Features', '## Installation'], '# Hospital Management System\n\nA comprehensive hospital management system built with PHP for managing patients, doctors, and appointments.\n\n## Features\n\n- Patient Management (CRUD operations)\n- Doctor Management (CRUD operations)\n- Appointment Scheduling\n- Responsive Web Interface\n- Database Migrations and Seeding\n- RESTful API Design\n\n## Installation\n\n1. Clone the repository\n2. Navigate to the project directory\n3. Run `composer install` to install dependencies\n4. Create a database and configure `app/Config/database.php`\n5. Run database migrations\n6. Start the development server\n\n## Project Structure\n\n```\nmedical/\n├── app/\n│   ├── Controllers/\n│   ├── Models/\n│   ├── Views/\n│   ├── Helpers/\n│   └── Config/\n├── public/\n│   ├── css/\n│   ├── js/\n│   └── images/\n├── database/\n│   ├── migrations/\n│   └── seeds/\n├── composer.json\n└── README.md\n```\n\n## Requirements\n\n- PHP 7.4 or higher\n- MySQL 5.7 or higher\n- Composer\n\n## License\n\nMIT License']
+# Hospital Management System
+
+A comprehensive hospital management system built with PHP for managing patients, doctors, and appointments.
+
+## Features
+
+- Patient Management (CRUD operations)
+- Doctor Management (CRUD operations)
+- Appointment Scheduling
+- Responsive Web Interface
+- Database Migrations and Seeding
+- RESTful API Design
+
+## Installation
+
+1. Clone the repository
+2. Navigate to the project directory
+3. Run `composer install` to install dependencies
+4. Create a database and configure `app/Config/database.php`
+5. Run database migrations
+6. Start the development server
+
+## Project Structure
+
+```
+medical/
+├── app/
+│   ├── Controllers/
+│   ├── Models/
+│   ├── Views/
+│   ├── Helpers/
+│   └── Config/
+├── public/
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── database/
+│   ├── migrations/
+│   └── seeds/
+├── composer.json
+└── README.md
+```
+
+## Requirements
+
+- PHP 7.4 or higher
+- MySQL 5.7 or higher
+- Composer
+
+## License
+
+MIT License

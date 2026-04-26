@@ -1,1 +1,32 @@
-[['Login'], ['Email', 'Password', 'Sign In'], "    <div class='container'>\n        <div class='row justify-content-center'>\n            <div class='col-md-6 col-lg-4'>\n                <div class='card mt-5'>\n                    <div class='card-header text-center'>\n                        <h3>Login to <?php echo APP_NAME; ?></h3>\n                    </div>\n                    <div class='card-body'>\n                        <form method='post' action='/login/authenticate'>\n                            <div class='mb-3'>\n                                <label for='email' class='form-label'>Email address</label>\n                                <input type='email' class='form-control' id='email' name='email' required>\n                            </div>\n                            <div class='mb-3'>\n                                <label for='password' class='form-label'>Password</label>\n                                <input type='password' class='form-control' id='password' name='password' required>\n                            </div>\n                            <div class='d-grid'>\n                                <button type='submit' class='btn btn-primary'>Sign In</button>\n                            </div>\n                        </form>\n                        \n                        <div class='mt-3 text-center'>\n                            <p class='text-muted'>Demo credentials:<br>\n                            Email: admin@example.com<br>\n                            Password: password</p>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>\n    </div>"]
+    <div class='container'>
+        <div class='row justify-content-center'>
+            <div class='col-md-6 col-lg-4'>
+                <div class='card mt-5'>
+                    <div class='card-header text-center'>
+                        <h3>Login to <?php echo APP_NAME; ?></h3>
+                    </div>
+                    <div class='card-body'>
+                        <form method='post' action='/login/authenticate'>
+                            <div class='mb-3'>
+                                <label for='email' class='form-label'>Email address</label>
+                                <input type='email' class='form-control' id='email' name='email' required>
+                            </div>
+                            <div class='mb-3'>
+                                <label for='password' class='form-label'>Password</label>
+                                <input type='password' class='form-control' id='password' name='password' required>
+                            </div>
+                            <div class='d-grid'>
+                                <button type='submit' class='btn btn-primary'>Sign In</button>
+                            </div>
+                        </form>
+                        
+                        <div class='mt-3 text-center'>
+                            <p class='text-muted'>Demo credentials:<br>
+                            Email: admin@example.com<br>
+                            Password: password</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
