@@ -1,1 +1,21 @@
-[['doctors'], ['id', 'name', 'email', 'phone', 'specialization', 'license_number'], '<?php\n\n// Migration: Create doctors table\n\n$sql = "\nCREATE TABLE IF NOT EXISTS doctors (\n    id INT AUTO_INCREMENT PRIMARY KEY,\n    name VARCHAR(255) NOT NULL,\n    email VARCHAR(255) UNIQUE NOT NULL,\n    phone VARCHAR(20) NOT NULL,\n    specialization VARCHAR(255) NOT NULL,\n    license_number VARCHAR(50) UNIQUE NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n";\n\n// Execute the SQL statement\n// This would typically be executed through a database connection\n// For example: $pdo->exec($sql);\n\necho "Doctors table created successfully";\n?>']
+<?php
+$host='localhost'; $db_name='hospital_db'; $username='root'; $password='';
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("
+    CREATE TABLE IF NOT EXISTS doctors (
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        name             VARCHAR(255) NOT NULL,
+        email            VARCHAR(255) UNIQUE NOT NULL,
+        phone            VARCHAR(20)  NOT NULL,
+        specialization   VARCHAR(255) NOT NULL,
+        license_number   VARCHAR(50)  UNIQUE NOT NULL,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+    echo "Doctors table created successfully\n";
+} catch(PDOException $e) { echo "Error: ".$e->getMessage()."\n"; }
+?>
+

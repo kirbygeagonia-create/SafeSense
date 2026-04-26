@@ -1,147 +1,153 @@
-<div class='d-flex justify-content-between align-items-center mb-4'>
-    <h1>Dashboard</h1>
-    <a href='/logout' class='btn btn-outline-danger'>Logout</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="mb-0">Dashboard</h1>
+    <small class="text-muted">Welcome back — <?php echo date('l, F j, Y'); ?></small>
+  </div>
 </div>
 
-<div class='row'>
-    <div class='col-md-3 mb-4'>
-        <div class='card bg-primary text-white h-100'>
-            <div class='card-body'>
-                <div class='d-flex justify-content-between align-items-center'>
-                    <div>
-                        <h6 class='text-white-50 mb-0'>Total Patients</h6>
-                        <h2 class='mb-0'><?php echo $patientCount ?? 0; ?></h2>
-                    </div>
-                    <div class='icon'>
-                        <i class='fas fa-user-injury fa-2x'></i>
-                    </div>
-                </div>
-            </div>
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Total Patients</div>
+          <h2 class="mb-0 fw-bold"><?php echo $patientCount ?? 0; ?></h2>
         </div>
-    </div>
-    <div class='col-md-3 mb-4'>
-        <div class='card bg-success text-white h-100'>
-            <div class='card-body'>
-                <div class='d-flex justify-content-between align-items-center'>
-                    <div>
-                        <h6 class='text-white-50 mb-0'>Total Doctors</h6>
-                        <h2 class='mb-0'><?php echo $doctorCount ?? 0; ?></h2>
-                    </div>
-                    <div class='icon'>
-                        <i class='fas fa-user-md fa-2x'></i>
-                    </div>
-                </div>
-            </div>
+        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-user-injured text-primary fa-lg"></i>
         </div>
+      </div>
     </div>
-    <div class='col-md-3 mb-4'>
-        <div class='card bg-info text-white h-100'>
-            <div class='card-body'>
-                <div class='d-flex justify-content-between align-items-center'>
-                    <div>
-                        <h6 class='text-white-50 mb-0'>Today\'s Appointments</h6>
-                        <h2 class='mb-0'><?php echo $appointmentCount ?? 0; ?></h2>
-                    </div>
-                    <div class='icon'>
-                        <i class='fas fa-calendar-check fa-2x'></i>
-                    </div>
-                </div>
-            </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Total Doctors</div>
+          <h2 class="mb-0 fw-bold"><?php echo $doctorCount ?? 0; ?></h2>
         </div>
-    </div>
-    <div class='col-md-3 mb-4'>
-        <div class='card bg-warning text-white h-100'>
-            <div class='card-body'>
-                <div class='d-flex justify-content-between align-items-center'>
-                    <div>
-                        <h6 class='text-white-50 mb-0'>Pending Appointments</h6>
-                        <h2 class='mb-0'>12</h2>
-                    </div>
-                    <div class='icon'>
-                        <i class='fas fa-clock fa-2x'></i>
-                    </div>
-                </div>
-            </div>
+        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-user-md text-success fa-lg"></i>
         </div>
+      </div>
     </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Appointments</div>
+          <h2 class="mb-0 fw-bold"><?php echo $appointmentCount ?? 0; ?></h2>
+        </div>
+        <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-calendar-check text-info fa-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <a href="/alerts" class="text-decoration-none">
+      <div class="card h-100 border-0 shadow-sm border-danger border-start border-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small mb-1">Unread Alerts</div>
+            <h2 class="mb-0 fw-bold text-danger"><?php echo $unreadAlerts ?? 0; ?></h2>
+          </div>
+          <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+            <i class="fas fa-satellite-dish text-danger fa-lg"></i>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
 </div>
 
-<div class='row'>
-    <div class='col-md-8'>
-        <div class='card'>
-            <div class='card-header'>
-                <h5 class='mb-0'>Recent Activity</h5>
+<!-- Main content row -->
+<div class="row g-4">
+
+  <!-- Recent SafeSense Alerts -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-bold">
+          <span class="ss-live-dot"></span>SafeSense Live Alerts
+        </h6>
+        <a href="/alerts" class="btn btn-sm btn-outline-danger">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <?php if (!empty($recentAlerts)): ?>
+          <?php foreach ($recentAlerts as $a):
+            $lvl    = $a['alert_level'];
+            $badge  = $lvl==='critical'?'danger':($lvl==='danger'?'warning':'info');
+            $icon   = $lvl==='critical'?'fa-skull-crossbones':($lvl==='danger'?'fa-exclamation-triangle':'fa-cloud-rain');
+            $label  = $lvl==='critical'?'🔴 CRITICAL':($lvl==='danger'?'🟠 DANGER':'🟡 WARNING');
+            $dt     = new DateTime($a['created_at']);
+          ?>
+          <div class="d-flex align-items-start gap-3 p-3 border-bottom <?php echo !$a['is_read']?'bg-light':''; ?>">
+            <div class="rounded-circle bg-<?php echo $badge; ?> bg-opacity-15 d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;">
+              <i class="fas <?php echo $icon; ?> text-<?php echo $badge; ?> fa-sm"></i>
             </div>
-            <div class='card-body'>
-                <div class='table-responsive'>
-                    <table class='table table-borderless'>
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Activity</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Just now</td>
-                                <td>New patient registered: John Doe</td>
-                                <td><span class='badge bg-success'>Success</span></td>
-                            </tr>
-                            <tr>
-                                <td>5 minutes ago</td>
-                                <td>Appointment scheduled: Jane Smith with Dr. Smith</td>
-                                <td><span class='badge bg-info'>Scheduled</span></td>
-                            </tr>
-                            <tr>
-                                <td>15 minutes ago</td>
-                                <td>Doctor profile updated: Dr. Johnson</td>
-                                <td><span class='badge bg-warning'>Updated</span></td>
-                            </tr>
-                            <tr>
-                                <td>30 minutes ago</td>
-                                <td>Patient record accessed: Robert Johnson</td>
-                                <td><span class='badge bg-secondary'>Accessed</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-<?php echo $badge; ?> badge-sm"><?php echo $label; ?></span>
+                <?php if(!$a['is_read']): ?><span class="badge bg-primary badge-sm">NEW</span><?php endif; ?>
+              </div>
+              <div class="text-truncate small fw-medium"><?php echo htmlspecialchars($a['message']); ?></div>
+              <div class="text-muted" style="font-size:.75rem;">
+                <i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($a['location_name']??'—'); ?>
+                &nbsp;·&nbsp;
+                <i class="fas fa-clock me-1"></i><?php echo $dt->format('h:i A'); ?>
+              </div>
             </div>
-        </div>
+          </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-check-circle text-success fa-2x mb-2 d-block"></i>
+            No recent alerts — system nominal.
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
-    <div class='col-md-4'>
-        <div class='card'>
-            <div class='card-header'>
-                <h5 class='mb-0'>Upcoming Appointments</h5>
+  </div>
+
+  <!-- Upcoming appointments -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2 text-primary"></i>Upcoming Appointments</h6>
+        <a href="/appointments" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <?php if (!empty($upcomingAppointments)): ?>
+          <?php foreach ($upcomingAppointments as $appt):
+            $status = $appt['status'] ?? 'pending';
+            $sc = $status==='confirmed'?'success':($status==='pending'?'warning':'secondary');
+          ?>
+          <div class="d-flex align-items-center gap-3 p-3 border-bottom">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;">
+              <i class="fas fa-user text-primary fa-sm"></i>
             </div>
-            <div class='card-body'>
-                <div class='list-group'>
-                    <a href='#' class='list-group-item list-group-item-action'>
-                        <div class='d-flex w-100 justify-content-between'>
-                            <h6 class='mb-1'>John Doe with Dr. Smith</h6>
-                            <small>Today, 10:00 AM</small>
-                        </div>
-                        <p class='mb-1'>Routine checkup</p>
-                        <small class='text-muted'>Confirmed</small>
-                    </a>
-                    <a href='#' class='list-group-item list-group-item-action'>
-                        <div class='d-flex w-100 justify-content-between'>
-                            <h6 class='mb-1'>Jane Smith with Dr. Johnson</h6>
-                            <small>Today, 2:30 PM</small>
-                        </div>
-                        <p class='mb-1'>Follow-up consultation</p>
-                        <small class='text-muted'>Pending</small>
-                    </a>
-                    <a href='#' class='list-group-item list-group-item-action'>
-                        <div class='d-flex w-100 justify-content-between'>
-                            <h6 class='mb-1'>Robert Johnson with Dr. Williams</h6>
-                            <small>Tomorrow, 9:15 AM</small>
-                        </div>
-                        <p class='mb-1'>Dental cleaning</p>
-                        <small class='text-muted'>Confirmed</small>
-                    </a>
-                </div>
+            <div class="flex-grow-1">
+              <div class="fw-medium small"><?php echo htmlspecialchars($appt['patient_name']??'—'); ?></div>
+              <div class="text-muted" style="font-size:.75rem;">
+                <?php echo htmlspecialchars($appt['appointment_date']??''); ?>
+                &nbsp;<?php echo htmlspecialchars($appt['appointment_time']??''); ?>
+              </div>
             </div>
-        </div>
+            <span class="badge bg-<?php echo $sc; ?>"><?php echo ucfirst($status); ?></span>
+          </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-calendar-times fa-2x mb-2 d-block text-muted"></i>
+            No upcoming appointments.
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
+  </div>
+
 </div>
+
