@@ -4,135 +4,141 @@ class DoctorController extends BaseController {
     private $doctorModel;
     
     public function __construct() {
-        // Initialize database connection
         $database = new Database();
         $db = $database->getConnection();
-        
-        // Initialize doctor model
         $this->doctorModel = new Doctor($db);
     }
     
     public function index() {
-        // Get all doctors
         $stmt = $this->doctorModel->getAll();
         $doctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Render view with doctors data
-        $this->render('doctors/index', [
-            'doctors' => $doctors,
-            'title' => 'Doctors'
-        ]);
+        $this->render('doctors/index', ['doctors' => $doctors, 'title' => 'Doctors']);
     }
     
     public function create() {
-        // Render create doctor form
-        $this->render('doctors/create', [
-            'title' => 'Add New Doctor'
-        ]);
+        $this->render('doctors/create', ['title' => 'Add New Doctor']);
     }
     
     public function store() {
-        if ($this->isPostRequest()) {
-            // Validate required fields
-            $requiredFields = ['name', 'email', 'phone', 'specialization', 'license_number'];
-            $errors = $this->validateRequiredFields($requiredFields);
-            
-            if (empty($errors)) {
-                // Set doctor properties
-                $this->doctorModel->name = $this->getPostData('name');
-                $this->doctorModel->email = $this->getPostData('email');
-                $this->doctorModel->phone = $this->getPostData('phone');
-                $this->doctorModel->specialization = $this->getPostData('specialization');
-                $this->doctorModel->license_number = $this->getPostData('license_number');
-                
-                // Create doctor
-                if ($this->doctorModel->create()) {
-                    $this->redirect('/doctors?success=Doctor created successfully');
-                } else {
-                    $this->redirect('/doctors?error=Failed to create doctor');
-                }
-            } else {
-                // Redirect with errors
-                $this->redirect('/doctors/create?error=' . urlencode(implode(', ', $errors)));
+        if (!$this->isPostRequest()) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            $this->redirect('/doctors');
+            return;
+        }
+        $errors = $this->validateRequiredFields(['name', 'email', 'phone', 'specialization', 'license_number']);
+        if (!empty($errors)) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+            $_SESSION['flash_error'] = implode(', ', $errors);
+            $this->redirect('/doctors');
+            return;
+        }
+        $this->doctorModel->name = $this->getPostData('name');
+        $this->doctorModel->email = $this->getPostData('email');
+        $this->doctorModel->phone = $this->getPostData('phone');
+        $this->doctorModel->specialization = $this->getPostData('specialization');
+        $this->doctorModel->license_number = $this->getPostData('license_number');
+        if ($this->doctorModel->create()) {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => true, 'message' => 'Doctor created successfully', 'data' => [
+                    'id' => $this->doctorModel->id, 'name' => $this->doctorModel->name,
+                    'email' => $this->doctorModel->email, 'phone' => $this->doctorModel->phone,
+                    'specialization' => $this->doctorModel->specialization, 'license_number' => $this->doctorModel->license_number
+                ]]);
             }
+            $_SESSION['flash_success'] = 'Doctor created successfully';
+            $this->redirect('/doctors');
         } else {
-            // Redirect if not POST request
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to create doctor'], 500);
+            $_SESSION['flash_error'] = 'Failed to create doctor';
             $this->redirect('/doctors');
         }
     }
     
     public function edit() {
         $id = $this->getGetData('id');
-        
-        if ($id) {
-            // Get doctor by ID
-            if ($this->doctorModel->getById($id)) {
-                // Render edit doctor form
-                $this->render('doctors/edit', [
-                    'title' => 'Edit Doctor',
-                    'doctor' => $this->doctorModel
-                ]);
-            } else {
-                $this->redirect('/doctors?error=Doctor not found');
+        if (!$id) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid doctor ID'], 400);
+            $this->redirect('/doctors');
+            return;
+        }
+        if ($this->doctorModel->getById($id)) {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => true, 'data' => [
+                    'id' => $this->doctorModel->id, 'name' => $this->doctorModel->name,
+                    'email' => $this->doctorModel->email, 'phone' => $this->doctorModel->phone,
+                    'specialization' => $this->doctorModel->specialization, 'license_number' => $this->doctorModel->license_number
+                ]]);
             }
+            $this->render('doctors/edit', ['title' => 'Edit Doctor', 'doctor' => $this->doctorModel]);
         } else {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Doctor not found'], 404);
+            $_SESSION['flash_error'] = 'Doctor not found';
             $this->redirect('/doctors');
         }
     }
     
     public function update() {
-        if ($this->isPostRequest()) {
-            $id = $this->getPostData('id');
-            
-            if ($id) {
-                // Validate required fields
-                $requiredFields = ['name', 'email', 'phone', 'specialization', 'license_number'];
-                $errors = $this->validateRequiredFields($requiredFields);
-                
-                if (empty($errors)) {
-                    // Set doctor properties
-                    $this->doctorModel->id = $id;
-                    $this->doctorModel->name = $this->getPostData('name');
-                    $this->doctorModel->email = $this->getPostData('email');
-                    $this->doctorModel->phone = $this->getPostData('phone');
-                    $this->doctorModel->specialization = $this->getPostData('specialization');
-                    $this->doctorModel->license_number = $this->getPostData('license_number');
-                    
-                    // Update doctor
-                    if ($this->doctorModel->update()) {
-                        $this->redirect('/doctors?success=Doctor updated successfully');
-                    } else {
-                        $this->redirect('/doctors/edit?id=' . $id . '&error=Failed to update doctor');
-                    }
-                } else {
-                    // Redirect with errors
-                    $this->redirect('/doctors/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
-                }
-            } else {
-                $this->redirect('/doctors?error=Invalid doctor ID');
-            }
-        } else {
+        if (!$this->isPostRequest()) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
             $this->redirect('/doctors');
+            return;
+        }
+        $id = $this->getPostData('id');
+        if (!$id) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid doctor ID'], 400);
+            $_SESSION['flash_error'] = 'Invalid doctor ID';
+            $this->redirect('/doctors');
+            return;
+        }
+        $errors = $this->validateRequiredFields(['name', 'email', 'phone', 'specialization', 'license_number']);
+        if (!empty($errors)) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+            $this->redirect('/doctors/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
+            return;
+        }
+        $this->doctorModel->id = $id;
+        $this->doctorModel->name = $this->getPostData('name');
+        $this->doctorModel->email = $this->getPostData('email');
+        $this->doctorModel->phone = $this->getPostData('phone');
+        $this->doctorModel->specialization = $this->getPostData('specialization');
+        $this->doctorModel->license_number = $this->getPostData('license_number');
+        if ($this->doctorModel->update()) {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => true, 'message' => 'Doctor updated successfully', 'data' => [
+                    'id' => $this->doctorModel->id, 'name' => $this->doctorModel->name,
+                    'email' => $this->doctorModel->email, 'phone' => $this->doctorModel->phone,
+                    'specialization' => $this->doctorModel->specialization, 'license_number' => $this->doctorModel->license_number
+                ]]);
+            }
+            $_SESSION['flash_success'] = 'Doctor updated successfully';
+            $this->redirect('/doctors');
+        } else {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to update doctor'], 500);
+            $this->redirect('/doctors/edit?id=' . $id . '&error=Failed to update doctor');
         }
     }
     
     public function delete() {
-        if ($this->isPostRequest()) {
-            $id = $this->getPostData('id');
-            
-            if ($id) {
-                $this->doctorModel->id = $id;
-                
-                // Delete doctor
-                if ($this->doctorModel->delete()) {
-                    $this->redirect('/doctors?success=Doctor deleted successfully');
-                } else {
-                    $this->redirect('/doctors?error=Failed to delete doctor');
-                }
-            } else {
-                $this->redirect('/doctors?error=Invalid doctor ID');
-            }
+        if (!$this->isPostRequest()) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            $this->redirect('/doctors');
+            return;
+        }
+        $id = $this->getPostData('id');
+        if (!$id) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid doctor ID'], 400);
+            $_SESSION['flash_error'] = 'Invalid doctor ID';
+            $this->redirect('/doctors');
+            return;
+        }
+        $this->doctorModel->id = $id;
+        if ($this->doctorModel->delete()) {
+            if ($this->isAjax()) $this->jsonResponse(['success' => true, 'message' => 'Doctor deleted successfully']);
+            $_SESSION['flash_success'] = 'Doctor deleted successfully';
+            $this->redirect('/doctors');
         } else {
+            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to delete doctor'], 500);
+            $_SESSION['flash_error'] = 'Failed to delete doctor';
             $this->redirect('/doctors');
         }
     }

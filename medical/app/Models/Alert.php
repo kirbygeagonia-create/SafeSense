@@ -131,6 +131,20 @@ class Alert {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    /** Get alert counts grouped by day for Chart.js (Phase 5) */
+    public function getAlertsByDay($days = 30) {
+        $query = "SELECT DATE(created_at) as date, COUNT(*) as count
+                  FROM {$this->table}
+                  WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                  GROUP BY DATE(created_at)
+                  ORDER BY date ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':days', $days, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
+
 

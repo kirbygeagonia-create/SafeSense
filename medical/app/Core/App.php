@@ -43,6 +43,9 @@ class App {
         $this->router->post('/api/alerts/read',     'AlertController@markRead');
         $this->router->post('/api/alerts/dismiss',  'AlertController@dismiss');
 
+        // Dashboard analytics API
+        $this->router->get('/api/dashboard/stats',  'DashboardController@stats');
+
         $this->router->get('/{any:.*}', 'ErrorController@notFound');
     }
 

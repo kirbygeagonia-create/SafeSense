@@ -339,3 +339,78 @@ table { background: #fff; }
   .ss-modal-details { grid-template-columns: 1fr; }
 }
 
+/* ════════════════════════════════════════
+   Phase 6 — Accessibility (WCAG 2.1 AA)
+════════════════════════════════════════ */
+
+/* Base font size — minimum 16px per WCAG */
+html { font-size: 16px; }
+
+/* Ensure touch targets are at least 44x44px (WCAG 2.5.5) */
+.btn { min-height: 44px; min-width: 44px; padding: .5rem 1rem; }
+.btn-sm { min-height: 36px; min-width: 36px; font-size: .85rem; padding: .35rem .65rem; }
+.table .btn-sm { min-height: 34px; min-width: 34px; }
+
+/* Focus outlines for keyboard navigation */
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.nav-link:focus-visible,
+a:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.25);
+}
+
+/* prefers-reduced-motion — suppress all animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════════════
+   DataTables Overrides
+════════════════════════════════════════ */
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: .45rem .85rem;
+  font-size: .9rem;
+  min-height: 40px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  outline: none;
+}
+.dataTables_wrapper .dataTables_length select {
+  border-radius: 8px;
+  padding: .35rem .5rem;
+}
+.dataTables_wrapper .dataTables_info {
+  font-size: .82rem;
+  color: #6b7280;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 6px !important;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* ── Modal premium styling ── */
+.modal-header.bg-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%) !important;
+}
+.modal-content {
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.modal-footer {
+  border-top: 1px solid #f0f0f0;
+}

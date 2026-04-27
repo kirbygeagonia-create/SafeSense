@@ -67,6 +67,7 @@ class Patient {
         $stmt->bindParam(':gender', $this->gender);
         
         if($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;

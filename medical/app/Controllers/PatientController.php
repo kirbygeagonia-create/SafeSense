@@ -48,15 +48,42 @@ class PatientController extends BaseController {
                 
                 // Create patient
                 if ($this->patientModel->create()) {
-                    $this->redirect('/patients?success=Patient created successfully');
+                    if ($this->isAjax()) {
+                        $this->jsonResponse([
+                            'success' => true,
+                            'message' => 'Patient created successfully',
+                            'data' => [
+                                'id' => $this->patientModel->id,
+                                'name' => $this->patientModel->name,
+                                'email' => $this->patientModel->email,
+                                'phone' => $this->patientModel->phone,
+                                'address' => $this->patientModel->address,
+                                'date_of_birth' => $this->patientModel->date_of_birth,
+                                'gender' => $this->patientModel->gender
+                            ]
+                        ]);
+                    }
+            $_SESSION['flash_success'] = 'Patient created successfully';
+            $this->redirect('/patients');
                 } else {
-                    $this->redirect('/patients?error=Failed to create patient');
+                    if ($this->isAjax()) {
+                        $this->jsonResponse(['success' => false, 'message' => 'Failed to create patient'], 500);
+                    }
+            $_SESSION['flash_error'] = 'Failed to create patient';
+            $this->redirect('/patients');
                 }
             } else {
+                if ($this->isAjax()) {
+                    $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+                }
                 // Redirect with errors
-                $this->redirect('/patients/create?error=' . urlencode(implode(', ', $errors)));
+                $_SESSION['flash_error'] = implode(', ', $errors);
+                $this->redirect('/patients');
             }
         } else {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
             // Redirect if not POST request
             $this->redirect('/patients');
         }
@@ -68,15 +95,36 @@ class PatientController extends BaseController {
         if ($id) {
             // Get patient by ID
             if ($this->patientModel->getById($id)) {
+                if ($this->isAjax()) {
+                    $this->jsonResponse([
+                        'success' => true,
+                        'data' => [
+                            'id' => $this->patientModel->id,
+                            'name' => $this->patientModel->name,
+                            'email' => $this->patientModel->email,
+                            'phone' => $this->patientModel->phone,
+                            'address' => $this->patientModel->address,
+                            'date_of_birth' => $this->patientModel->date_of_birth,
+                            'gender' => $this->patientModel->gender
+                        ]
+                    ]);
+                }
                 // Render edit patient form
                 $this->render('patients/edit', [
                     'title' => 'Edit Patient',
                     'patient' => $this->patientModel
                 ]);
             } else {
-                $this->redirect('/patients?error=Patient not found');
+                if ($this->isAjax()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Patient not found'], 404);
+                }
+                $_SESSION['flash_error'] = 'Patient not found';
+                $this->redirect('/patients');
             }
         } else {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid patient ID'], 400);
+            }
             $this->redirect('/patients');
         }
     }
@@ -102,18 +150,47 @@ class PatientController extends BaseController {
                     
                     // Update patient
                     if ($this->patientModel->update()) {
-                        $this->redirect('/patients?success=Patient updated successfully');
+                        if ($this->isAjax()) {
+                            $this->jsonResponse([
+                                'success' => true,
+                                'message' => 'Patient updated successfully',
+                                'data' => [
+                                    'id' => $this->patientModel->id,
+                                    'name' => $this->patientModel->name,
+                                    'email' => $this->patientModel->email,
+                                    'phone' => $this->patientModel->phone,
+                                    'address' => $this->patientModel->address,
+                                    'date_of_birth' => $this->patientModel->date_of_birth,
+                                    'gender' => $this->patientModel->gender
+                                ]
+                            ]);
+                        }
+                        $_SESSION['flash_success'] = 'Patient updated successfully';
+                        $this->redirect('/patients');
                     } else {
+                        if ($this->isAjax()) {
+                            $this->jsonResponse(['success' => false, 'message' => 'Failed to update patient'], 500);
+                        }
                         $this->redirect('/patients/edit?id=' . $id . '&error=Failed to update patient');
                     }
                 } else {
+                    if ($this->isAjax()) {
+                        $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+                    }
                     // Redirect with errors
                     $this->redirect('/patients/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
                 }
             } else {
-                $this->redirect('/patients?error=Invalid patient ID');
+                if ($this->isAjax()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid patient ID'], 400);
+                }
+                $_SESSION['flash_error'] = 'Invalid patient ID';
+                $this->redirect('/patients');
             }
         } else {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
             $this->redirect('/patients');
         }
     }
@@ -127,14 +204,32 @@ class PatientController extends BaseController {
                 
                 // Delete patient
                 if ($this->patientModel->delete()) {
-                    $this->redirect('/patients?success=Patient deleted successfully');
+                    if ($this->isAjax()) {
+                        $this->jsonResponse([
+                            'success' => true,
+                            'message' => 'Patient deleted successfully'
+                        ]);
+                    }
+                    $_SESSION['flash_success'] = 'Patient deleted successfully';
+                    $this->redirect('/patients');
                 } else {
-                    $this->redirect('/patients?error=Failed to delete patient');
+                    if ($this->isAjax()) {
+                        $this->jsonResponse(['success' => false, 'message' => 'Failed to delete patient'], 500);
+                    }
+                    $_SESSION['flash_error'] = 'Failed to delete patient';
+                    $this->redirect('/patients');
                 }
             } else {
-                $this->redirect('/patients?error=Invalid patient ID');
+                if ($this->isAjax()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid patient ID'], 400);
+                }
+                $_SESSION['flash_error'] = 'Invalid patient ID';
+                $this->redirect('/patients');
             }
         } else {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            }
             $this->redirect('/patients');
         }
     }

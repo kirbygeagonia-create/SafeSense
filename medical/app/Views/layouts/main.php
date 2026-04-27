@@ -7,9 +7,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="<?php echo ASSETS_URL; ?>/css/style.css" rel="stylesheet">
 </head>
 <body>
+
+<?php
+  // Session flash — read and immediately destroy
+  $flashSuccess = $_SESSION['flash_success'] ?? null;
+  $flashError   = $_SESSION['flash_error']   ?? null;
+  unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+?>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container">
@@ -109,20 +117,13 @@
 <!-- ── Toast Container ── -->
 <div class="ss-toast-wrap" id="ssToastWrap"></div>
 
+<!-- ── Session Flash Data (consumed by app.js) ── -->
+<?php if ($flashSuccess || $flashError): ?>
+<div id="ssFlashData" data-success="<?php echo htmlspecialchars($flashSuccess ?? ''); ?>" data-error="<?php echo htmlspecialchars($flashError ?? ''); ?>" style="display:none;"></div>
+<?php endif; ?>
+
 <!-- ── Main Content ── -->
 <main class="container mt-4 mb-5">
-  <?php if (isset($_GET['success'])): ?>
-    <div class="alert alert-success alert-dismissible fade show">
-      <i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($_GET['success']); ?>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <?php endif; ?>
-  <?php if (isset($_GET['error'])): ?>
-    <div class="alert alert-danger alert-dismissible fade show">
-      <i class="fas fa-exclamation-circle me-2"></i><?php echo htmlspecialchars($_GET['error']); ?>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <?php endif; ?>
   <?php echo $content ?? ''; ?>
 </main>
 
@@ -138,6 +139,10 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 (function(){
   'use strict';
@@ -308,6 +313,6 @@
   setInterval(poll, POLL_MS);
 })();
 </script>
+<script src="<?php echo ASSETS_URL; ?>/js/app.js"></script>
 </body>
 </html>
-

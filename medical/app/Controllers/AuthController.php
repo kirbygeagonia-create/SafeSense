@@ -18,7 +18,8 @@ class AuthController extends BaseController {
         $password = $this->getPostData('password') ?? '';
 
         if (empty($email) || empty($password)) {
-            $this->redirect('/login?error=Email and password are required.');
+            $_SESSION['flash_error'] = 'Email and password are required.';
+            $this->redirect('/login');
             return;
         }
 
@@ -46,20 +47,25 @@ class AuthController extends BaseController {
         if ($user) {
             $_SESSION['user']       = $user;
             $_SESSION['login_time'] = time();
+            $_SESSION['flash_success'] = 'Welcome back, ' . $user['name'] . '!';
             $this->redirect('/dashboard');
         } else {
-            $this->redirect('/login?error=Invalid email or password.');
+            $_SESSION['flash_error'] = 'Invalid email or password.';
+            $this->redirect('/login');
         }
     }
 
     public function logout() {
         session_destroy();
-        $this->redirect('/login?success=You have been logged out successfully.');
+        session_start();
+        $_SESSION['flash_success'] = 'You have been logged out successfully.';
+        $this->redirect('/login');
     }
 
     public function dashboard() {
         if (!isset($_SESSION['user'])) {
-            $this->redirect('/login?error=Please log in to access the dashboard.');
+            $_SESSION['flash_error'] = 'Please log in to access the dashboard.';
+            $this->redirect('/login');
             return;
         }
 

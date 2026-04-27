@@ -72,6 +72,7 @@ class Appointment {
         $stmt->bindParam(':reason', $this->reason);
         
         if($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;
@@ -121,5 +122,20 @@ class Appointment {
             return true;
         }
         return false;
+    }
+
+    /** Get appointment counts grouped by week for Chart.js (Phase 5) */
+    public function getAppointmentsByWeek($weeks = 8) {
+        $query = 'SELECT YEARWEEK(appointment_date, 1) as yw,
+                         MIN(appointment_date) as week_start,
+                         COUNT(*) as count
+                  FROM ' . $this->table_name . '
+                  WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL :weeks WEEK)
+                  GROUP BY YEARWEEK(appointment_date, 1)
+                  ORDER BY yw ASC';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':weeks', $weeks, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

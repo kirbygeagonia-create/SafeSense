@@ -40,6 +40,11 @@ class BaseController {
         return $_SERVER['REQUEST_METHOD'] === 'POST';
     }
     
+    protected function isAjax() {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+    
     protected function getPostData($key, $default = null) {
         return $_POST[$key] ?? $default;
     }

@@ -63,6 +63,7 @@ class Doctor {
         $stmt->bindParam(':license_number', $this->license_number);
         
         if($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;

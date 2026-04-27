@@ -151,3 +151,92 @@
 
 </div>
 
+<!-- Chart.js Analytics -->
+<div class="row g-4 mt-2">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-danger"></i>Alerts Over Time (30 Days)</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="alertsChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>Appointments by Week (8 Weeks)</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="appointmentsChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  fetch('/api/dashboard/stats')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) return;
+
+      // Alerts chart
+      const alertLabels = (data.alerts || []).map(r => r.date);
+      const alertValues = (data.alerts || []).map(r => parseInt(r.count));
+      new Chart(document.getElementById('alertsChart'), {
+        type: 'line',
+        data: {
+          labels: alertLabels,
+          datasets: [{
+            label: 'Alerts',
+            data: alertValues,
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220,38,38,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#dc2626'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { maxTicksLimit: 10 } }
+          }
+        }
+      });
+
+      // Appointments chart
+      const apptLabels = (data.appointments || []).map(r => r.week_start || r.yw);
+      const apptValues = (data.appointments || []).map(r => parseInt(r.count));
+      new Chart(document.getElementById('appointmentsChart'), {
+        type: 'bar',
+        data: {
+          labels: apptLabels,
+          datasets: [{
+            label: 'Appointments',
+            data: apptValues,
+            backgroundColor: 'rgba(37,99,235,0.7)',
+            borderColor: '#2563eb',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { maxTicksLimit: 8 } }
+          }
+        }
+      });
+    })
+    .catch(() => {});
+})();
+</script>
