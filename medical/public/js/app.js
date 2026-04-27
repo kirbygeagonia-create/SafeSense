@@ -32,8 +32,20 @@
   }
 
   /* ──────────────────────────────────────────────
-     Session Flash → SweetAlert2
+     Fix DataTables "Show N entries" select overlap
+     (Bootstrap form-select-sm sets tight padding
+     inline; we override after full render)
   ────────────────────────────────────────────── */
+  function fixDtLengthSelect() {
+    document.querySelectorAll('.dataTables_length select').forEach(sel => {
+      sel.style.setProperty('min-width',     '76px',  'important');
+      sel.style.setProperty('padding-right', '1.8rem','important');
+      sel.style.setProperty('width',         'auto',  'important');
+    });
+  }
+  setTimeout(fixDtLengthSelect, 400);
+
+
   const flashEl = document.getElementById('ssFlashData');
   if (flashEl) {
     const s = flashEl.dataset.success;
@@ -42,6 +54,29 @@
     if (e) Swal.fire({ icon: 'error', title: e });
     flashEl.remove();
   }
+
+  /* ──────────────────────────────────────────────
+     Logout Confirmation
+  ────────────────────────────────────────────── */
+  document.querySelectorAll('form[action*="/logout"]').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      Swal.fire({
+        title: 'Log out?',
+        text: 'You will be returned to the login screen.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-sign-out-alt me-1"></i> Yes, log out',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+      }).then(result => {
+        if (result.isConfirmed) form.submit();
+      });
+    });
+  });
+
 
   /* ──────────────────────────────────────────────
      Generic CRUD Modal System
@@ -55,7 +90,17 @@
       pageLength: 10,
       order: [[0, 'desc']],
       language: { search: '', searchPlaceholder: 'Search...' },
-      columnDefs: [{ orderable: false, targets: -1 }]
+      columnDefs: [{ orderable: false, targets: -1 }],
+      initComplete: function() {
+        // Fix the "Show N entries" select so the number and arrow don't overlap
+        const lengthSel = tableEl.closest('.dataTables_wrapper')
+          ?.querySelector('.dataTables_length select');
+        if (lengthSel) {
+          lengthSel.style.setProperty('min-width', '80px', 'important');
+          lengthSel.style.setProperty('padding-right', '2rem', 'important');
+          lengthSel.style.setProperty('width', 'auto', 'important');
+        }
+      }
     });
 
     const modalEl = document.getElementById(cfg.modalId);
@@ -168,10 +213,10 @@
     addBtnId: 'addPatientBtn',
     addTitle: 'Add Patient',
     editTitle: 'Edit Patient',
-    storeUrl: '/patients/store',
-    updateUrl: '/patients/update',
-    deleteUrl: '/patients/delete',
-    editUrl: '/patients/edit',
+    storeUrl: window.BASE_URL + '/patients/store',
+    updateUrl: window.BASE_URL + '/patients/update',
+    deleteUrl: window.BASE_URL + '/patients/delete',
+    editUrl: window.BASE_URL + '/patients/edit',
     fields: ['id', 'name', 'email', 'phone', 'date_of_birth', 'gender', 'address'],
     buildRow: (d) => [
       d.id,
@@ -195,10 +240,10 @@
     addBtnId: 'addDoctorBtn',
     addTitle: 'Add Doctor',
     editTitle: 'Edit Doctor',
-    storeUrl: '/doctors/store',
-    updateUrl: '/doctors/update',
-    deleteUrl: '/doctors/delete',
-    editUrl: '/doctors/edit',
+    storeUrl: window.BASE_URL + '/doctors/store',
+    updateUrl: window.BASE_URL + '/doctors/update',
+    deleteUrl: window.BASE_URL + '/doctors/delete',
+    editUrl: window.BASE_URL + '/doctors/edit',
     fields: ['id', 'name', 'email', 'phone', 'specialization', 'license_number'],
     buildRow: (d) => [
       d.id,
@@ -252,10 +297,10 @@
       addBtnId: 'addAppointmentBtn',
       addTitle: 'Schedule Appointment',
       editTitle: 'Edit Appointment',
-      storeUrl: '/appointments/store',
-      updateUrl: '/appointments/update',
-      deleteUrl: '/appointments/delete',
-      editUrl: '/appointments/edit',
+      storeUrl: window.BASE_URL + '/appointments/store',
+      updateUrl: window.BASE_URL + '/appointments/update',
+      deleteUrl: window.BASE_URL + '/appointments/delete',
+      editUrl: window.BASE_URL + '/appointments/edit',
       fields: ['id', 'patient_id', 'doctor_id', 'appointment_date', 'appointment_time', 'status', 'reason'],
       onOpenAdd: (form) => populateDropdowns(form),
       onOpenEdit: (form, d) => {

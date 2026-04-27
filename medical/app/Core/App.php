@@ -12,7 +12,7 @@ class App
 
     private function initRoutes()
     {
-        $this->router->get('/', 'PatientController@index');
+        $this->router->get('/', 'AuthController@dashboard');
         $this->router->get('/patients', 'PatientController@index');
         $this->router->post('/patients/store', 'PatientController@store');
         $this->router->get('/patients/edit', 'PatientController@edit');
@@ -54,12 +54,16 @@ class App
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $requestMethod = $_SERVER['REQUEST_METHOD'];
 
-        $basePath = '';
-        if (!empty($_SERVER['BASE_PATH'])) {
-            $basePath = rtrim($_SERVER['BASE_PATH'], '/\\');
-            if (str_starts_with($uri, $basePath)) {
-                $uri = substr($uri, strlen($basePath));
-            }
+        $basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        if ($basePath === '/') {
+            $basePath = '';
+        }
+        
+        if (str_starts_with($uri, $basePath)) {
+            $uri = substr($uri, strlen($basePath));
+        }
+        if ($uri === '') {
+            $uri = '/';
         }
 
         $route = $this->router->match($uri, $requestMethod);

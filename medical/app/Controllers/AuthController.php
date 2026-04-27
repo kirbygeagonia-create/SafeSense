@@ -64,7 +64,6 @@ class AuthController extends BaseController {
 
     public function dashboard() {
         if (!isset($_SESSION['user'])) {
-            $_SESSION['flash_error'] = 'Please log in to access the dashboard.';
             $this->redirect('/login');
             return;
         }

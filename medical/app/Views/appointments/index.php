@@ -67,7 +67,7 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
         <h5 class="modal-title"><i class="fas fa-calendar-check me-2"></i>Schedule Appointment</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form id="appointmentForm" data-action="/appointments/store">
+      <form id="appointmentForm" data-action="<?php echo url('/appointments/store'); ?>">
         <div class="modal-body">
           <input type="hidden" name="id">
           <div class="row">

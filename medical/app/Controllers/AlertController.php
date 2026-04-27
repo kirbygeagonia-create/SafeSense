@@ -182,24 +182,26 @@ class AlertController extends BaseController {
     // HELPERS
     // ---------------------------------------------------------------
 
-    private function sanitize($val) {
+    protected function sanitize($val) {
         if ($val === null) return null;
         return htmlspecialchars(strip_tags(trim($val)));
     }
 
-    private function requireAuth() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+    protected function requireAuth() {
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         if (!isset($_SESSION['user'])) {
-            $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            // For page requests (non-AJAX), redirect to login instead of JSON error
+            $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                      strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            $isApi   = strpos($_SERVER['REQUEST_URI'], '/api/') !== false;
+            if ($isAjax || $isApi) {
+                $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            } else {
+                $_SESSION['flash_error'] = 'Please log in to access this page.';
+                $this->redirect('/login');
+            }
             exit;
         }
-    }
-
-    private function jsonResponse($data, $status = 200) {
-        http_response_code($status);
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        exit;
     }
 }
 ?>

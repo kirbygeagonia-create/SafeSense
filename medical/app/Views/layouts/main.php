@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="<?php echo ASSETS_URL; ?>/css/style.css" rel="stylesheet">
+    <script>window.BASE_URL = '<?php echo url(); ?>';</script>
 </head>
 <body>
 
@@ -21,7 +22,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="/dashboard">
+    <a class="navbar-brand fw-bold" href="<?php echo url('/dashboard'); ?>">
       <i class="fas fa-satellite-dish me-2"></i><?php echo APP_NAME; ?>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -29,17 +30,24 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="/patients"><i class="fas fa-user-injured me-1"></i>Patients</a></li>
-        <li class="nav-item"><a class="nav-link" href="/doctors"><i class="fas fa-user-md me-1"></i>Doctors</a></li>
-        <li class="nav-item"><a class="nav-link" href="/appointments"><i class="fas fa-calendar-check me-1"></i>Appointments</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/dashboard'); ?>"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/patients'); ?>"><i class="fas fa-user-injured me-1"></i>Patients</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/doctors'); ?>"><i class="fas fa-user-md me-1"></i>Doctors</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/appointments'); ?>"><i class="fas fa-calendar-check me-1"></i>Appointments</a></li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-1" href="/alerts">
+          <a class="nav-link d-flex align-items-center gap-1" href="<?php echo url('/alerts'); ?>">
             <span class="ss-live-dot"></span>SafeSense Alerts
           </a>
         </li>
       </ul>
       <ul class="navbar-nav align-items-center gap-3">
+        <?php if (isset($_SESSION['user'])): ?>
+        <li class="nav-item text-light me-3 d-flex align-items-center">
+          <i class="fas fa-user-circle me-1"></i>
+          <span><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
+          <small class="ms-1 text-white-50">(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'])); ?>)</small>
+        </li>
+        <?php endif; ?>
         <li class="nav-item">
           <div class="ss-bell-wrap" id="ssBellBtn" title="Open SafeSense Alerts">
             <i class="fas fa-bell"></i>
@@ -47,7 +55,7 @@
           </div>
         </li>
         <li class="nav-item">
-          <form method="post" action="/logout" class="d-inline">
+          <form method="post" action="<?php echo url('/logout'); ?>" class="d-inline">
             <button type="submit" class="btn btn-outline-light btn-sm">
               <i class="fas fa-sign-out-alt me-1"></i>Logout
             </button>
@@ -74,7 +82,7 @@
     </p>
   </div>
   <div class="ss-drawer-footer">
-    <a href="/alerts" class="btn btn-primary btn-sm w-100">
+    <a href="<?php echo url('/alerts'); ?>" class="btn btn-primary btn-sm w-100">
       <i class="fas fa-list me-1"></i>View Full Alert History
     </a>
   </div>
@@ -186,7 +194,7 @@
   function closeDrawer(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
 
   markAllBtn.addEventListener('click', ()=>{
-    post('/api/alerts/read','id=all').then(d=>{ setBadge(0); document.querySelectorAll('.ss-notif.unread').forEach(el=>el.classList.remove('unread')); });
+    post(window.BASE_URL + '/api/alerts/read','id=all').then(d=>{ setBadge(0); document.querySelectorAll('.ss-notif.unread').forEach(el=>el.classList.remove('unread')); });
   });
 
   /* ── Drawer item ── */
@@ -272,13 +280,13 @@
   $('ssModalAckBtn').addEventListener('click',()=>{ markRead(modal.dataset.id); closeModal(); });
 
   /* ── API helpers ── */
-  function markRead(id){ post('/api/alerts/read','id='+id).then(d=>setBadge(d.unread_count||0)); }
-  function dismissItem(id,el){ post('/api/alerts/dismiss','id='+id); if(el){ el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); } }
+  function markRead(id){ post(window.BASE_URL + '/api/alerts/read','id='+id).then(d=>setBadge(d.unread_count||0)); }
+  function dismissItem(id,el){ post(window.BASE_URL + '/api/alerts/dismiss','id='+id); if(el){ el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); } }
   function post(url,body){ return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body}).then(r=>r.json()); }
 
   /* ── Poll ── */
   function poll(){
-    fetch('/api/alerts/poll?since='+encodeURIComponent(lastPoll))
+    fetch(window.BASE_URL + '/api/alerts/poll?since='+encodeURIComponent(lastPoll))
     .then(r=>r.json())
     .then(data=>{
       lastPoll=data.server_time||lastPoll;
@@ -309,7 +317,7 @@
   function esc(s){ const d=document.createElement('div'); d.appendChild(document.createTextNode(s||'')); return d.innerHTML; }
 
   /* ── Init ── */
-  fetch('/api/alerts/poll?since=1970-01-01+00:00:00').then(r=>r.json()).then(d=>{ if(d.unread_count) setBadge(d.unread_count); }).catch(()=>{});
+  fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00').then(r=>r.json()).then(d=>{ if(d.unread_count) setBadge(d.unread_count); }).catch(()=>{});
   setInterval(poll, POLL_MS);
 })();
 </script>

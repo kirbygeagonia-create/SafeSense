@@ -47,7 +47,7 @@
         <h5 class="modal-title"><i class="fas fa-user-injured me-2"></i>Add Patient</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form id="patientForm" data-action="/patients/store">
+      <form id="patientForm" data-action="<?php echo url('/patients/store'); ?>">
         <div class="modal-body">
           <input type="hidden" name="id">
           <div class="row">

@@ -2,7 +2,7 @@
 
 // ── App ──────────────────────────────────────
 define('APP_NAME', 'SafeSense Hospital Management');
-define('APP_URL',  'http://localhost/medical');
+define('APP_URL',  'http://localhost/SafeSense/medical');
 
 // ── Database ─────────────────────────────────
 define('DB_HOST', 'localhost');
@@ -62,3 +62,16 @@ define('SS_WATER_WARNING',  20.0);
 define('SS_WATER_DANGER',   35.0);
 define('SS_WATER_CRITICAL', 50.0);
 
+// ── Global URL Helper ─────────────────────────
+if (!function_exists('url')) {
+    function url($path = '') {
+        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+        // basePath = everything up to and including /public
+        $basePath = rtrim(dirname($script), '/');
+        if ($basePath === '.') $basePath = '';
+        // Return basePath alone (no trailing slash) if no path given,
+        // so JS can do:  window.BASE_URL + '/route'  without double slashes
+        if ($path === '') return $basePath;
+        return $basePath . '/' . ltrim($path, '/');
+    }
+}

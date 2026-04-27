@@ -47,7 +47,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <a href="/alerts" class="text-decoration-none">
+    <a href="<?php echo url('/alerts'); ?>" class="text-decoration-none">
       <div class="card h-100 border-0 shadow-sm border-danger border-start border-4">
         <div class="card-body d-flex justify-content-between align-items-center">
           <div>
@@ -73,7 +73,7 @@
         <h6 class="mb-0 fw-bold">
           <span class="ss-live-dot"></span>SafeSense Live Alerts
         </h6>
-        <a href="/alerts" class="btn btn-sm btn-outline-danger">View All</a>
+        <a href="<?php echo url('/alerts'); ?>" class="btn btn-sm btn-outline-danger">View All</a>
       </div>
       <div class="card-body p-0">
         <?php if (!empty($recentAlerts)): ?>
@@ -117,7 +117,7 @@
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
         <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2 text-primary"></i>Upcoming Appointments</h6>
-        <a href="/appointments" class="btn btn-sm btn-outline-primary">View All</a>
+        <a href="<?php echo url('/appointments'); ?>" class="btn btn-sm btn-outline-primary">View All</a>
       </div>
       <div class="card-body p-0">
         <?php if (!empty($upcomingAppointments)): ?>

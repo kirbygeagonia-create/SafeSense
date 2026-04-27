@@ -20,11 +20,15 @@ class BaseController {
         // Get the content and clean the buffer
         $content = ob_get_clean();
         
-        // Include the layout
-        include APP_PATH . '/Views/layouts/main.php';
+        // Use auth layout for login/auth pages, main layout for everything else
+        $layoutName = (strpos($view, 'auth/') === 0) ? 'auth' : 'main';
+        include APP_PATH . '/Views/layouts/' . $layoutName . '.php';
     }
     
     protected function redirect($url) {
+        if (!str_starts_with($url, 'http')) {
+            $url = url($url);
+        }
         header('Location: ' . $url);
         exit();
     }
