@@ -1,15 +1,18 @@
 <?php
 
-class AppointmentController extends BaseController {
+class AppointmentController extends BaseController
+{
     private $appointmentModel;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $database = new Database();
         $db = $database->getConnection();
         $this->appointmentModel = new Appointment($db);
     }
-    
-    public function index() {
+
+    public function index()
+    {
         $database = new Database();
         $db = $database->getConnection();
         $stmt = $this->appointmentModel->getAll();
@@ -18,33 +21,26 @@ class AppointmentController extends BaseController {
         $doctorModel = new Doctor($db);
         $this->render('appointments/index', [
             'appointments' => $appointments,
-            'allPatients'  => $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
-            'allDoctors'   => $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
+            'allPatients' => $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
+            'allDoctors' => $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
             'title' => 'Appointments'
         ]);
     }
-    
-    public function create() {
-        $database = new Database();
-        $db = $database->getConnection();
-        $patientModel = new Patient($db);
-        $doctorModel = new Doctor($db);
-        $patients = $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
-        $doctors = $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
-        $this->render('appointments/create', [
-            'title' => 'Schedule Appointment', 'patients' => $patients, 'doctors' => $doctors
-        ]);
-    }
-    
-    public function store() {
+
+
+
+    public function store()
+    {
         if (!$this->isPostRequest()) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
             $this->redirect('/appointments');
             return;
         }
         $errors = $this->validateRequiredFields(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time']);
         if (!empty($errors)) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
             $_SESSION['flash_error'] = implode(', ', $errors);
             $this->redirect('/appointments');
             return;
@@ -57,43 +53,53 @@ class AppointmentController extends BaseController {
         $this->appointmentModel->reason = $this->getPostData('reason', '');
         if ($this->appointmentModel->create()) {
             if ($this->isAjax()) {
-                $this->jsonResponse(['success' => true, 'message' => 'Appointment scheduled successfully', 'data' => [
-                    'id' => $this->appointmentModel->id,
-                    'patient_id' => $this->appointmentModel->patient_id,
-                    'doctor_id' => $this->appointmentModel->doctor_id,
-                    'appointment_date' => $this->appointmentModel->appointment_date,
-                    'appointment_time' => $this->appointmentModel->appointment_time,
-                    'status' => $this->appointmentModel->status,
-                    'reason' => $this->appointmentModel->reason
-                ]]);
+                $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Appointment scheduled successfully',
+                    'data' => [
+                        'id' => $this->appointmentModel->id,
+                        'patient_id' => $this->appointmentModel->patient_id,
+                        'doctor_id' => $this->appointmentModel->doctor_id,
+                        'appointment_date' => $this->appointmentModel->appointment_date,
+                        'appointment_time' => $this->appointmentModel->appointment_time,
+                        'status' => $this->appointmentModel->status,
+                        'reason' => $this->appointmentModel->reason
+                    ]
+                ]);
             }
             $_SESSION['flash_success'] = 'Appointment scheduled successfully';
             $this->redirect('/appointments');
         } else {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to schedule appointment'], 500);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to schedule appointment'], 500);
             $_SESSION['flash_error'] = 'Failed to schedule appointment';
             $this->redirect('/appointments');
         }
     }
-    
-    public function edit() {
+
+    public function edit()
+    {
         $id = $this->getGetData('id');
         if (!$id) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
             $this->redirect('/appointments');
             return;
         }
         if ($this->appointmentModel->getById($id)) {
             if ($this->isAjax()) {
-                $this->jsonResponse(['success' => true, 'data' => [
-                    'id' => $this->appointmentModel->id,
-                    'patient_id' => $this->appointmentModel->patient_id,
-                    'doctor_id' => $this->appointmentModel->doctor_id,
-                    'appointment_date' => $this->appointmentModel->appointment_date,
-                    'appointment_time' => $this->appointmentModel->appointment_time,
-                    'status' => $this->appointmentModel->status,
-                    'reason' => $this->appointmentModel->reason
-                ]]);
+                $this->jsonResponse([
+                    'success' => true,
+                    'data' => [
+                        'id' => $this->appointmentModel->id,
+                        'patient_id' => $this->appointmentModel->patient_id,
+                        'doctor_id' => $this->appointmentModel->doctor_id,
+                        'appointment_date' => $this->appointmentModel->appointment_date,
+                        'appointment_time' => $this->appointmentModel->appointment_time,
+                        'status' => $this->appointmentModel->status,
+                        'reason' => $this->appointmentModel->reason
+                    ]
+                ]);
             }
             $database = new Database();
             $db = $database->getConnection();
@@ -102,32 +108,39 @@ class AppointmentController extends BaseController {
             $patients = $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
             $doctors = $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
             $this->render('appointments/edit', [
-                'title' => 'Edit Appointment', 'appointment' => $this->appointmentModel,
-                'patients' => $patients, 'doctors' => $doctors
+                'title' => 'Edit Appointment',
+                'appointment' => $this->appointmentModel,
+                'patients' => $patients,
+                'doctors' => $doctors
             ]);
         } else {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Appointment not found'], 404);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Appointment not found'], 404);
             $_SESSION['flash_error'] = 'Appointment not found';
             $this->redirect('/appointments');
         }
     }
-    
-    public function update() {
+
+    public function update()
+    {
         if (!$this->isPostRequest()) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
             $this->redirect('/appointments');
             return;
         }
         $id = $this->getPostData('id');
         if (!$id) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
             $_SESSION['flash_error'] = 'Invalid appointment ID';
             $this->redirect('/appointments');
             return;
         }
         $errors = $this->validateRequiredFields(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time']);
         if (!empty($errors)) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
             $this->redirect('/appointments/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
             return;
         }
@@ -140,44 +153,54 @@ class AppointmentController extends BaseController {
         $this->appointmentModel->reason = $this->getPostData('reason');
         if ($this->appointmentModel->update()) {
             if ($this->isAjax()) {
-                $this->jsonResponse(['success' => true, 'message' => 'Appointment updated successfully', 'data' => [
-                    'id' => $this->appointmentModel->id,
-                    'patient_id' => $this->appointmentModel->patient_id,
-                    'doctor_id' => $this->appointmentModel->doctor_id,
-                    'appointment_date' => $this->appointmentModel->appointment_date,
-                    'appointment_time' => $this->appointmentModel->appointment_time,
-                    'status' => $this->appointmentModel->status,
-                    'reason' => $this->appointmentModel->reason
-                ]]);
+                $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'Appointment updated successfully',
+                    'data' => [
+                        'id' => $this->appointmentModel->id,
+                        'patient_id' => $this->appointmentModel->patient_id,
+                        'doctor_id' => $this->appointmentModel->doctor_id,
+                        'appointment_date' => $this->appointmentModel->appointment_date,
+                        'appointment_time' => $this->appointmentModel->appointment_time,
+                        'status' => $this->appointmentModel->status,
+                        'reason' => $this->appointmentModel->reason
+                    ]
+                ]);
             }
             $_SESSION['flash_success'] = 'Appointment updated successfully';
             $this->redirect('/appointments');
         } else {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to update appointment'], 500);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to update appointment'], 500);
             $this->redirect('/appointments/edit?id=' . $id . '&error=Failed to update appointment');
         }
     }
-    
-    public function delete() {
+
+    public function delete()
+    {
         if (!$this->isPostRequest()) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
             $this->redirect('/appointments');
             return;
         }
         $id = $this->getPostData('id');
         if (!$id) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid appointment ID'], 400);
             $_SESSION['flash_error'] = 'Invalid appointment ID';
             $this->redirect('/appointments');
             return;
         }
         $this->appointmentModel->id = $id;
         if ($this->appointmentModel->delete()) {
-            if ($this->isAjax()) $this->jsonResponse(['success' => true, 'message' => 'Appointment deleted successfully']);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => true, 'message' => 'Appointment deleted successfully']);
             $_SESSION['flash_success'] = 'Appointment deleted successfully';
             $this->redirect('/appointments');
         } else {
-            if ($this->isAjax()) $this->jsonResponse(['success' => false, 'message' => 'Failed to delete appointment'], 500);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete appointment'], 500);
             $_SESSION['flash_error'] = 'Failed to delete appointment';
             $this->redirect('/appointments');
         }

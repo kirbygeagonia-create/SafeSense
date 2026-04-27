@@ -1,42 +1,41 @@
 <?php
 
-class PatientController extends BaseController {
+class PatientController extends BaseController
+{
     private $patientModel;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         // Initialize database connection
         $database = new Database();
         $db = $database->getConnection();
-        
+
         // Initialize patient model
         $this->patientModel = new Patient($db);
     }
-    
-    public function index() {
+
+    public function index()
+    {
         // Get all patients
         $stmt = $this->patientModel->getAll();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Render view with patients data
         $this->render('patients/index', [
             'patients' => $patients,
             'title' => 'Patients'
         ]);
     }
-    
-    public function create() {
-        // Render create patient form
-        $this->render('patients/create', [
-            'title' => 'Add New Patient'
-        ]);
-    }
-    
-    public function store() {
+
+
+
+    public function store()
+    {
         if ($this->isPostRequest()) {
             // Validate required fields
             $requiredFields = ['name', 'email', 'phone', 'date_of_birth', 'gender'];
             $errors = $this->validateRequiredFields($requiredFields);
-            
+
             if (empty($errors)) {
                 // Set patient properties
                 $this->patientModel->name = $this->getPostData('name');
@@ -45,7 +44,7 @@ class PatientController extends BaseController {
                 $this->patientModel->address = $this->getPostData('address', '');
                 $this->patientModel->date_of_birth = $this->getPostData('date_of_birth');
                 $this->patientModel->gender = $this->getPostData('gender');
-                
+
                 // Create patient
                 if ($this->patientModel->create()) {
                     if ($this->isAjax()) {
@@ -63,14 +62,14 @@ class PatientController extends BaseController {
                             ]
                         ]);
                     }
-            $_SESSION['flash_success'] = 'Patient created successfully';
-            $this->redirect('/patients');
+                    $_SESSION['flash_success'] = 'Patient created successfully';
+                    $this->redirect('/patients');
                 } else {
                     if ($this->isAjax()) {
                         $this->jsonResponse(['success' => false, 'message' => 'Failed to create patient'], 500);
                     }
-            $_SESSION['flash_error'] = 'Failed to create patient';
-            $this->redirect('/patients');
+                    $_SESSION['flash_error'] = 'Failed to create patient';
+                    $this->redirect('/patients');
                 }
             } else {
                 if ($this->isAjax()) {
@@ -88,10 +87,11 @@ class PatientController extends BaseController {
             $this->redirect('/patients');
         }
     }
-    
-    public function edit() {
+
+    public function edit()
+    {
         $id = $this->getGetData('id');
-        
+
         if ($id) {
             // Get patient by ID
             if ($this->patientModel->getById($id)) {
@@ -128,16 +128,17 @@ class PatientController extends BaseController {
             $this->redirect('/patients');
         }
     }
-    
-    public function update() {
+
+    public function update()
+    {
         if ($this->isPostRequest()) {
             $id = $this->getPostData('id');
-            
+
             if ($id) {
                 // Validate required fields
                 $requiredFields = ['name', 'email', 'phone', 'date_of_birth', 'gender'];
                 $errors = $this->validateRequiredFields($requiredFields);
-                
+
                 if (empty($errors)) {
                     // Set patient properties
                     $this->patientModel->id = $id;
@@ -147,7 +148,7 @@ class PatientController extends BaseController {
                     $this->patientModel->address = $this->getPostData('address', '');
                     $this->patientModel->date_of_birth = $this->getPostData('date_of_birth');
                     $this->patientModel->gender = $this->getPostData('gender');
-                    
+
                     // Update patient
                     if ($this->patientModel->update()) {
                         if ($this->isAjax()) {
@@ -194,14 +195,15 @@ class PatientController extends BaseController {
             $this->redirect('/patients');
         }
     }
-    
-    public function delete() {
+
+    public function delete()
+    {
         if ($this->isPostRequest()) {
             $id = $this->getPostData('id');
-            
+
             if ($id) {
                 $this->patientModel->id = $id;
-                
+
                 // Delete patient
                 if ($this->patientModel->delete()) {
                     if ($this->isAjax()) {
