@@ -6,13 +6,16 @@
   'use strict';
 
   /* ──────────────────────────────────────────────
-     AJAX Helper — enforces X-Requested-With header
+     AJAX Helper — enforces X-Requested-With + CSRF
   ────────────────────────────────────────────── */
   function ajax(url, opts = {}) {
+    // Task 2 — inject CSRF token into every AJAX request
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
     const defaults = {
       method: opts.method || 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': csrfToken,
         ...(opts.headers || {})
       }
     };
@@ -33,8 +36,6 @@
 
   /* ──────────────────────────────────────────────
      Fix DataTables "Show N entries" select overlap
-     (Bootstrap form-select-sm sets tight padding
-     inline; we override after full render)
   ────────────────────────────────────────────── */
   function fixDtLengthSelect() {
     document.querySelectorAll('.dataTables_length select').forEach(sel => {
@@ -92,7 +93,6 @@
       language: { search: '', searchPlaceholder: 'Search...' },
       columnDefs: [{ orderable: false, targets: -1 }],
       initComplete: function() {
-        // Fix the "Show N entries" select so the number and arrow don't overlap
         const lengthSel = tableEl.closest('.dataTables_wrapper')
           ?.querySelector('.dataTables_length select');
         if (lengthSel) {
@@ -103,11 +103,11 @@
       }
     });
 
-    const modalEl = document.getElementById(cfg.modalId);
-    const modal = new bootstrap.Modal(modalEl);
-    const form = document.getElementById(cfg.formId);
+    const modalEl    = document.getElementById(cfg.modalId);
+    const modal      = new bootstrap.Modal(modalEl);
+    const form       = document.getElementById(cfg.formId);
     const modalTitle = modalEl.querySelector('.modal-title');
-    let editingRow = null;
+    let editingRow   = null;
 
     // ADD button
     const addBtn = document.getElementById(cfg.addBtnId);
@@ -127,7 +127,7 @@
     tableEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.btn-edit');
       if (!btn) return;
-      const id = btn.dataset.id;
+      const id  = btn.dataset.id;
       const row = btn.closest('tr');
 
       ajax(cfg.editUrl + '?id=' + id)
@@ -152,12 +152,13 @@
     tableEl.addEventListener('click', (e) => {
       const btn = e.target.closest('.btn-delete');
       if (!btn) return;
-      const id = btn.dataset.id;
+      const id  = btn.dataset.id;
       const row = btn.closest('tr');
 
+      // Task 5 — cascade delete text is passed per-module via cfg.deleteText
       Swal.fire({
         title: 'Are you sure?',
-        text: 'This action cannot be undone.',
+        text: cfg.deleteText || 'This action cannot be undone.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -177,16 +178,16 @@
     // FORM SUBMIT
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const url = form.getAttribute('data-action');
+      const url      = form.getAttribute('data-action');
       const formData = new FormData(form);
-      const data = {};
+      const data     = {};
       formData.forEach((v, k) => data[k] = v);
 
       ajaxPost(url, data)
         .then(res => {
           if (!res.success) throw res;
           modal.hide();
-          const d = res.data;
+          const d       = res.data;
           const rowData = cfg.buildRow(d);
 
           if (editingRow) {
@@ -207,16 +208,18 @@
      PATIENTS MODULE
   ────────────────────────────────────────────── */
   initCrudModule({
-    tableId: 'patientsTable',
-    modalId: 'patientModal',
-    formId: 'patientForm',
-    addBtnId: 'addPatientBtn',
-    addTitle: 'Add Patient',
-    editTitle: 'Edit Patient',
-    storeUrl: window.BASE_URL + '/patients/store',
-    updateUrl: window.BASE_URL + '/patients/update',
-    deleteUrl: window.BASE_URL + '/patients/delete',
-    editUrl: window.BASE_URL + '/patients/edit',
+    tableId:    'patientsTable',
+    modalId:    'patientModal',
+    formId:     'patientForm',
+    addBtnId:   'addPatientBtn',
+    addTitle:   'Add Patient',
+    editTitle:  'Edit Patient',
+    storeUrl:   window.BASE_URL + '/patients/store',
+    updateUrl:  window.BASE_URL + '/patients/update',
+    deleteUrl:  window.BASE_URL + '/patients/delete',
+    editUrl:    window.BASE_URL + '/patients/edit',
+    // Task 5 — cascade delete warning for patients
+    deleteText: 'This will also permanently delete all appointments for this patient.',
     fields: ['id', 'name', 'email', 'phone', 'date_of_birth', 'gender', 'address'],
     buildRow: (d) => [
       d.id,
@@ -234,16 +237,16 @@
      DOCTORS MODULE
   ────────────────────────────────────────────── */
   initCrudModule({
-    tableId: 'doctorsTable',
-    modalId: 'doctorModal',
-    formId: 'doctorForm',
-    addBtnId: 'addDoctorBtn',
-    addTitle: 'Add Doctor',
+    tableId:   'doctorsTable',
+    modalId:   'doctorModal',
+    formId:    'doctorForm',
+    addBtnId:  'addDoctorBtn',
+    addTitle:  'Add Doctor',
     editTitle: 'Edit Doctor',
-    storeUrl: window.BASE_URL + '/doctors/store',
+    storeUrl:  window.BASE_URL + '/doctors/store',
     updateUrl: window.BASE_URL + '/doctors/update',
     deleteUrl: window.BASE_URL + '/doctors/delete',
-    editUrl: window.BASE_URL + '/doctors/edit',
+    editUrl:   window.BASE_URL + '/doctors/edit',
     fields: ['id', 'name', 'email', 'phone', 'specialization', 'license_number'],
     buildRow: (d) => [
       d.id,
@@ -262,28 +265,25 @@
   ────────────────────────────────────────────── */
   const apptEl = document.getElementById('appointmentsTable');
   if (apptEl) {
-    // Build dropdown options from embedded data
     function buildOptions(arr, labelKey) {
       return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
     }
 
     const patientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
-    const doctorOpts = typeof DOCTORS !== 'undefined' ? buildOptions(DOCTORS, 'name') : '';
+    const doctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
 
     function populateDropdowns(form) {
       const ps = form.querySelector('[name="patient_id"]');
       const ds = form.querySelector('[name="doctor_id"]');
       if (ps && !ps.dataset.filled) { ps.innerHTML = '<option value="">Select Patient</option>' + patientOpts; ps.dataset.filled = '1'; }
-      if (ds && !ds.dataset.filled) { ds.innerHTML = '<option value="">Select Doctor</option>' + doctorOpts; ds.dataset.filled = '1'; }
+      if (ds && !ds.dataset.filled) { ds.innerHTML = '<option value="">Select Doctor</option>'  + doctorOpts;  ds.dataset.filled = '1'; }
     }
 
-    // Status badge helper for row rendering
     function statusBadge(s) {
       const colors = { pending: 'warning', confirmed: 'success', completed: 'secondary', cancelled: 'danger' };
       return `<span class="badge bg-${colors[s] || 'secondary'}">${s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending'}</span>`;
     }
 
-    // Find name by ID from embedded arrays
     function findName(arr, id) {
       if (!arr) return '—';
       const item = arr.find(i => String(i.id) === String(id));
@@ -291,27 +291,27 @@
     }
 
     initCrudModule({
-      tableId: 'appointmentsTable',
-      modalId: 'appointmentModal',
-      formId: 'appointmentForm',
-      addBtnId: 'addAppointmentBtn',
-      addTitle: 'Schedule Appointment',
+      tableId:   'appointmentsTable',
+      modalId:   'appointmentModal',
+      formId:    'appointmentForm',
+      addBtnId:  'addAppointmentBtn',
+      addTitle:  'Schedule Appointment',
       editTitle: 'Edit Appointment',
-      storeUrl: window.BASE_URL + '/appointments/store',
+      storeUrl:  window.BASE_URL + '/appointments/store',
       updateUrl: window.BASE_URL + '/appointments/update',
       deleteUrl: window.BASE_URL + '/appointments/delete',
-      editUrl: window.BASE_URL + '/appointments/edit',
+      editUrl:   window.BASE_URL + '/appointments/edit',
       fields: ['id', 'patient_id', 'doctor_id', 'appointment_date', 'appointment_time', 'status', 'reason'],
-      onOpenAdd: (form) => populateDropdowns(form),
+      onOpenAdd:  (form)    => populateDropdowns(form),
       onOpenEdit: (form, d) => {
         populateDropdowns(form);
         form.querySelector('[name="patient_id"]').value = d.patient_id;
-        form.querySelector('[name="doctor_id"]').value = d.doctor_id;
+        form.querySelector('[name="doctor_id"]').value  = d.doctor_id;
       },
       buildRow: (d) => [
         d.id,
         esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
-        esc(findName(typeof DOCTORS !== 'undefined' ? DOCTORS : [], d.doctor_id)),
+        esc(findName(typeof DOCTORS  !== 'undefined' ? DOCTORS  : [], d.doctor_id)),
         esc(d.appointment_date),
         esc(d.appointment_time),
         statusBadge(d.status),

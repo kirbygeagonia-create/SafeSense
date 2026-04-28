@@ -9,7 +9,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($title) ? htmlspecialchars($title).' — ' : ''; ?><?php echo APP_NAME; ?></title>
+    <!-- Task 8 — consistent title format -->
+    <title><?php echo htmlspecialchars($title ?? 'SafeSense'); ?> — SafeSense</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,10 +34,25 @@
             max-width: 420px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
+        /* Task 8 — shield + red accent bar branding */
+        .auth-accent-bar {
+            height: 4px;
+            width: 56px;
+            background: #dc2626;
+            border-radius: 2px;
+            margin: 0 auto 1.25rem;
+        }
         .auth-logo {
-            font-size: 2rem;
-            color: #3b82f6;
-            margin-bottom: 0.25rem;
+            font-size: 2.4rem;
+            color: #dc2626;
+            margin-bottom: 0.4rem;
+        }
+        .auth-brand-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #f1f5f9;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.2rem;
         }
         .auth-title {
             color: #f1f5f9;
@@ -105,10 +121,12 @@
 ?>
 
 <div class="auth-card">
+    <!-- Task 8 — fa-shield-halved + "SafeSense" heading + #dc2626 accent bar -->
     <div class="text-center mb-4">
-        <div class="auth-logo"><i class="fas fa-satellite-dish"></i></div>
-        <div class="auth-title"><?php echo APP_NAME; ?></div>
-        <div class="auth-subtitle">Hospital Intelligence & IoT Monitoring</div>
+        <div class="auth-logo"><i class="fas fa-shield-halved"></i></div>
+        <div class="auth-brand-name">SafeSense</div>
+        <div class="auth-accent-bar"></div>
+        <div class="auth-subtitle">Hospital Intelligence &amp; IoT Monitoring</div>
     </div>
 
     <?php if ($flashError): ?>

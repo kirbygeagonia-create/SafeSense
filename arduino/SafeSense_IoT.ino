@@ -46,7 +46,8 @@ const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 // Use your server's local IP or domain (no trailing slash)
 const char* SERVER_HOST   = "http://192.168.1.100";  // e.g. your PC's IP on the LAN
 const char* API_ENDPOINT  = "/api/alert";
-const char* API_KEY       = "SAFESENSE_SECRET_KEY";   // must match config.php
+// Task 1 — API key now lives in medical/.env as SAFESENSE_API_KEY; mirror it here
+const char* API_KEY       = "SAFESENSE_SECRET_KEY";   // must match .env SAFESENSE_API_KEY
 
 // Device identity
 const char* DEVICE_ID     = "SAFESENSE-001";
@@ -153,25 +154,25 @@ void loop() {
 
     String rainStatus = getRainStatus(rainIntensity, isRaining);
 
-    // CRITICAL flood
+    // CRITICAL flood — Task 9: use sendWithRetry instead of sendAlert
     if (waterLevel >= WATER_CRITICAL && isRaining) {
       String msg = "CRITICAL: Flood detected. Water level at " + String(waterLevel, 1) +
                    " cm — DANGER threshold exceeded. Immediate response required!";
-      sendAlert("critical", "flood", rainStatus, waterLevel, false, msg);
+      sendWithRetry("critical", "flood", rainStatus, waterLevel, false, msg);
       lastAlertTime = now;
     }
     // DANGER — high water
     else if (waterLevel >= WATER_DANGER && isRaining) {
       String msg = "DANGER: Rising floodwater detected. Water level: " + String(waterLevel, 1) +
                    " cm. Road hazard likely.";
-      sendAlert("danger", "flood", rainStatus, waterLevel, false, msg);
+      sendWithRetry("danger", "flood", rainStatus, waterLevel, false, msg);
       lastAlertTime = now;
     }
     // WARNING — rain started
     else if (isRaining && !prevRaining) {
       String msg = "WARNING: Rain detected (" + rainStatus + "). Water level: " +
                    String(waterLevel, 1) + " cm. Monitoring conditions.";
-      sendAlert("warning", "rain", rainStatus, waterLevel, false, msg);
+      sendWithRetry("warning", "rain", rainStatus, waterLevel, false, msg);
       lastAlertTime = now;
     }
     // ACCIDENT — vibration during rain/flood
@@ -181,7 +182,7 @@ void loop() {
         String msg = "DANGER: Possible road accident detected via vibration sensor during " +
                      String(isRaining ? "rain" : "flood") + " event. Water level: " +
                      String(waterLevel, 1) + " cm.";
-        sendAlert("danger", "accident", rainStatus, waterLevel, true, msg);
+        sendWithRetry("danger", "accident", rainStatus, waterLevel, true, msg);
         lastAlertTime  = now;
         vibrationCount = 0;
       }
@@ -270,13 +271,13 @@ String getRainStatus(int intensity, bool isRaining) {
 }
 
 
-void sendAlert(String level, String eventType, String rainStatus,
+// ── sendAlert: returns true on HTTP 201, false otherwise ──────
+bool sendAlert(String level, String eventType, String rainStatus,
                float waterLevel, bool vibration, String message) {
 
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[Alert] No WiFi — skipping HTTP alert.");
-    // GSM SMS fallback would go here
-    return;
+    return false;
   }
 
   Serial.println("[Alert] Sending " + level + " alert...");
@@ -309,20 +310,42 @@ void sendAlert(String level, String eventType, String rainStatus,
 
   int httpCode = http.POST(jsonBody);
 
-  if (httpCode == 201) {
+  bool success = (httpCode == 201);
+  if (success) {
     Serial.println("[Alert] ✓ Sent successfully (HTTP 201)");
-    // Sound buzzer confirmation
     tone(PIN_BUZZER, 1000, 200);
     delay(300);
     tone(PIN_BUZZER, 1400, 200);
   } else {
     Serial.print("[Alert] ✗ Failed. HTTP code: ");
     Serial.println(httpCode);
-    // Buzzer error tone
     tone(PIN_BUZZER, 400, 500);
   }
 
   http.end();
+  return success;
 }
 
 
+// ── Task 9: Retry wrapper — up to maxRetries attempts ────────
+bool sendWithRetry(String level, String eventType, String rainStatus,
+                   float waterLevel, bool vibration, String message,
+                   int maxRetries = 3) {
+  for (int attempt = 1; attempt <= maxRetries; attempt++) {
+    Serial.print("[Alert] Attempt ");
+    Serial.print(attempt);
+    Serial.print("/");
+    Serial.println(maxRetries);
+
+    if (sendAlert(level, eventType, rainStatus, waterLevel, vibration, message)) {
+      return true;  // success — stop retrying
+    }
+
+    if (attempt < maxRetries) {
+      Serial.println("[Alert] Retrying in 2s...");
+      delay(2000);
+    }
+  }
+  Serial.println("[Alert] All retry attempts exhausted. Alert may not have been received.");
+  return false;
+}

@@ -12,6 +12,13 @@ if (session_status() === PHP_SESSION_NONE) {
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) require_once $autoload;
 
+// Load .env BEFORE config.php so $_ENV values are available (Task 1)
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->load();
+}
+
 // Core configuration
 require_once __DIR__ . '/../app/Config/config.php';
 require_once __DIR__ . '/../app/Config/database.php';

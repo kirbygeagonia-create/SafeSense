@@ -55,7 +55,7 @@ define('TOKEN_EXPIRY',        3600);
 // ── SafeSense IoT Integration ─────────────────
 // This key must match the api_key sent by your Arduino WiFi Shield.
 // Change this to a strong random string in production!
-define('SAFESENSE_API_KEY', 'SAFESENSE_SECRET_KEY');
+define('SAFESENSE_API_KEY', $_ENV['SAFESENSE_API_KEY'] ?? '');
 
 // Alert level thresholds (mirrors Arduino thresholds)
 define('SS_WATER_WARNING',  20.0);

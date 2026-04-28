@@ -6,59 +6,66 @@ class PatientController extends BaseController
 
     public function __construct()
     {
-        // Initialize database connection
         $database = new Database();
         $db = $database->getConnection();
-
-        // Initialize patient model
         $this->patientModel = new Patient($db);
     }
 
     public function index()
     {
-        // Get all patients
         $stmt = $this->patientModel->getAll();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Render view with patients data
         $this->render('patients/index', [
             'patients' => $patients,
-            'title' => 'Patients'
+            'title'    => 'Patients'
         ]);
     }
-
-
 
     public function store()
     {
         if ($this->isPostRequest()) {
-            // Validate required fields
+            // Task 2 — CSRF guard
+            $this->validateCsrf();
+
             $requiredFields = ['name', 'email', 'phone', 'date_of_birth', 'gender'];
             $errors = $this->validateRequiredFields($requiredFields);
 
             if (empty($errors)) {
-                // Set patient properties
-                $this->patientModel->name = $this->getPostData('name');
-                $this->patientModel->email = $this->getPostData('email');
-                $this->patientModel->phone = $this->getPostData('phone');
-                $this->patientModel->address = $this->getPostData('address', '');
+                $this->patientModel->name         = $this->getPostData('name');
+                $this->patientModel->email        = $this->getPostData('email');
+                $this->patientModel->phone        = $this->getPostData('phone');
+                $this->patientModel->address      = $this->getPostData('address', '');
                 $this->patientModel->date_of_birth = $this->getPostData('date_of_birth');
-                $this->patientModel->gender = $this->getPostData('gender');
+                $this->patientModel->gender       = $this->getPostData('gender');
 
-                // Create patient
-                if ($this->patientModel->create()) {
+                // Task 3 — duplicate email guard
+                try {
+                    $created = $this->patientModel->create();
+                } catch (PDOException $e) {
+                    if ($e->getCode() === '23000') {
+                        if ($this->isAjax()) {
+                            $this->jsonResponse(['success' => false, 'message' => 'A record with this email already exists.'], 422);
+                        }
+                        $_SESSION['flash_error'] = 'A record with this email already exists.';
+                        $this->redirect('/patients');
+                        return;
+                    }
+                    throw $e;
+                }
+
+                if ($created) {
                     if ($this->isAjax()) {
                         $this->jsonResponse([
                             'success' => true,
                             'message' => 'Patient created successfully',
-                            'data' => [
-                                'id' => $this->patientModel->id,
-                                'name' => $this->patientModel->name,
-                                'email' => $this->patientModel->email,
-                                'phone' => $this->patientModel->phone,
-                                'address' => $this->patientModel->address,
+                            'data'    => [
+                                'id'            => $this->patientModel->id,
+                                'name'          => $this->patientModel->name,
+                                'email'         => $this->patientModel->email,
+                                'phone'         => $this->patientModel->phone,
+                                'address'       => $this->patientModel->address,
                                 'date_of_birth' => $this->patientModel->date_of_birth,
-                                'gender' => $this->patientModel->gender
+                                'gender'        => $this->patientModel->gender
                             ]
                         ]);
                     }
@@ -75,7 +82,6 @@ class PatientController extends BaseController
                 if ($this->isAjax()) {
                     $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
                 }
-                // Redirect with errors
                 $_SESSION['flash_error'] = implode(', ', $errors);
                 $this->redirect('/patients');
             }
@@ -83,7 +89,6 @@ class PatientController extends BaseController
             if ($this->isAjax()) {
                 $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
             }
-            // Redirect if not POST request
             $this->redirect('/patients');
         }
     }
@@ -91,27 +96,24 @@ class PatientController extends BaseController
     public function edit()
     {
         $id = $this->getGetData('id');
-
         if ($id) {
-            // Get patient by ID
             if ($this->patientModel->getById($id)) {
                 if ($this->isAjax()) {
                     $this->jsonResponse([
                         'success' => true,
-                        'data' => [
-                            'id' => $this->patientModel->id,
-                            'name' => $this->patientModel->name,
-                            'email' => $this->patientModel->email,
-                            'phone' => $this->patientModel->phone,
-                            'address' => $this->patientModel->address,
+                        'data'    => [
+                            'id'            => $this->patientModel->id,
+                            'name'          => $this->patientModel->name,
+                            'email'         => $this->patientModel->email,
+                            'phone'         => $this->patientModel->phone,
+                            'address'       => $this->patientModel->address,
                             'date_of_birth' => $this->patientModel->date_of_birth,
-                            'gender' => $this->patientModel->gender
+                            'gender'        => $this->patientModel->gender
                         ]
                     ]);
                 }
-                // Render edit patient form
                 $this->render('patients/edit', [
-                    'title' => 'Edit Patient',
+                    'title'   => 'Edit Patient',
                     'patient' => $this->patientModel
                 ]);
             } else {
@@ -132,37 +134,51 @@ class PatientController extends BaseController
     public function update()
     {
         if ($this->isPostRequest()) {
-            $id = $this->getPostData('id');
+            // Task 2 — CSRF guard
+            $this->validateCsrf();
 
+            $id = $this->getPostData('id');
             if ($id) {
-                // Validate required fields
                 $requiredFields = ['name', 'email', 'phone', 'date_of_birth', 'gender'];
                 $errors = $this->validateRequiredFields($requiredFields);
 
                 if (empty($errors)) {
-                    // Set patient properties
-                    $this->patientModel->id = $id;
-                    $this->patientModel->name = $this->getPostData('name');
-                    $this->patientModel->email = $this->getPostData('email');
-                    $this->patientModel->phone = $this->getPostData('phone');
-                    $this->patientModel->address = $this->getPostData('address', '');
+                    $this->patientModel->id           = $id;
+                    $this->patientModel->name         = $this->getPostData('name');
+                    $this->patientModel->email        = $this->getPostData('email');
+                    $this->patientModel->phone        = $this->getPostData('phone');
+                    $this->patientModel->address      = $this->getPostData('address', '');
                     $this->patientModel->date_of_birth = $this->getPostData('date_of_birth');
-                    $this->patientModel->gender = $this->getPostData('gender');
+                    $this->patientModel->gender       = $this->getPostData('gender');
 
-                    // Update patient
-                    if ($this->patientModel->update()) {
+                    // Task 3 — duplicate email guard
+                    try {
+                        $updated = $this->patientModel->update();
+                    } catch (PDOException $e) {
+                        if ($e->getCode() === '23000') {
+                            if ($this->isAjax()) {
+                                $this->jsonResponse(['success' => false, 'message' => 'A record with this email already exists.'], 422);
+                            }
+                            $_SESSION['flash_error'] = 'A record with this email already exists.';
+                            $this->redirect('/patients');
+                            return;
+                        }
+                        throw $e;
+                    }
+
+                    if ($updated) {
                         if ($this->isAjax()) {
                             $this->jsonResponse([
                                 'success' => true,
                                 'message' => 'Patient updated successfully',
-                                'data' => [
-                                    'id' => $this->patientModel->id,
-                                    'name' => $this->patientModel->name,
-                                    'email' => $this->patientModel->email,
-                                    'phone' => $this->patientModel->phone,
-                                    'address' => $this->patientModel->address,
+                                'data'    => [
+                                    'id'            => $this->patientModel->id,
+                                    'name'          => $this->patientModel->name,
+                                    'email'         => $this->patientModel->email,
+                                    'phone'         => $this->patientModel->phone,
+                                    'address'       => $this->patientModel->address,
                                     'date_of_birth' => $this->patientModel->date_of_birth,
-                                    'gender' => $this->patientModel->gender
+                                    'gender'        => $this->patientModel->gender
                                 ]
                             ]);
                         }
@@ -172,14 +188,15 @@ class PatientController extends BaseController
                         if ($this->isAjax()) {
                             $this->jsonResponse(['success' => false, 'message' => 'Failed to update patient'], 500);
                         }
-                        $this->redirect('/patients/edit?id=' . $id . '&error=Failed to update patient');
+                        $_SESSION['flash_error'] = 'Failed to update patient';
+                        $this->redirect('/patients');
                     }
                 } else {
                     if ($this->isAjax()) {
                         $this->jsonResponse(['success' => false, 'message' => implode(', ', $errors)], 422);
                     }
-                    // Redirect with errors
-                    $this->redirect('/patients/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
+                    $_SESSION['flash_error'] = implode(', ', $errors);
+                    $this->redirect('/patients');
                 }
             } else {
                 if ($this->isAjax()) {
@@ -199,18 +216,15 @@ class PatientController extends BaseController
     public function delete()
     {
         if ($this->isPostRequest()) {
-            $id = $this->getPostData('id');
+            // Task 2 — CSRF guard
+            $this->validateCsrf();
 
+            $id = $this->getPostData('id');
             if ($id) {
                 $this->patientModel->id = $id;
-
-                // Delete patient
                 if ($this->patientModel->delete()) {
                     if ($this->isAjax()) {
-                        $this->jsonResponse([
-                            'success' => true,
-                            'message' => 'Patient deleted successfully'
-                        ]);
+                        $this->jsonResponse(['success' => true, 'message' => 'Patient deleted successfully']);
                     }
                     $_SESSION['flash_success'] = 'Patient deleted successfully';
                     $this->redirect('/patients');

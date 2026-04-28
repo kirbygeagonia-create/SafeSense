@@ -18,16 +18,14 @@ class AppointmentController extends BaseController
         $stmt = $this->appointmentModel->getAll();
         $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $patientModel = new Patient($db);
-        $doctorModel = new Doctor($db);
+        $doctorModel  = new Doctor($db);
         $this->render('appointments/index', [
             'appointments' => $appointments,
-            'allPatients' => $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
-            'allDoctors' => $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
-            'title' => 'Appointments'
+            'allPatients'  => $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
+            'allDoctors'   => $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
+            'title'        => 'Appointments'
         ]);
     }
-
-
 
     public function store()
     {
@@ -37,6 +35,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $errors = $this->validateRequiredFields(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time']);
         if (!empty($errors)) {
             if ($this->isAjax())
@@ -45,25 +45,35 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
-        $this->appointmentModel->patient_id = $this->getPostData('patient_id');
-        $this->appointmentModel->doctor_id = $this->getPostData('doctor_id');
+        $this->appointmentModel->patient_id       = $this->getPostData('patient_id');
+        $this->appointmentModel->doctor_id        = $this->getPostData('doctor_id');
         $this->appointmentModel->appointment_date = $this->getPostData('appointment_date');
         $this->appointmentModel->appointment_time = $this->getPostData('appointment_time');
-        $this->appointmentModel->status = $this->getPostData('status', 'pending');
-        $this->appointmentModel->reason = $this->getPostData('reason', '');
+        $this->appointmentModel->status           = $this->getPostData('status', 'pending');
+        $this->appointmentModel->reason           = $this->getPostData('reason', '');
+
+        // Task 4 — conflict detection
+        if ($this->appointmentModel->hasConflict()) {
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'This doctor is already booked at the selected date and time.'], 409);
+            $_SESSION['flash_error'] = 'This doctor is already booked at the selected date and time.';
+            $this->redirect('/appointments');
+            return;
+        }
+
         if ($this->appointmentModel->create()) {
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
                     'message' => 'Appointment scheduled successfully',
-                    'data' => [
-                        'id' => $this->appointmentModel->id,
-                        'patient_id' => $this->appointmentModel->patient_id,
-                        'doctor_id' => $this->appointmentModel->doctor_id,
+                    'data'    => [
+                        'id'               => $this->appointmentModel->id,
+                        'patient_id'       => $this->appointmentModel->patient_id,
+                        'doctor_id'        => $this->appointmentModel->doctor_id,
                         'appointment_date' => $this->appointmentModel->appointment_date,
                         'appointment_time' => $this->appointmentModel->appointment_time,
-                        'status' => $this->appointmentModel->status,
-                        'reason' => $this->appointmentModel->reason
+                        'status'           => $this->appointmentModel->status,
+                        'reason'           => $this->appointmentModel->reason
                     ]
                 ]);
             }
@@ -90,28 +100,28 @@ class AppointmentController extends BaseController
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
-                    'data' => [
-                        'id' => $this->appointmentModel->id,
-                        'patient_id' => $this->appointmentModel->patient_id,
-                        'doctor_id' => $this->appointmentModel->doctor_id,
+                    'data'    => [
+                        'id'               => $this->appointmentModel->id,
+                        'patient_id'       => $this->appointmentModel->patient_id,
+                        'doctor_id'        => $this->appointmentModel->doctor_id,
                         'appointment_date' => $this->appointmentModel->appointment_date,
                         'appointment_time' => $this->appointmentModel->appointment_time,
-                        'status' => $this->appointmentModel->status,
-                        'reason' => $this->appointmentModel->reason
+                        'status'           => $this->appointmentModel->status,
+                        'reason'           => $this->appointmentModel->reason
                     ]
                 ]);
             }
             $database = new Database();
             $db = $database->getConnection();
             $patientModel = new Patient($db);
-            $doctorModel = new Doctor($db);
+            $doctorModel  = new Doctor($db);
             $patients = $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
-            $doctors = $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
+            $doctors  = $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC);
             $this->render('appointments/edit', [
-                'title' => 'Edit Appointment',
+                'title'       => 'Edit Appointment',
                 'appointment' => $this->appointmentModel,
-                'patients' => $patients,
-                'doctors' => $doctors
+                'patients'    => $patients,
+                'doctors'     => $doctors
             ]);
         } else {
             if ($this->isAjax())
@@ -129,6 +139,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $id = $this->getPostData('id');
         if (!$id) {
             if ($this->isAjax())
@@ -144,26 +156,36 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
             return;
         }
-        $this->appointmentModel->id = $id;
-        $this->appointmentModel->patient_id = $this->getPostData('patient_id');
-        $this->appointmentModel->doctor_id = $this->getPostData('doctor_id');
+        $this->appointmentModel->id               = $id;
+        $this->appointmentModel->patient_id       = $this->getPostData('patient_id');
+        $this->appointmentModel->doctor_id        = $this->getPostData('doctor_id');
         $this->appointmentModel->appointment_date = $this->getPostData('appointment_date');
         $this->appointmentModel->appointment_time = $this->getPostData('appointment_time');
-        $this->appointmentModel->status = $this->getPostData('status');
-        $this->appointmentModel->reason = $this->getPostData('reason');
+        $this->appointmentModel->status           = $this->getPostData('status');
+        $this->appointmentModel->reason           = $this->getPostData('reason');
+
+        // Task 4 — conflict detection (exclude current record)
+        if ($this->appointmentModel->hasConflict((int) $id)) {
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'This doctor is already booked at the selected date and time.'], 409);
+            $_SESSION['flash_error'] = 'This doctor is already booked at the selected date and time.';
+            $this->redirect('/appointments');
+            return;
+        }
+
         if ($this->appointmentModel->update()) {
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
                     'message' => 'Appointment updated successfully',
-                    'data' => [
-                        'id' => $this->appointmentModel->id,
-                        'patient_id' => $this->appointmentModel->patient_id,
-                        'doctor_id' => $this->appointmentModel->doctor_id,
+                    'data'    => [
+                        'id'               => $this->appointmentModel->id,
+                        'patient_id'       => $this->appointmentModel->patient_id,
+                        'doctor_id'        => $this->appointmentModel->doctor_id,
                         'appointment_date' => $this->appointmentModel->appointment_date,
                         'appointment_time' => $this->appointmentModel->appointment_time,
-                        'status' => $this->appointmentModel->status,
-                        'reason' => $this->appointmentModel->reason
+                        'status'           => $this->appointmentModel->status,
+                        'reason'           => $this->appointmentModel->reason
                     ]
                 ]);
             }
@@ -184,6 +206,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $id = $this->getPostData('id');
         if (!$id) {
             if ($this->isAjax())

@@ -83,9 +83,10 @@
 </div>
 
 <?php else: ?>
+<!-- Task 7 — empty state: "No alerts received yet." -->
 <div class="text-center py-5">
   <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
-  <h4>No Alerts</h4>
+  <h4>No Alerts Received Yet</h4>
   <p class="text-muted">No SafeSense alerts recorded. The system is monitoring.</p>
 </div>
 <?php endif; ?>
@@ -104,7 +105,7 @@
     <p class="text-muted mb-2">Required JSON fields:</p>
     <code class="d-block bg-dark text-info p-3 rounded" style="font-size:.8rem;">
       {<br>
-      &nbsp;&nbsp;"api_key": "SAFESENSE_SECRET_KEY",<br>
+      &nbsp;&nbsp;"api_key": "your-key-from-.env",<br>
       &nbsp;&nbsp;"device_id": "SAFESENSE-001",<br>
       &nbsp;&nbsp;"station_type": "hospital",<br>
       &nbsp;&nbsp;"alert_level": "critical",<br>
@@ -154,4 +155,3 @@ document.getElementById('markAllReadBtn').addEventListener('click',()=>{
   });
 });
 </script>
-

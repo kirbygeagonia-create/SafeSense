@@ -18,8 +18,6 @@ class DoctorController extends BaseController
         $this->render('doctors/index', ['doctors' => $doctors, 'title' => 'Doctors']);
     }
 
-
-
     public function store()
     {
         if (!$this->isPostRequest()) {
@@ -28,6 +26,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $errors = $this->validateRequiredFields(['name', 'email', 'phone', 'specialization', 'license_number']);
         if (!empty($errors)) {
             if ($this->isAjax())
@@ -36,21 +36,36 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
-        $this->doctorModel->name = $this->getPostData('name');
-        $this->doctorModel->email = $this->getPostData('email');
-        $this->doctorModel->phone = $this->getPostData('phone');
+        $this->doctorModel->name           = $this->getPostData('name');
+        $this->doctorModel->email          = $this->getPostData('email');
+        $this->doctorModel->phone          = $this->getPostData('phone');
         $this->doctorModel->specialization = $this->getPostData('specialization');
         $this->doctorModel->license_number = $this->getPostData('license_number');
-        if ($this->doctorModel->create()) {
+
+        // Task 3 — duplicate email guard
+        try {
+            $created = $this->doctorModel->create();
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                if ($this->isAjax())
+                    $this->jsonResponse(['success' => false, 'message' => 'A record with this email already exists.'], 422);
+                $_SESSION['flash_error'] = 'A record with this email already exists.';
+                $this->redirect('/doctors');
+                return;
+            }
+            throw $e;
+        }
+
+        if ($created) {
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
                     'message' => 'Doctor created successfully',
-                    'data' => [
-                        'id' => $this->doctorModel->id,
-                        'name' => $this->doctorModel->name,
-                        'email' => $this->doctorModel->email,
-                        'phone' => $this->doctorModel->phone,
+                    'data'    => [
+                        'id'             => $this->doctorModel->id,
+                        'name'           => $this->doctorModel->name,
+                        'email'          => $this->doctorModel->email,
+                        'phone'          => $this->doctorModel->phone,
                         'specialization' => $this->doctorModel->specialization,
                         'license_number' => $this->doctorModel->license_number
                     ]
@@ -79,11 +94,11 @@ class DoctorController extends BaseController
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
-                    'data' => [
-                        'id' => $this->doctorModel->id,
-                        'name' => $this->doctorModel->name,
-                        'email' => $this->doctorModel->email,
-                        'phone' => $this->doctorModel->phone,
+                    'data'    => [
+                        'id'             => $this->doctorModel->id,
+                        'name'           => $this->doctorModel->name,
+                        'email'          => $this->doctorModel->email,
+                        'phone'          => $this->doctorModel->phone,
                         'specialization' => $this->doctorModel->specialization,
                         'license_number' => $this->doctorModel->license_number
                     ]
@@ -106,6 +121,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $id = $this->getPostData('id');
         if (!$id) {
             if ($this->isAjax())
@@ -121,22 +138,37 @@ class DoctorController extends BaseController
             $this->redirect('/doctors/edit?id=' . $id . '&error=' . urlencode(implode(', ', $errors)));
             return;
         }
-        $this->doctorModel->id = $id;
-        $this->doctorModel->name = $this->getPostData('name');
-        $this->doctorModel->email = $this->getPostData('email');
-        $this->doctorModel->phone = $this->getPostData('phone');
+        $this->doctorModel->id             = $id;
+        $this->doctorModel->name           = $this->getPostData('name');
+        $this->doctorModel->email          = $this->getPostData('email');
+        $this->doctorModel->phone          = $this->getPostData('phone');
         $this->doctorModel->specialization = $this->getPostData('specialization');
         $this->doctorModel->license_number = $this->getPostData('license_number');
-        if ($this->doctorModel->update()) {
+
+        // Task 3 — duplicate email guard
+        try {
+            $updated = $this->doctorModel->update();
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                if ($this->isAjax())
+                    $this->jsonResponse(['success' => false, 'message' => 'A record with this email already exists.'], 422);
+                $_SESSION['flash_error'] = 'A record with this email already exists.';
+                $this->redirect('/doctors');
+                return;
+            }
+            throw $e;
+        }
+
+        if ($updated) {
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
                     'message' => 'Doctor updated successfully',
-                    'data' => [
-                        'id' => $this->doctorModel->id,
-                        'name' => $this->doctorModel->name,
-                        'email' => $this->doctorModel->email,
-                        'phone' => $this->doctorModel->phone,
+                    'data'    => [
+                        'id'             => $this->doctorModel->id,
+                        'name'           => $this->doctorModel->name,
+                        'email'          => $this->doctorModel->email,
+                        'phone'          => $this->doctorModel->phone,
                         'specialization' => $this->doctorModel->specialization,
                         'license_number' => $this->doctorModel->license_number
                     ]
@@ -159,6 +191,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->validateCsrf(); // Task 2
+
         $id = $this->getPostData('id');
         if (!$id) {
             if ($this->isAjax())

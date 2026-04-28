@@ -68,4 +68,26 @@ class BaseController {
         
         return $errors;
     }
+
+    // ── Task 2: CSRF Protection ────────────────────────────────────────────
+    protected function generateCsrfToken(): string {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+
+    protected function validateCsrf(): void {
+        // Accept token from AJAX header or fallback hidden form field
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN']
+               ?? $_POST['_csrf_token']
+               ?? '';
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'CSRF token validation failed.'], 403);
+            }
+            $_SESSION['flash_error'] = 'Invalid request. Please try again.';
+            $this->redirect('/dashboard');
+        }
+    }
 }

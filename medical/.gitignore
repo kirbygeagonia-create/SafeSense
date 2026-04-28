@@ -1,0 +1,13 @@
+# Task 1 — never commit secrets
+.env
+
+# Composer
+vendor/
+composer.phar
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
