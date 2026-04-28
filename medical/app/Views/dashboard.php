@@ -63,6 +63,62 @@
   </div>
 </div>
 
+<!-- Billing summary row -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm border-primary border-start border-4">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Total Invoiced</div>
+          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_invoiced'] ?? 0), 2); ?></h2>
+        </div>
+        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-file-invoice-dollar text-primary fa-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm border-success border-start border-4">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Total Collected</div>
+          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_collected'] ?? 0), 2); ?></h2>
+        </div>
+        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-hand-holding-usd text-success fa-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm border-warning border-start border-4">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Total Unpaid</div>
+          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_unpaid'] ?? 0), 2); ?></h2>
+        </div>
+        <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-exclamation-triangle text-warning fa-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card h-100 border-0 shadow-sm border-info border-start border-4">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small mb-1">Invoice Count</div>
+          <h2 class="mb-0 fw-bold"><?php echo (int)($billingSummary['invoice_count'] ?? 0); ?></h2>
+        </div>
+        <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
+          <i class="fas fa-receipt text-info fa-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main content row -->
 <div class="row g-4">
 

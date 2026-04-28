@@ -326,6 +326,152 @@
   }
 
   /* ──────────────────────────────────────────────
+     USERS MODULE
+  ────────────────────────────────────────────── */
+  initCrudModule({
+    tableId:   'usersTable',
+    modalId:   'userModal',
+    formId:    'userForm',
+    addBtnId:  'addUserBtn',
+    addTitle:  'Add User',
+    editTitle: 'Edit User',
+    storeUrl:  window.BASE_URL + '/users/store',
+    updateUrl: window.BASE_URL + '/users/update',
+    deleteUrl: window.BASE_URL + '/users/delete',
+    editUrl:   window.BASE_URL + '/users/edit',
+    fields: ['id', 'name', 'email', 'role', 'password'],
+    onOpenEdit: (form, d) => {
+      const pw = form.querySelector('[name="password"]');
+      if (pw) { pw.value = ''; pw.placeholder = 'Leave blank to keep current'; }
+      const hint = document.getElementById('pwHint');
+      if (hint) hint.textContent = 'Leave blank to keep existing password';
+    },
+    buildRow: (d) => [
+      d.id,
+      esc(d.name),
+      esc(d.email),
+      esc(d.role ? d.role.charAt(0).toUpperCase() + d.role.slice(1) : ''),
+      esc(d.created_at ? d.created_at.slice(0, 10) : ''),
+      `<button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="${d.id}"><i class="fas fa-edit"></i></button>` +
+      `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${d.id}"><i class="fas fa-trash"></i></button>`
+    ]
+  });
+
+  /* ──────────────────────────────────────────────
+     EMR MODULE
+  ────────────────────────────────────────────── */
+  const emrEl = document.getElementById('emrTable');
+  if (emrEl) {
+    function buildOptions(arr, labelKey) {
+      return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
+    }
+    const emrPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
+    const emrDoctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
+
+    function populateEmrDropdowns(form) {
+      const ps = form.querySelector('[name="patient_id"]');
+      const ds = form.querySelector('[name="doctor_id"]');
+      if (ps && !ps.dataset.filled) { ps.innerHTML = '<option value="">Select Patient</option>' + emrPatientOpts; ps.dataset.filled = '1'; }
+      if (ds && !ds.dataset.filled) { ds.innerHTML = '<option value="">Select Doctor</option>'  + emrDoctorOpts;  ds.dataset.filled = '1'; }
+    }
+
+    function findName(arr, id) {
+      if (!arr) return '—';
+      const item = arr.find(i => String(i.id) === String(id));
+      return item ? item.name : '—';
+    }
+
+    initCrudModule({
+      tableId:   'emrTable',
+      modalId:   'emrModal',
+      formId:    'emrForm',
+      addBtnId:  'addEmrBtn',
+      addTitle:  'Add Medical Record',
+      editTitle: 'Edit Medical Record',
+      storeUrl:  window.BASE_URL + '/emr/store',
+      updateUrl: window.BASE_URL + '/emr/update',
+      deleteUrl: window.BASE_URL + '/emr/delete',
+      editUrl:   window.BASE_URL + '/emr/edit',
+      fields: ['id','patient_id','doctor_id','visit_date','chief_complaint','diagnosis','prescription','notes','blood_pressure','temperature','heart_rate','weight'],
+      onOpenAdd:  (form)    => populateEmrDropdowns(form),
+      onOpenEdit: (form, d) => {
+        populateEmrDropdowns(form);
+        form.querySelector('[name="patient_id"]').value = d.patient_id;
+        form.querySelector('[name="doctor_id"]').value  = d.doctor_id;
+      },
+      buildRow: (d) => [
+        d.id,
+        esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
+        esc(findName(typeof DOCTORS  !== 'undefined' ? DOCTORS  : [], d.doctor_id)),
+        esc(d.visit_date),
+        esc(d.diagnosis),
+        esc(d.blood_pressure || '—'),
+        `<button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="${d.id}"><i class="fas fa-edit"></i></button>` +
+        `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${d.id}"><i class="fas fa-trash"></i></button>`
+      ]
+    });
+  }
+
+  /* ──────────────────────────────────────────────
+     BILLING MODULE
+  ────────────────────────────────────────────── */
+  const billEl = document.getElementById('billingTable');
+  if (billEl) {
+    function buildOptions(arr, labelKey) {
+      return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
+    }
+    const billPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
+
+    function populateBillDropdown(form) {
+      const ps = form.querySelector('[name="patient_id"]');
+      if (ps && !ps.dataset.filled) { ps.innerHTML = '<option value="">Select Patient</option>' + billPatientOpts; ps.dataset.filled = '1'; }
+    }
+
+    function findName(arr, id) {
+      if (!arr) return '—';
+      const item = arr.find(i => String(i.id) === String(id));
+      return item ? item.name : '—';
+    }
+
+    function paymentStatusBadge(s) {
+      const colors = { unpaid: 'danger', paid: 'success', partial: 'warning', cancelled: 'secondary' };
+      return `<span class="badge bg-${colors[s] || 'secondary'}">${s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Unpaid'}</span>`;
+    }
+
+    initCrudModule({
+      tableId:   'billingTable',
+      modalId:   'billingModal',
+      formId:    'billingForm',
+      addBtnId:  'addBillingBtn',
+      addTitle:  'Create Invoice',
+      editTitle: 'Edit Invoice',
+      storeUrl:  window.BASE_URL + '/billing/store',
+      updateUrl: window.BASE_URL + '/billing/update',
+      deleteUrl: window.BASE_URL + '/billing/delete',
+      editUrl:   window.BASE_URL + '/billing/edit',
+      fields: ['id','patient_id','appointment_id','service_description','amount','discount','tax','payment_status','payment_method','payment_date','notes'],
+      onOpenAdd:  (form)    => populateBillDropdown(form),
+      onOpenEdit: (form, d) => {
+        populateBillDropdown(form);
+        form.querySelector('[name="patient_id"]').value = d.patient_id;
+      },
+      buildRow: (d) => [
+        esc(d.invoice_number),
+        esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
+        Number(d.amount || 0).toFixed(2),
+        Number(d.discount || 0).toFixed(2),
+        Number(d.tax || 0).toFixed(2),
+        Number(d.total_amount || 0).toFixed(2),
+        paymentStatusBadge(d.payment_status),
+        esc(d.payment_method || '—'),
+        esc(d.payment_date || '—'),
+        `<button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="${d.id}"><i class="fas fa-edit"></i></button>` +
+        `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${d.id}"><i class="fas fa-trash"></i></button>`
+      ]
+    });
+  }
+
+  /* ──────────────────────────────────────────────
      Utility
   ────────────────────────────────────────────── */
   function esc(s) {

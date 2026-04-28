@@ -42,6 +42,13 @@
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/patients'); ?>"><i class="fas fa-user-injured me-1"></i>Patients</a></li>
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/doctors'); ?>"><i class="fas fa-user-md me-1"></i>Doctors</a></li>
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/appointments'); ?>"><i class="fas fa-calendar-check me-1"></i>Appointments</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/emr'); ?>"><i class="fas fa-file-medical me-1"></i>Medical Records</a></li>
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin','staff'])): ?>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/billing'); ?>"><i class="fas fa-file-invoice-dollar me-1"></i>Billing</a></li>
+        <?php endif; ?>
+        <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+        <li class="nav-item"><a class="nav-link" href="<?php echo url('/users'); ?>"><i class="fas fa-users-cog me-1"></i>Users</a></li>
+        <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-1" href="<?php echo url('/alerts'); ?>">
             <span class="ss-live-dot"></span>SafeSense Alerts

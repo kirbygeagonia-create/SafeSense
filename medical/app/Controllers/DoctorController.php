@@ -13,9 +13,14 @@ class DoctorController extends BaseController
 
     public function index()
     {
+        $this->requireLogin();
         $stmt = $this->doctorModel->getAll();
         $doctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $this->render('doctors/index', ['doctors' => $doctors, 'title' => 'Doctors']);
+        $this->render('doctors/index', [
+            'doctors'     => $doctors,
+            'title'       => 'Doctors',
+            'currentRole' => $this->currentRole()
+        ]);
     }
 
     public function store()
@@ -26,6 +31,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole('admin');
         $this->validateCsrf(); // Task 2
 
         $errors = $this->validateRequiredFields(['name', 'email', 'phone', 'specialization', 'license_number']);
@@ -83,6 +90,7 @@ class DoctorController extends BaseController
 
     public function edit()
     {
+        $this->requireLogin();
         $id = $this->getGetData('id');
         if (!$id) {
             if ($this->isAjax())
@@ -121,6 +129,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole('admin');
         $this->validateCsrf(); // Task 2
 
         $id = $this->getPostData('id');
@@ -191,6 +201,8 @@ class DoctorController extends BaseController
             $this->redirect('/doctors');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole('admin');
         $this->validateCsrf(); // Task 2
 
         $id = $this->getPostData('id');

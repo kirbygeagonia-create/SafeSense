@@ -1,8 +1,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-user-injured me-2"></i>Patients</h1>
+    <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
     <button type="button" class="btn btn-primary" id="addPatientBtn">
         <i class="fas fa-plus me-1"></i>Add Patient
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive">
@@ -29,8 +31,12 @@
                     <td><?php echo htmlspecialchars($p['date_of_birth']); ?></td>
                     <td><?php echo htmlspecialchars($p['gender']); ?></td>
                     <td>
+                        <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $p['id']; ?>"><i class="fas fa-edit"></i></button>
+                        <?php endif; ?>
+                        <?php if (($currentRole ?? '') === 'admin'): ?>
                         <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<?php echo $p['id']; ?>"><i class="fas fa-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

@@ -90,4 +90,35 @@ class BaseController {
             $this->redirect('/dashboard');
         }
     }
+
+    protected function requireLogin(): void {
+        if (empty($_SESSION['user'])) {
+            if ($this->isAjax()) {
+                $this->jsonResponse(['success' => false, 'message' => 'Unauthorized. Please log in.'], 401);
+            }
+            $_SESSION['flash_error'] = 'Please log in to access that page.';
+            $this->redirect('/login');
+            exit;
+        }
+    }
+
+    protected function requireRole($allowedRoles): void {
+        $role = $_SESSION['user']['role'] ?? '';
+        $allowed = (array) $allowedRoles;
+        if (!in_array($role, $allowed, true)) {
+            if ($this->isAjax()) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'You do not have permission to perform this action.'
+                ], 403);
+            }
+            $_SESSION['flash_error'] = 'Access denied. You do not have permission for that action.';
+            $this->redirect('/dashboard');
+            exit;
+        }
+    }
+
+    protected function currentRole(): string {
+        return $_SESSION['user']['role'] ?? 'staff';
+    }
 }

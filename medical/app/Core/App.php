@@ -36,6 +36,27 @@ class App
         $this->router->post('/logout', 'AuthController@logout');
         $this->router->get('/dashboard', 'AuthController@dashboard');
 
+        // User Management (admin only)
+        $this->router->get('/users',          'UserController@index');
+        $this->router->post('/users/store',   'UserController@store');
+        $this->router->get('/users/edit',     'UserController@edit');
+        $this->router->post('/users/update',  'UserController@update');
+        $this->router->post('/users/delete',  'UserController@delete');
+
+        // EMR Module
+        $this->router->get('/emr',          'EmrController@index');
+        $this->router->post('/emr/store',   'EmrController@store');
+        $this->router->get('/emr/edit',     'EmrController@edit');
+        $this->router->post('/emr/update',  'EmrController@update');
+        $this->router->post('/emr/delete',  'EmrController@delete');
+
+        // Billing Module
+        $this->router->get('/billing',          'BillingController@index');
+        $this->router->post('/billing/store',   'BillingController@store');
+        $this->router->get('/billing/edit',     'BillingController@edit');
+        $this->router->post('/billing/update',  'BillingController@update');
+        $this->router->post('/billing/delete',  'BillingController@delete');
+
         // SafeSense IoT Routes
         $this->router->post('/api/alert', 'AlertController@receive');
         $this->router->get('/alerts', 'AlertController@index');

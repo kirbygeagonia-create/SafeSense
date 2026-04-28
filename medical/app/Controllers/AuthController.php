@@ -57,7 +57,7 @@ class AuthController extends BaseController {
 
     public function logout() {
         session_destroy();
-        session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         $_SESSION['flash_success'] = 'You have been logged out successfully.';
         $this->redirect('/login');
     }
@@ -75,6 +75,22 @@ class AuthController extends BaseController {
         $patientCount     = $this->safeCount($db, 'patients');
         $doctorCount      = $this->safeCount($db, 'doctors');
         $appointmentCount = $this->safeCount($db, 'appointments');
+
+        // Billing summary for dashboard widget
+        $billingSummary = [
+            'total_invoiced'  => 0,
+            'total_collected' => 0,
+            'total_unpaid'    => 0,
+            'invoice_count'   => 0
+        ];
+        try {
+            $billingModelFile = APP_PATH . '/Models/Billing.php';
+            if (file_exists($billingModelFile)) {
+                require_once $billingModelFile;
+                $billingModel = new Billing($db);
+                $billingSummary = $billingModel->getSummary();
+            }
+        } catch (Exception $e) {}
 
         // Recent alerts for dashboard widget
         $recentAlerts        = [];
@@ -111,6 +127,7 @@ class AuthController extends BaseController {
             'patientCount'         => $patientCount,
             'doctorCount'          => $doctorCount,
             'appointmentCount'     => $appointmentCount,
+            'billingSummary'       => $billingSummary,
             'unreadAlerts'         => $unreadAlerts,
             'recentAlerts'         => $recentAlerts,
             'upcomingAppointments' => $upcomingAppointments,

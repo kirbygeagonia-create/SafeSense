@@ -1,8 +1,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-user-md me-2"></i>Doctors</h1>
+    <?php if (($currentRole ?? '') === 'admin'): ?>
     <button type="button" class="btn btn-primary" id="addDoctorBtn">
         <i class="fas fa-plus me-1"></i>Add Doctor
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive">
@@ -29,8 +31,10 @@
                     <td><?php echo htmlspecialchars($d['specialization']); ?></td>
                     <td><?php echo htmlspecialchars($d['license_number']); ?></td>
                     <td>
+                        <?php if (($currentRole ?? '') === 'admin'): ?>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $d['id']; ?>"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<?php echo $d['id']; ?>"><i class="fas fa-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

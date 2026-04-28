@@ -13,6 +13,7 @@ class AppointmentController extends BaseController
 
     public function index()
     {
+        $this->requireLogin();
         $database = new Database();
         $db = $database->getConnection();
         $stmt = $this->appointmentModel->getAll();
@@ -23,7 +24,8 @@ class AppointmentController extends BaseController
             'appointments' => $appointments,
             'allPatients'  => $patientModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
             'allDoctors'   => $doctorModel->getAll()->fetchAll(PDO::FETCH_ASSOC),
-            'title'        => 'Appointments'
+            'title'        => 'Appointments',
+            'currentRole'  => $this->currentRole()
         ]);
     }
 
@@ -35,6 +37,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole(['admin','doctor','nurse']);
         $this->validateCsrf(); // Task 2
 
         $errors = $this->validateRequiredFields(['patient_id', 'doctor_id', 'appointment_date', 'appointment_time']);
@@ -89,6 +93,7 @@ class AppointmentController extends BaseController
 
     public function edit()
     {
+        $this->requireLogin();
         $id = $this->getGetData('id');
         if (!$id) {
             if ($this->isAjax())
@@ -139,6 +144,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole(['admin','doctor','nurse']);
         $this->validateCsrf(); // Task 2
 
         $id = $this->getPostData('id');
@@ -206,6 +213,8 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
             return;
         }
+        $this->requireLogin(); // authentication first
+        $this->requireRole(['admin','doctor']);
         $this->validateCsrf(); // Task 2
 
         $id = $this->getPostData('id');

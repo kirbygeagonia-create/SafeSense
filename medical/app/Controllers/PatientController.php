@@ -13,17 +13,21 @@ class PatientController extends BaseController
 
     public function index()
     {
+        $this->requireLogin();
         $stmt = $this->patientModel->getAll();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $this->render('patients/index', [
-            'patients' => $patients,
-            'title'    => 'Patients'
+            'patients'    => $patients,
+            'title'       => 'Patients',
+            'currentRole' => $this->currentRole()
         ]);
     }
 
     public function store()
     {
         if ($this->isPostRequest()) {
+            $this->requireLogin();     // authentication first
+            $this->requireRole(['admin','doctor','nurse']);
             // Task 2 — CSRF guard
             $this->validateCsrf();
 
@@ -95,6 +99,7 @@ class PatientController extends BaseController
 
     public function edit()
     {
+        $this->requireLogin();
         $id = $this->getGetData('id');
         if ($id) {
             if ($this->patientModel->getById($id)) {
@@ -134,6 +139,8 @@ class PatientController extends BaseController
     public function update()
     {
         if ($this->isPostRequest()) {
+            $this->requireLogin();     // authentication first
+            $this->requireRole(['admin','doctor','nurse']);
             // Task 2 — CSRF guard
             $this->validateCsrf();
 
@@ -216,6 +223,8 @@ class PatientController extends BaseController
     public function delete()
     {
         if ($this->isPostRequest()) {
+            $this->requireLogin();     // authentication first
+            $this->requireRole('admin');
             // Task 2 — CSRF guard
             $this->validateCsrf();
 

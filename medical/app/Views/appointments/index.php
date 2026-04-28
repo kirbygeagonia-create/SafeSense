@@ -10,9 +10,11 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1><i class="fas fa-calendar-check me-2"></i>Appointments</h1>
+    <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
     <button type="button" class="btn btn-primary" id="addAppointmentBtn">
         <i class="fas fa-plus me-1"></i>Schedule Appointment
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive">
@@ -49,8 +51,12 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
                     </td>
                     <td><?php echo htmlspecialchars($a['reason']); ?></td>
                     <td>
+                        <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $a['id']; ?>"><i class="fas fa-edit"></i></button>
+                        <?php endif; ?>
+                        <?php if (in_array($currentRole ?? '', ['admin','doctor'])): ?>
                         <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<?php echo $a['id']; ?>"><i class="fas fa-trash"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
