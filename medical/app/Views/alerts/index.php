@@ -139,19 +139,24 @@ document.querySelectorAll('.dismiss-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
     const id=this.dataset.id;
     const card=this.closest('.alert-card-wrap');
-    fetch(window.BASE_URL+'/api/alerts/dismiss',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+id})
-    .then(()=>{ card.style.opacity='0'; card.style.transition='.3s'; setTimeout(()=>card.remove(),300); });
+    ajaxPost(window.BASE_URL + '/api/alerts/dismiss', { id: id })
+      .then(() => {
+        card.style.opacity = '0';
+        card.style.transition = '.3s';
+        setTimeout(() => card.remove(), 300);
+      });
   });
 });
 
 document.getElementById('markAllReadBtn').addEventListener('click',()=>{
-  fetch(window.BASE_URL+'/api/alerts/read',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id=all'})
-  .then(r=>r.json()).then(d=>{
-    document.querySelectorAll('.ss-alert-card-unread').forEach(el=>el.classList.remove('ss-alert-card-unread'));
-    document.querySelectorAll('.badge.bg-primary').forEach(el=>el.remove());
-    const ub=document.getElementById('unreadBadge');
-    if(ub) ub.textContent='0 Unread';
-    if(typeof setBadge==='function') setBadge(0);
-  });
+  ajaxPost(window.BASE_URL + '/api/alerts/read', { id: 'all' })
+    .then(d => {
+      document.querySelectorAll('.ss-alert-card-unread')
+        .forEach(el => el.classList.remove('ss-alert-card-unread'));
+      document.querySelectorAll('.badge.bg-primary').forEach(el => el.remove());
+      const ub = document.getElementById('unreadBadge');
+      if (ub) ub.textContent = '0 Unread';
+      if (typeof setBadge === 'function') setBadge(0);
+    });
 });
 </script>

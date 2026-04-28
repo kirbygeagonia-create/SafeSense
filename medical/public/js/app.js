@@ -33,6 +33,9 @@
       body: new URLSearchParams(formData).toString()
     });
   }
+  
+  window.ajax = ajax;
+  window.ajaxPost = ajaxPost;
 
   /* ──────────────────────────────────────────────
      Fix DataTables "Show N entries" select overlap

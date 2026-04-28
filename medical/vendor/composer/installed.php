@@ -3,7 +3,7 @@
         'name' => 'safesense/hospital-management-system',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '3fbd3f805132b825f527a225d0bb9db7180a53f2',
+        'reference' => 'ad00aca230dfbba46721d13d2fc224845330ee11',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -130,7 +130,7 @@
         'safesense/hospital-management-system' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '3fbd3f805132b825f527a225d0bb9db7180a53f2',
+            'reference' => 'ad00aca230dfbba46721d13d2fc224845330ee11',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

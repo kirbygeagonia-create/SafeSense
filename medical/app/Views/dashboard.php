@@ -178,8 +178,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function(){
-  fetch(window.BASE_URL + '/api/dashboard/stats')
-    .then(r => r.json())
+  ajax(window.BASE_URL + '/api/dashboard/stats')
     .then(data => {
       if (!data.success) return;
 
