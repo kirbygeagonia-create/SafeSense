@@ -95,6 +95,7 @@
       order: [[0, 'desc']],
       language: { search: '', searchPlaceholder: 'Search...' },
       columnDefs: [{ orderable: false, targets: -1 }],
+      dom: '<"dt-header"lf>rtip',
       initComplete: function() {
         const lengthSel = tableEl.closest('.dataTables_wrapper')
           ?.querySelector('.dataTables_length select');

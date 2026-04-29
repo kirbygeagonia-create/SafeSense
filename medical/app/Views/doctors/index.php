@@ -10,7 +10,7 @@
     <?php endif; ?>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive mb-3">
     <table id="doctorsTable" class="table table-striped table-hover" style="width:100%">
         <thead class="table-dark">
             <tr>

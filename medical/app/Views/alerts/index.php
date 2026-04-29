@@ -4,8 +4,8 @@
     <small class="text-muted">Real-time IoT flood &amp; hazard alerts from the field</small>
   </div>
   <div class="d-flex gap-2">
-    <span class="badge bg-danger fs-6" id="unreadBadge">
-      <?php echo $unreadCount; ?> Unread
+    <span class="ss-unread-counter" id="unreadBadge">
+      <i class="fas fa-bell"></i><?php echo $unreadCount; ?> Unread
     </span>
     <button class="btn btn-outline-secondary btn-sm" id="markAllReadBtn">
       <i class="fas fa-check-double me-1"></i>Mark All Read
@@ -19,13 +19,13 @@
     <i class="fas fa-layer-group"></i>All
   </button>
   <button class="ss-filter-pill" data-filter="critical">
-    <i class="fas fa-circle text-danger"></i>Critical
+    <i class="fas fa-skull-crossbones"></i>Critical
   </button>
   <button class="ss-filter-pill" data-filter="danger">
-    <i class="fas fa-circle" style="color:#c2410c"></i>Danger
+    <i class="fas fa-exclamation-triangle"></i>Danger
   </button>
   <button class="ss-filter-pill" data-filter="warning">
-    <i class="fas fa-circle" style="color:#b45309"></i>Warning
+    <i class="fas fa-cloud-rain"></i>Warning
   </button>
 </div>
 
@@ -34,15 +34,15 @@
   <?php foreach ($alerts as $a): ?>
     <?php
       $level  = $a['alert_level'];
-      $border = $level === 'critical' ? 'border-danger' : ($level === 'danger' ? 'border-warning' : 'border-info');
+      $levelClass = 'ss-level-' . $level;
       $badge  = $level === 'critical' ? 'danger' : ($level === 'danger' ? 'warning' : 'info');
       $icon   = $level === 'critical' ? 'fa-skull-crossbones' : ($level === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
-      $label  = $level === 'critical' ? '<i class=\"fas fa-exclamation-circle\"></i> CRITICAL' : ($level === 'danger' ? '<i class=\"fas fa-exclamation-triangle\"></i> DANGER' : '<i class=\"fas fa-info-circle\"></i> WARNING');
+      $label  = $level === 'critical' ? '<i class="fas fa-exclamation-circle"></i> CRITICAL' : ($level === 'danger' ? '<i class="fas fa-exclamation-triangle"></i> DANGER' : '<i class="fas fa-info-circle"></i> WARNING');
       $dt     = new DateTime($a['created_at']);
       $unreadClass = (!$a['is_read']) ? 'ss-alert-card-unread' : '';
     ?>
     <div class="col-12 alert-card-wrap" data-level="<?php echo $level; ?>">
-      <div class="card ss-alert-card <?php echo $border; ?> <?php echo $unreadClass; ?> border-start border-4">
+      <div class="card ss-alert-card <?php echo $levelClass; ?> <?php echo $unreadClass; ?> border-start border-4">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div class="d-flex gap-3 align-items-start flex-grow-1">
@@ -133,8 +133,7 @@
 <script>
 document.querySelectorAll('[data-filter]').forEach(btn=>{
   btn.addEventListener('click',function(){
-    document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active','btn-dark'));
-    document.querySelectorAll('[data-filter]').forEach(b=>{ if(!b.classList.contains('active')) b.classList.add('btn-outline-'+b.dataset.color); });
+    document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active'));
     this.classList.add('active');
     const f=this.dataset.filter;
     document.querySelectorAll('.alert-card-wrap').forEach(el=>{

@@ -138,7 +138,7 @@
             $lvl    = $a['alert_level'];
             $badge  = $lvl==='critical'?'danger':($lvl==='danger'?'warning':'info');
             $icon   = $lvl==='critical'?'fa-skull-crossbones':($lvl==='danger'?'fa-exclamation-triangle':'fa-cloud-rain');
-            $label  = $lvl==='critical'?'🔴 CRITICAL':($lvl==='danger'?'🟠 DANGER':'🟡 WARNING');
+            $label  = $lvl==='critical'?'<i class="fas fa-exclamation-circle"></i> CRITICAL':($lvl==='danger'?'<i class="fas fa-exclamation-triangle"></i> DANGER':'<i class="fas fa-info-circle"></i> WARNING');
             $dt     = new DateTime($a['created_at']);
           ?>
           <div class="d-flex align-items-start gap-3 p-3 border-bottom <?php echo !$a['is_read']?'bg-light':''; ?>">

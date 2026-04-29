@@ -9,7 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="<?php echo ASSETS_URL; ?>/css/style.css" rel="stylesheet">
+    <link href="<?php echo ASSETS_URL; ?>/css/style.css?v=2" rel="stylesheet">
     <script>window.BASE_URL = '<?php echo url(); ?>';</script>
     <?php
     // Task 2 — generate CSRF token once per session and expose it as a meta tag
@@ -37,7 +37,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto">
+      <ul class="navbar-nav me-auto gap-1">
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/dashboard'); ?>"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/patients'); ?>"><i class="fas fa-user-injured me-1"></i>Patients</a></li>
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/doctors'); ?>"><i class="fas fa-user-md me-1"></i>Doctors</a></li>
@@ -51,25 +51,29 @@
         <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-1" href="<?php echo url('/alerts'); ?>">
-            <span class="ss-live-dot"></span>SafeSense Alerts
+            <i class="fas fa-bell me-1"></i>SafeSense Alerts<span class="ss-live-dot ms-1"></span>
           </a>
         </li>
       </ul>
-      <ul class="navbar-nav align-items-center gap-3">
+
+      <!-- Vertical separator -->
+      <div class="d-none d-lg-block mx-2" style="width:1px;height:28px;background:rgba(255,255,255,0.15);"></div>
+
+      <ul class="navbar-nav align-items-center gap-2">
         <?php if (isset($_SESSION['user'])): ?>
-        <li class="nav-item text-light me-3 d-flex align-items-center">
-          <i class="fas fa-user-circle me-1"></i>
-          <span><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
-          <small class="ms-1 text-white-50">(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'])); ?>)</small>
+        <li class="nav-item">
+          <div class="nav-user-pill">
+            <i class="fas fa-user-circle"></i>
+            <span><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
+            <small>(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'])); ?>)</small>
+          </div>
         </li>
         <?php endif; ?>
-        <li class="nav-item">
+        <li class="nav-item d-flex align-items-center gap-2">
           <div class="ss-bell-wrap" id="ssBellBtn" title="Open SafeSense Alerts">
             <i class="fas fa-bell"></i>
             <span class="ss-badge" id="ssBadge" data-count="0">0</span>
           </div>
-        </li>
-        <li class="nav-item">
           <form method="post" action="<?php echo url('/logout'); ?>" class="d-inline">
             <input type="hidden" name="_csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit" class="btn btn-outline-light btn-sm">
@@ -340,6 +344,6 @@
   setInterval(poll, POLL_MS);
 })();
 </script>
-<script src="<?php echo ASSETS_URL; ?>/js/app.js"></script>
+<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=2"></script>
 </body>
 </html>

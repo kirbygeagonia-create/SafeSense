@@ -20,7 +20,7 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
     <?php endif; ?>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive mb-3">
     <table id="emrTable" class="table table-striped table-hover" style="width:100%">
         <thead class="table-dark">
             <tr>
