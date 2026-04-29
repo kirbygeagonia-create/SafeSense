@@ -42,7 +42,7 @@ class AuthController extends BaseController {
                 $user = ['email' => $row['email'], 'role' => $row['role'], 'name' => $row['name'] ?? 'Staff'];
             }
         } catch (Exception $e) {
-            // Users table may not exist yet — fall through to demo login
+            // Users table may not exist yet — login will fail gracefully
         }
 
                 if ($user) {

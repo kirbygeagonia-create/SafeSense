@@ -8,6 +8,7 @@
 class DashboardController extends BaseController {
 
     public function stats() {
+        $this->requireLogin();
         $database = new Database();
         $db = $database->getConnection();
 

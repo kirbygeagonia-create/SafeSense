@@ -143,6 +143,7 @@ class AlertController extends BaseController {
 
     public function markRead() {
         $this->requireAuth();
+        $this->validateCsrf();
 
         $database   = new Database();
         $db         = $database->getConnection();
@@ -165,6 +166,7 @@ class AlertController extends BaseController {
 
     public function dismiss() {
         $this->requireAuth();
+        $this->validateCsrf();
 
         $database   = new Database();
         $db         = $database->getConnection();
