@@ -1,6 +1,9 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-user-md me-2"></i>Doctors</h1>
-    <?php if (($currentRole ?? '') === 'admin'): ?>
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-user-md me-2"></i>Doctors</h1>
+        <div class="page-subtitle">Medical staff and practitioner directory</div>
+    </div>
+    <?php if (in_array($currentRole ?? '', ['admin'])): ?>
     <button type="button" class="btn btn-primary" id="addDoctorBtn">
         <i class="fas fa-plus me-1"></i>Add Doctor
     </button>

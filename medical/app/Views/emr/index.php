@@ -7,8 +7,12 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
   const DOCTORS  = <?php echo json_encode($allDoctors); ?>;
 </script>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-file-medical me-2"></i>Medical Records</h1>
+<!-- Task 1 — Page header -->
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-file-medical me-2"></i>Medical Records</h1>
+        <div class="page-subtitle">Patient diagnosis and treatment history</div>
+    </div>
     <?php if (in_array($currentRole ?? '', ['admin','doctor'])): ?>
     <button type="button" class="btn btn-primary" id="addEmrBtn">
         <i class="fas fa-plus me-1"></i>Add Record

@@ -5,8 +5,12 @@ $allPatients = isset($allPatients) ? $allPatients : [];
   const PATIENTS = <?php echo json_encode($allPatients); ?>;
 </script>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-file-invoice-dollar me-2"></i>Billing</h1>
+<!-- Task 1 — Page header -->
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-file-invoice-dollar me-2"></i>Billing</h1>
+        <div class="page-subtitle">Invoice management and payment tracking</div>
+    </div>
     <?php if (in_array($currentRole ?? '', ['admin','staff'])): ?>
     <button type="button" class="btn btn-primary" id="addBillingBtn">
         <i class="fas fa-plus me-1"></i>Create Invoice

@@ -8,8 +8,12 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
   const DOCTORS  = <?php echo json_encode($allDoctors); ?>;
 </script>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-calendar-check me-2"></i>Appointments</h1>
+<!-- Task 1 — Page header -->
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-calendar-check me-2"></i>Appointments</h1>
+        <div class="page-subtitle">Schedule and manage patient appointments</div>
+    </div>
     <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
     <button type="button" class="btn btn-primary" id="addAppointmentBtn">
         <i class="fas fa-plus me-1"></i>Schedule Appointment

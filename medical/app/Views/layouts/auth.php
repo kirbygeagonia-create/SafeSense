@@ -91,16 +91,6 @@
             transition: opacity 0.2s;
         }
         .btn-login:hover { opacity: 0.9; color: #fff; }
-        .demo-box {
-            background: rgba(59,130,246,0.08);
-            border: 1px solid rgba(59,130,246,0.2);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin-top: 1.5rem;
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
-        .demo-box strong { color: #93c5fd; }
         .alert-danger-custom {
             background: rgba(220,38,38,0.15);
             border: 1px solid rgba(220,38,38,0.3);
@@ -139,10 +129,6 @@
     <?php endif; ?>
 
     <?php echo $content ?? ''; ?>
-
-    <div class="demo-box text-center">
-        <i class="fas fa-key me-1"></i> Demo: <strong>admin@example.com</strong> / <strong>password</strong>
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

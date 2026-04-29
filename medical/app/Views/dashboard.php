@@ -7,55 +7,56 @@
 
 <!-- Stats row -->
 <div class="row g-3 mb-4">
+  <!-- Task 2 — Convert first 4 stat cards -->
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Total Patients</div>
-          <h2 class="mb-0 fw-bold"><?php echo $patientCount ?? 0; ?></h2>
+          <div class="stat-label">Total Patients</div>
+          <div class="stat-value"><?php echo $patientCount ?? 0; ?></div>
         </div>
-        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-user-injured text-primary fa-lg"></i>
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="fas fa-user-injured"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Total Doctors</div>
-          <h2 class="mb-0 fw-bold"><?php echo $doctorCount ?? 0; ?></h2>
+          <div class="stat-label">Total Doctors</div>
+          <div class="stat-value"><?php echo $doctorCount ?? 0; ?></div>
         </div>
-        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-user-md text-success fa-lg"></i>
+        <div class="stat-icon bg-success bg-opacity-10 text-success">
+          <i class="fas fa-user-md"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Appointments</div>
-          <h2 class="mb-0 fw-bold"><?php echo $appointmentCount ?? 0; ?></h2>
+          <div class="stat-label">Appointments</div>
+          <div class="stat-value"><?php echo $appointmentCount ?? 0; ?></div>
         </div>
-        <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-calendar-check text-info fa-lg"></i>
+        <div class="stat-icon bg-info bg-opacity-10 text-info">
+          <i class="fas fa-calendar-check"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
     <a href="<?php echo url('/alerts'); ?>" class="text-decoration-none">
-      <div class="card h-100 border-0 shadow-sm border-danger border-start border-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
+      <div class="stat-card border-danger border-start border-4">
+        <div class="d-flex justify-content-between align-items-start">
           <div>
-            <div class="text-muted small mb-1">Unread Alerts</div>
-            <h2 class="mb-0 fw-bold text-danger"><?php echo $unreadAlerts ?? 0; ?></h2>
+            <div class="stat-label">Unread Alerts</div>
+            <div class="stat-value text-danger"><?php echo $unreadAlerts ?? 0; ?></div>
           </div>
-          <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-            <i class="fas fa-satellite-dish text-danger fa-lg"></i>
+          <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+            <i class="fas fa-satellite-dish"></i>
           </div>
         </div>
       </div>
@@ -66,53 +67,53 @@
 <!-- Billing summary row -->
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm border-primary border-start border-4">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card border-primary border-start border-4">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Total Invoiced</div>
-          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_invoiced'] ?? 0), 2); ?></h2>
+          <div class="stat-label">Total Invoiced</div>
+          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_invoiced'] ?? 0), 2); ?></div>
         </div>
-        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-file-invoice-dollar text-primary fa-lg"></i>
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="fas fa-file-invoice-dollar"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm border-success border-start border-4">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card border-success border-start border-4">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Total Collected</div>
-          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_collected'] ?? 0), 2); ?></h2>
+          <div class="stat-label">Total Collected</div>
+          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_collected'] ?? 0), 2); ?></div>
         </div>
-        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-hand-holding-usd text-success fa-lg"></i>
+        <div class="stat-icon bg-success bg-opacity-10 text-success">
+          <i class="fas fa-hand-holding-usd"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm border-warning border-start border-4">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card border-warning border-start border-4">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Total Unpaid</div>
-          <h2 class="mb-0 fw-bold"><?php echo number_format((float)($billingSummary['total_unpaid'] ?? 0), 2); ?></h2>
+          <div class="stat-label">Total Unpaid</div>
+          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_unpaid'] ?? 0), 2); ?></div>
         </div>
-        <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-exclamation-triangle text-warning fa-lg"></i>
+        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="fas fa-exclamation-triangle"></i>
         </div>
       </div>
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm border-info border-start border-4">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="stat-card border-info border-start border-4">
+      <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="text-muted small mb-1">Invoice Count</div>
-          <h2 class="mb-0 fw-bold"><?php echo (int)($billingSummary['invoice_count'] ?? 0); ?></h2>
+          <div class="stat-label">Invoice Count</div>
+          <div class="stat-value"><?php echo (int)($billingSummary['invoice_count'] ?? 0); ?></div>
         </div>
-        <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:52px;height:52px;">
-          <i class="fas fa-receipt text-info fa-lg"></i>
+        <div class="stat-icon bg-info bg-opacity-10 text-info">
+          <i class="fas fa-receipt"></i>
         </div>
       </div>
     </div>

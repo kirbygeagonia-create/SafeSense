@@ -15,10 +15,18 @@
 
 <!-- Level filter pills -->
 <div class="mb-3 d-flex gap-2 flex-wrap">
-  <button class="btn btn-sm btn-dark active" data-filter="all">All</button>
-  <button class="btn btn-sm btn-outline-danger" data-filter="critical">🔴 Critical</button>
-  <button class="btn btn-sm btn-outline-warning" data-filter="danger">🟠 Danger</button>
-  <button class="btn btn-sm btn-outline-info" data-filter="warning">🟡 Warning</button>
+  <button class="ss-filter-pill active" data-filter="all">
+    <i class="fas fa-layer-group"></i>All
+  </button>
+  <button class="ss-filter-pill" data-filter="critical">
+    <i class="fas fa-circle text-danger"></i>Critical
+  </button>
+  <button class="ss-filter-pill" data-filter="danger">
+    <i class="fas fa-circle" style="color:#c2410c"></i>Danger
+  </button>
+  <button class="ss-filter-pill" data-filter="warning">
+    <i class="fas fa-circle" style="color:#b45309"></i>Warning
+  </button>
 </div>
 
 <?php if (!empty($alerts)): ?>
@@ -29,7 +37,7 @@
       $border = $level === 'critical' ? 'border-danger' : ($level === 'danger' ? 'border-warning' : 'border-info');
       $badge  = $level === 'critical' ? 'danger' : ($level === 'danger' ? 'warning' : 'info');
       $icon   = $level === 'critical' ? 'fa-skull-crossbones' : ($level === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
-      $label  = $level === 'critical' ? '🔴 CRITICAL' : ($level === 'danger' ? '🟠 DANGER' : '🟡 WARNING');
+      $label  = $level === 'critical' ? '<i class=\"fas fa-exclamation-circle\"></i> CRITICAL' : ($level === 'danger' ? '<i class=\"fas fa-exclamation-triangle\"></i> DANGER' : '<i class=\"fas fa-info-circle\"></i> WARNING');
       $dt     = new DateTime($a['created_at']);
       $unreadClass = (!$a['is_read']) ? 'ss-alert-card-unread' : '';
     ?>
@@ -44,9 +52,9 @@
               <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-1">
                   <span class="badge bg-<?php echo $badge; ?>"><?php echo $label; ?></span>
-                  <span class="badge bg-secondary"><?php echo strtoupper(htmlspecialchars($a['event_type'])); ?></span>
+                  <span class="badge bg-secondary"><i class="fas fa-tag"></i> <?php echo strtoupper(htmlspecialchars($a['event_type'])); ?></span>
                   <?php if (!$a['is_read']): ?>
-                    <span class="badge bg-primary">NEW</span>
+                    <span class="badge bg-primary"><i class="fas fa-bell"></i> NEW</span>
                   <?php endif; ?>
                 </div>
                 <p class="mb-2 fw-semibold"><?php echo htmlspecialchars($a['message']); ?></p>

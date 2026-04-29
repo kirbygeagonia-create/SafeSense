@@ -1,5 +1,9 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-users-cog me-2"></i>Users</h1>
+<!-- Task 1 — Page header -->
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-users-cog me-2"></i>Users</h1>
+        <div class="page-subtitle">System user management and permissions</div>
+    </div>
     <button type="button" class="btn btn-primary" id="addUserBtn">
         <i class="fas fa-plus me-1"></i>Add User
     </button>
