@@ -1,0 +1,17 @@
+# Environment & secrets
+medical/.env
+.env
+
+# Session / cookie test artifacts
+medical/cookie*.txt
+
+# Composer dependencies
+medical/vendor/
+medical/composer.phar
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

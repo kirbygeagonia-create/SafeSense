@@ -32,7 +32,7 @@ class AuthController extends BaseController {
         $database = new Database();
         $db       = $database->getConnection();
 
-        // Try users table first; fall back to demo credentials
+        // Query users table
         $user = null;
         try {
             $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
@@ -45,12 +45,7 @@ class AuthController extends BaseController {
             // Users table may not exist yet — fall through to demo login
         }
 
-        // Demo fallback (remove in production)
-        if (!$user && $email === 'admin@example.com' && $password === 'password') {
-            $user = ['email' => $email, 'role' => 'admin', 'name' => 'Admin'];
-        }
-
-        if ($user) {
+                if ($user) {
             $_SESSION['user']       = $user;
             $_SESSION['login_time'] = time();
             $_SESSION['flash_success'] = 'Welcome back, ' . $user['name'] . '!';

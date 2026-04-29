@@ -43,7 +43,7 @@ class Router {
             }
 
             // Check route pattern (use (.+) for catch-all wildcards)
-            $pattern = '#^' . preg_replace('/\{(\w+)\}/', '(?P<$1>.+)', preg_quote($route['route'], '#')) . '$#';
+            $pattern = '#^' . preg_replace('/\{[^}]+\}/', '(.+)', preg_quote($route['route'], '#')) . '$#';
             
             if (preg_match($pattern, $requestUri, $matches)) {
                 // Extract parameters

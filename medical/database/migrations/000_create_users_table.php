@@ -15,11 +15,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
-    // Insert default admin (password: 'password')
-    $hash = password_hash('password', PASSWORD_BCRYPT);
-    $stmt = $pdo->prepare("INSERT IGNORE INTO users (name,email,password,role) VALUES (?,?,?,?)");
-    $stmt->execute(['Admin', 'admin@example.com', $hash, 'admin']);
-    echo "Users table created. Default: admin@example.com / password\n";
+    echo "Users table created. Add your first admin user via the /users route after setup.\n";
 } catch(PDOException $e) { echo "Error: ".$e->getMessage()."\n"; }
 ?>
 

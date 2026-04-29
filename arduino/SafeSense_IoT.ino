@@ -304,7 +304,7 @@ bool sendAlert(String level, String eventType, String rainStatus,
   // HTTP POST
   WiFiClient client;
   HTTPClient http;
-  String url = String(SERVER_HOST) + String(API_ENDPOINT);
+  String url = String(SERVER_HOST) + String(SERVER_PATH) + String(API_ENDPOINT);
 
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
