@@ -126,7 +126,11 @@ class BillingController extends BaseController {
                 ]
             ]);
         }
-        $this->redirect('/billing');
+
+        $this->render('billing/edit', [
+            'title'  => 'Edit Invoice',
+            'record' => $this->billingModel,
+        ]);
     }
 
     public function update() {

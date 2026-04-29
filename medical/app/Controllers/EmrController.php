@@ -134,7 +134,11 @@ class EmrController extends BaseController {
                 ]
             ]);
         }
-        $this->redirect('/emr');
+
+        $this->render('emr/edit', [
+            'title'  => 'Edit Medical Record',
+            'record' => $this->emrModel,
+        ]);
     }
 
     public function update() {
