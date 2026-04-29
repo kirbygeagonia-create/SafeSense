@@ -5,10 +5,10 @@ define('APP_NAME', 'SafeSense Hospital Management');
 define('APP_URL',  'http://localhost/SafeSense/medical');
 
 // ── Database ─────────────────────────────────
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'hospital_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'hospital_db');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 
 // ── Paths ────────────────────────────────────
 define('APP_PATH',    __DIR__ . '/../');
@@ -43,7 +43,6 @@ define('GENDER_OTHER',  'other');
 define('ROLE_ADMIN',   'admin');
 define('ROLE_DOCTOR',  'doctor');
 define('ROLE_NURSE',   'nurse');
-define('ROLE_PATIENT', 'patient');
 
 // ── Pagination ───────────────────────────────
 define('ITEMS_PER_PAGE', 10);

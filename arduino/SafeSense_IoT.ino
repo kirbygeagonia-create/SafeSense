@@ -45,7 +45,8 @@ const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 // Your Hospital Management System server
 // Use your server's local IP or domain (no trailing slash)
 const char* SERVER_HOST   = "http://192.168.1.100";  // e.g. your PC's IP on the LAN
-const char* API_ENDPOINT  = "/api/alert";
+const char* SERVER_PATH   = "/SafeSense/medical";    // Base path if installed in subdirectory
+const char* API_ENDPOINT  = "/api/alert";            // Full path will be SERVER_HOST + SERVER_PATH + API_ENDPOINT
 // Task 1 — API key now lives in medical/.env as SAFESENSE_API_KEY; mirror it here
 const char* API_KEY       = "SAFESENSE_SECRET_KEY";   // must match .env SAFESENSE_API_KEY
 

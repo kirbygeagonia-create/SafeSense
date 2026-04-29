@@ -11,3 +11,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Session/cookie test files (Security)
+cookie*.txt

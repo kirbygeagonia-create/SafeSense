@@ -31,7 +31,7 @@ require_once __DIR__ . '/../app/Core/App.php';
 require_once __DIR__ . '/../app/Controllers/BaseController.php';
 
 // Models (preload commonly used ones)
-$models = ['Patient', 'Doctor', 'Appointment', 'Alert'];
+$models = ['Patient', 'Doctor', 'Appointment', 'Alert', 'Emr', 'Billing'];
 foreach ($models as $model) {
     $file = __DIR__ . '/../app/Models/' . $model . '.php';
     if (file_exists($file)) require_once $file;

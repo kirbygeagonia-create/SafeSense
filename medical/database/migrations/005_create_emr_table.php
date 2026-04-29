@@ -21,9 +21,11 @@ try {
         weight          DECIMAL(5,2) DEFAULT NULL,
         created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+        FOREIGN KEY (doctor_id)  REFERENCES doctors(id)  ON DELETE RESTRICT,
         INDEX idx_patient_id (patient_id),
         INDEX idx_visit_date (visit_date)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
     echo "EMR records table created successfully.\n";
 } catch(PDOException $e) { echo "Error: ".$e->getMessage()."\n"; }

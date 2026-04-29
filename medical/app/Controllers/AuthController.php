@@ -8,11 +8,17 @@ class AuthController extends BaseController {
             $this->redirect('/dashboard');
             return;
         }
-        $this->render('auth/login', ['title' => 'Login']);
+        $this->render('auth/login', ['title' => 'Login', 'csrf_token' => $this->generateCsrfToken()]);
     }
 
     public function authenticate() {
-        if (!$this->isPostRequest()) { $this->redirect('/login'); return; }
+        if (!$this->isPostRequest()) { 
+            $this->redirect('/login'); 
+            return; 
+        }
+
+        // Validate CSRF token
+        $this->validateCsrf();
 
         $email    = trim($this->getPostData('email') ?? '');
         $password = $this->getPostData('password') ?? '';
@@ -56,9 +62,12 @@ class AuthController extends BaseController {
     }
 
     public function logout() {
+        // Save flash message before destroying session
+        $flashMessage = 'You have been logged out successfully.';
+        $_SESSION = [];
         session_destroy();
         if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-        $_SESSION['flash_success'] = 'You have been logged out successfully.';
+        $_SESSION['flash_success'] = $flashMessage;
         $this->redirect('/login');
     }
 
