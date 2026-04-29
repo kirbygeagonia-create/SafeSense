@@ -71,6 +71,7 @@
         </li>
         <li class="nav-item">
           <form method="post" action="<?php echo url('/logout'); ?>" class="d-inline">
+            <input type="hidden" name="_csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit" class="btn btn-outline-light btn-sm">
               <i class="fas fa-sign-out-alt me-1"></i>Logout
             </button>

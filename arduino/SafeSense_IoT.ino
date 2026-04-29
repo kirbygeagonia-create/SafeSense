@@ -48,7 +48,7 @@ const char* SERVER_HOST   = "http://192.168.1.100";  // e.g. your PC's IP on the
 const char* SERVER_PATH   = "/SafeSense/medical";    // Base path if installed in subdirectory
 const char* API_ENDPOINT  = "/api/alert";            // Full path will be SERVER_HOST + SERVER_PATH + API_ENDPOINT
 // Task 1 — API key now lives in medical/.env as SAFESENSE_API_KEY; mirror it here
-const char* API_KEY       = "SAFESENSE_SECRET_KEY";   // must match .env SAFESENSE_API_KEY
+const char* API_KEY       = "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8";   // must match .env SAFESENSE_API_KEY
 
 // Device identity
 const char* DEVICE_ID     = "SAFESENSE-001";

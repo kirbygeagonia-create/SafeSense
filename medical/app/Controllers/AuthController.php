@@ -57,12 +57,21 @@ class AuthController extends BaseController {
     }
 
     public function logout() {
-        // Save flash message before destroying session
-        $flashMessage = 'You have been logged out successfully.';
+        $this->validateCsrf();
+
         $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $p = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+        }
+
         session_destroy();
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-        $_SESSION['flash_success'] = $flashMessage;
+        session_start();
+        session_regenerate_id(true);
+
+        $_SESSION['flash_success'] = 'You have been logged out successfully.';
         $this->redirect('/login');
     }
 

@@ -188,7 +188,6 @@ class AlertController extends BaseController {
     }
 
     protected function requireAuth() {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         if (!isset($_SESSION['user'])) {
             // For page requests (non-AJAX), redirect to login instead of JSON error
             $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
