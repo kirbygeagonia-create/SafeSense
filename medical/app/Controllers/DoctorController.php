@@ -14,6 +14,7 @@ class DoctorController extends BaseController
     public function index()
     {
         $this->requireLogin();
+        $this->requireRole(['admin', 'doctor', 'nurse']);
         $stmt = $this->doctorModel->getAll();
         $doctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $this->render('doctors/index', [

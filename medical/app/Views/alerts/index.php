@@ -153,15 +153,16 @@ function safeAjaxPost(url, data) {
   });
 }
 
-document.querySelectorAll('.dismiss-btn').forEach(btn=>{
-  btn.addEventListener('click',function(){
-    const id=this.dataset.id;
-    const card=this.closest('.alert-card-wrap');
-    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id: id })
+document.querySelectorAll('.dismiss-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const id   = this.dataset.id;
+    const card = this.closest('.alert-card-wrap');
+    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id })
       .then(() => {
-        card.style.opacity = '0';
-        card.style.transition = '.3s';
-        setTimeout(() => card.remove(), 300);
+        card.style.transition = 'opacity .25s ease, transform .25s ease';
+        card.style.opacity    = '0';
+        card.style.transform  = 'translateX(24px)';
+        setTimeout(() => card.remove(), 260);
       });
   });
 });

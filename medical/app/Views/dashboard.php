@@ -186,8 +186,8 @@
             $sc = $status==='confirmed'?'success':($status==='pending'?'warning':'secondary');
           ?>
           <div class="d-flex align-items-center gap-3 p-3 border-bottom">
-            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;">
-              <i class="fas fa-user text-primary fa-sm"></i>
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+              <i class="fas fa-user"></i>
             </div>
             <div class="flex-grow-1">
               <div class="fw-medium small"><?php echo htmlspecialchars($appt['patient_name']??'—'); ?></div>

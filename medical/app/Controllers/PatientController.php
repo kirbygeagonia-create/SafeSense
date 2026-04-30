@@ -14,6 +14,7 @@ class PatientController extends BaseController
     public function index()
     {
         $this->requireLogin();
+        $this->requireRole(['admin', 'doctor', 'nurse']);
         $stmt = $this->patientModel->getAll();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $this->render('patients/index', [
