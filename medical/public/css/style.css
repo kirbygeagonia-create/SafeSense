@@ -60,6 +60,13 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 .stat-card > .d-flex { gap: 0.75rem; }
 .stat-icon { width: 44px; height: 44px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
 
+/* ── Stat card accent borders — left only, SafeSense palette ── */
+.ss-stat-left-primary { border-left: 4px solid var(--ss-primary) !important; }
+.ss-stat-left-success { border-left: 4px solid #16a34a !important; }
+.ss-stat-left-info    { border-left: 4px solid #0891b2 !important; }
+.ss-stat-left-warning { border-left: 4px solid #d97706 !important; }
+.ss-stat-left-danger  { border-left: 4px solid var(--ss-critical) !important; }
+
 /* Tables */
 .table { background: var(--ss-surface); margin: 0; font-size: .875rem; }
 .table thead th { border-top: none; border-bottom: 2px solid var(--ss-border); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ss-text-2); padding: .85rem 1rem; white-space: nowrap; background: var(--ss-surface-2); }
@@ -383,7 +390,6 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
   margin-bottom: .45rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

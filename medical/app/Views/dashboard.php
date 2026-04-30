@@ -9,7 +9,7 @@
 <div class="row g-3 mb-4">
   <!-- Task 2 — Convert first 4 stat cards -->
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-primary border-start border-4">
+    <div class="stat-card ss-stat-left-primary">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Patients</div>
@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-success border-start border-4">
+    <div class="stat-card ss-stat-left-success">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Doctors</div>
@@ -35,7 +35,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-info border-start border-4">
+    <div class="stat-card ss-stat-left-info">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Appointments</div>
@@ -49,7 +49,7 @@
   </div>
   <div class="col-sm-6 col-lg-3">
     <a href="<?php echo url('/alerts'); ?>" class="text-decoration-none">
-      <div class="stat-card border-danger border-start border-4">
+      <div class="stat-card ss-stat-left-danger">
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="stat-label">Unread Alerts</div>
@@ -67,7 +67,7 @@
 <!-- Billing summary row -->
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-primary border-start border-4">
+    <div class="stat-card ss-stat-left-primary">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Invoiced</div>
@@ -80,7 +80,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-success border-start border-4">
+    <div class="stat-card ss-stat-left-success">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Collected</div>
@@ -93,7 +93,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-warning border-start border-4">
+    <div class="stat-card ss-stat-left-warning">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Unpaid</div>
@@ -106,7 +106,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card border-info border-start border-4">
+    <div class="stat-card ss-stat-left-info">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Invoice Count</div>
