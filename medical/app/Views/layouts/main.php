@@ -51,7 +51,7 @@
         <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-1" href="<?php echo url('/alerts'); ?>">
-            <i class="fas fa-bell me-1"></i>SafeSense Alerts<span class="ss-live-dot ms-1"></span>
+            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ms-1"></span>
           </a>
         </li>
       </ul>
@@ -260,7 +260,7 @@
     t.innerHTML=`
       <div class="ss-toast-icon"><i class="fas ${ICONS[a.alert_level]||'fa-bell'}"></i></div>
       <div class="ss-toast-body">
-        <div class="ss-toast-title">${LABELS[a.alert_level]} — ${esc(a.event_type.toUpperCase())}</div>
+        <div class="ss-toast-title">${LABELS[a.alert_level]} — ${esc((a.event_type || 'ALERT').toUpperCase())}</div>
         <div class="ss-toast-sub">${esc(a.location_name)} · ${time}</div>
       </div>
       <button class="ss-toast-x"><i class="fas fa-times"></i></button>`;
@@ -275,7 +275,6 @@
   function showModal(a){ if(modalOpen){ modalQueue.push(a); return; } openModal(a); }
 
   function openModal(a){
-    console.log('Opening modal with alert:', a);
     modalOpen=true;
     const dt=new Date(a.created_at || Date.now());
     const time=dt.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -319,11 +318,9 @@
     fetch(window.BASE_URL + '/api/alerts/poll?since='+encodeURIComponent(lastPoll))
     .then(r=>r.json())
     .then(data=>{
-      console.log('Poll data:', data);
       lastPoll=data.server_time||lastPoll;
       setBadge(data.unread_count||0);
       (data.alerts||[]).forEach(a=>{
-        console.log('Processing alert:', a);
         addDrawerItem(a);
         showToast(a);
         // Note: Modal only opens when user clicks a notification, not automatically

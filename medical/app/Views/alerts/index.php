@@ -161,7 +161,7 @@ document.getElementById('markAllReadBtn').addEventListener('click', () => {
     .then(d => {
       document.querySelectorAll('.ss-alert-card-unread')
         .forEach(el => el.classList.remove('ss-alert-card-unread'));
-      document.querySelectorAll('.badge.bg-primary').forEach(el => el.remove());
+      document.querySelectorAll('.ss-new-badge').forEach(el => el.remove());
 
       const ub = document.getElementById('unreadBadge');
       if (ub) {

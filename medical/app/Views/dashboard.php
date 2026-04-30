@@ -9,7 +9,7 @@
 <div class="row g-3 mb-4">
   <!-- Task 2 — Convert first 4 stat cards -->
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card">
+    <div class="stat-card border-primary border-start border-4">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Patients</div>
@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card">
+    <div class="stat-card border-success border-start border-4">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Doctors</div>
@@ -35,7 +35,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-lg-3">
-    <div class="stat-card">
+    <div class="stat-card border-info border-start border-4">
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Appointments</div>
