@@ -1,7 +1,7 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
   <div>
-    <h1 class="mb-0">Dashboard</h1>
-    <small class="text-muted">Welcome back — <?php echo date('l, F j, Y'); ?></small>
+    <h1><i class="fas fa-tachometer-alt text-primary"></i>Dashboard</h1>
+    <div class="page-subtitle">Welcome back — <?php echo date('l, F j, Y'); ?></div>
   </div>
 </div>
 
@@ -71,7 +71,7 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Invoiced</div>
-          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_invoiced'] ?? 0), 2); ?></div>
+          <div class="stat-value">₱<?php echo number_format((float)($billingSummary['total_invoiced'] ?? 0), 2); ?></div>
         </div>
         <div class="stat-icon bg-primary bg-opacity-10 text-primary">
           <i class="fas fa-file-invoice-dollar"></i>
@@ -84,7 +84,7 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Collected</div>
-          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_collected'] ?? 0), 2); ?></div>
+          <div class="stat-value">₱<?php echo number_format((float)($billingSummary['total_collected'] ?? 0), 2); ?></div>
         </div>
         <div class="stat-icon bg-success bg-opacity-10 text-success">
           <i class="fas fa-hand-holding-usd"></i>
@@ -97,7 +97,7 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="stat-label">Total Unpaid</div>
-          <div class="stat-value"><?php echo number_format((float)($billingSummary['total_unpaid'] ?? 0), 2); ?></div>
+          <div class="stat-value">₱<?php echo number_format((float)($billingSummary['total_unpaid'] ?? 0), 2); ?></div>
         </div>
         <div class="stat-icon bg-warning bg-opacity-10 text-warning">
           <i class="fas fa-exclamation-triangle"></i>
@@ -125,8 +125,8 @@
 
   <!-- Recent SafeSense Alerts -->
   <div class="col-lg-7">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-bold">
           <span class="ss-live-dot"></span>SafeSense Live Alerts
         </h6>
@@ -174,8 +174,8 @@
 
   <!-- Upcoming appointments -->
   <div class="col-lg-5">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2 text-primary"></i>Upcoming Appointments</h6>
         <a href="<?php echo url('/appointments'); ?>" class="btn btn-sm btn-outline-primary">View All</a>
       </div>
@@ -214,21 +214,21 @@
 <!-- Chart.js Analytics -->
 <div class="row g-4 mt-2">
   <div class="col-lg-6">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white border-bottom py-3">
+    <div class="card">
+      <div class="card-header">
         <h6 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-danger"></i>Alerts Over Time (30 Days)</h6>
       </div>
-      <div class="card-body" id="alertsChartWrap">
+      <div class="card-body d-flex align-items-center justify-content-center" id="alertsChartWrap">
         <canvas id="alertsChart" height="200"></canvas>
       </div>
     </div>
   </div>
   <div class="col-lg-6">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white border-bottom py-3">
+    <div class="card">
+      <div class="card-header">
         <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>Appointments by Week (8 Weeks)</h6>
       </div>
-      <div class="card-body" id="appointmentsChartWrap">
+      <div class="card-body d-flex align-items-center justify-content-center" id="appointmentsChartWrap">
         <canvas id="appointmentsChart" height="200"></canvas>
       </div>
     </div>

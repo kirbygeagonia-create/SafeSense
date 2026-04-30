@@ -38,6 +38,25 @@
   window.ajaxPost = ajaxPost;
 
   /* ──────────────────────────────────────────────
+     Shared Utilities — hoisted to prevent re-declaration
+  ────────────────────────────────────────────── */
+  function esc(s) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(s || ''));
+    return d.innerHTML;
+  }
+
+  function buildOptions(arr, labelKey) {
+    return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
+  }
+
+  function findName(arr, id) {
+    if (!arr) return '—';
+    const item = arr.find(i => String(i.id) === String(id));
+    return item ? item.name : '—';
+  }
+
+  /* ──────────────────────────────────────────────
      Fix DataTables "Show N entries" select overlap
   ────────────────────────────────────────────── */
   function fixDtLengthSelect() {
@@ -182,10 +201,17 @@
     // FORM SUBMIT
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const url      = form.getAttribute('data-action');
-      const formData = new FormData(form);
-      const data     = {};
+      const url       = form.getAttribute('data-action');
+      const formData  = new FormData(form);
+      const data      = {};
       formData.forEach((v, k) => data[k] = v);
+      const submitBtn = form.querySelector('[type="submit"]');
+      const originalBtn = submitBtn ? submitBtn.innerHTML : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+      }
 
       ajaxPost(url, data)
         .then(res => {
@@ -204,6 +230,12 @@
         .catch(err => {
           // Modal stays open on error
           Swal.fire({ icon: 'error', title: err.message || 'Operation failed' });
+        })
+        .finally(() => {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtn;
+          }
         });
     });
   }
@@ -269,10 +301,6 @@
   ────────────────────────────────────────────── */
   const apptEl = document.getElementById('appointmentsTable');
   if (apptEl) {
-    function buildOptions(arr, labelKey) {
-      return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
-    }
-
     const patientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
     const doctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
 
@@ -286,12 +314,6 @@
     function statusBadge(s) {
       const colors = { pending: 'warning', confirmed: 'success', completed: 'secondary', cancelled: 'danger' };
       return `<span class="badge bg-${colors[s] || 'secondary'}">${s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Pending'}</span>`;
-    }
-
-    function findName(arr, id) {
-      if (!arr) return '—';
-      const item = arr.find(i => String(i.id) === String(id));
-      return item ? item.name : '—';
     }
 
     initCrudModule({
@@ -363,9 +385,6 @@
   ────────────────────────────────────────────── */
   const emrEl = document.getElementById('emrTable');
   if (emrEl) {
-    function buildOptions(arr, labelKey) {
-      return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
-    }
     const emrPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
     const emrDoctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
 
@@ -374,12 +393,6 @@
       const ds = form.querySelector('[name="doctor_id"]');
       if (ps && !ps.dataset.filled) { ps.innerHTML = '<option value="">Select Patient</option>' + emrPatientOpts; ps.dataset.filled = '1'; }
       if (ds && !ds.dataset.filled) { ds.innerHTML = '<option value="">Select Doctor</option>'  + emrDoctorOpts;  ds.dataset.filled = '1'; }
-    }
-
-    function findName(arr, id) {
-      if (!arr) return '—';
-      const item = arr.find(i => String(i.id) === String(id));
-      return item ? item.name : '—';
     }
 
     initCrudModule({
@@ -418,20 +431,11 @@
   ────────────────────────────────────────────── */
   const billEl = document.getElementById('billingTable');
   if (billEl) {
-    function buildOptions(arr, labelKey) {
-      return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
-    }
     const billPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
 
     function populateBillDropdown(form) {
       const ps = form.querySelector('[name="patient_id"]');
       if (ps && !ps.dataset.filled) { ps.innerHTML = '<option value="">Select Patient</option>' + billPatientOpts; ps.dataset.filled = '1'; }
-    }
-
-    function findName(arr, id) {
-      if (!arr) return '—';
-      const item = arr.find(i => String(i.id) === String(id));
-      return item ? item.name : '—';
     }
 
     function paymentStatusBadge(s) {
@@ -470,15 +474,6 @@
         `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${d.id}"><i class="fas fa-trash"></i></button>`
       ]
     });
-  }
-
-  /* ──────────────────────────────────────────────
-     Utility
-  ────────────────────────────────────────────── */
-  function esc(s) {
-    const d = document.createElement('div');
-    d.appendChild(document.createTextNode(s || ''));
-    return d.innerHTML;
   }
 
 })();

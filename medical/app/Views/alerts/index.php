@@ -101,8 +101,8 @@
 <?php endif; ?>
 
 <!-- IoT Connection Info box -->
-<div class="card mt-5" style="border: 1.5px solid var(--ss-primary);">
-  <div class="card-header text-white" style="background: linear-gradient(135deg, var(--ss-primary) 0%, var(--ss-primary-dark) 100%);">
+<div class="card ss-iot-guide mt-5">
+  <div class="card-header">
     <h6 class="mb-0"><i class="fas fa-plug me-2"></i>Arduino → System Connection Guide</h6>
   </div>
   <div class="card-body">
@@ -143,11 +143,21 @@ document.querySelectorAll('[data-filter]').forEach(btn=>{
   });
 });
 
+function safeAjaxPost(url, data) {
+  if (typeof ajaxPost === 'function') return ajaxPost(url, data);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (typeof ajaxPost === 'function') resolve(ajaxPost(url, data));
+      else reject(new Error('ajaxPost not available'));
+    }, 150);
+  });
+}
+
 document.querySelectorAll('.dismiss-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
     const id=this.dataset.id;
     const card=this.closest('.alert-card-wrap');
-    ajaxPost(window.BASE_URL + '/api/alerts/dismiss', { id: id })
+    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id: id })
       .then(() => {
         card.style.opacity = '0';
         card.style.transition = '.3s';
@@ -157,7 +167,7 @@ document.querySelectorAll('.dismiss-btn').forEach(btn=>{
 });
 
 document.getElementById('markAllReadBtn').addEventListener('click', () => {
-  ajaxPost(window.BASE_URL + '/api/alerts/read', { id: 'all' })
+  safeAjaxPost(window.BASE_URL + '/api/alerts/read', { id: 'all' })
     .then(d => {
       document.querySelectorAll('.ss-alert-card-unread')
         .forEach(el => el.classList.remove('ss-alert-card-unread'));

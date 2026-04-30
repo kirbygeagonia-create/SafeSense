@@ -84,8 +84,8 @@
         </li>
         <?php endif; ?>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-1 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
-            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ms-1"></span>
+          <a class="nav-link d-flex align-items-center gap-2 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
+            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ss-live-dot--sm"></span>
           </a>
         </li>
       </ul>
@@ -205,6 +205,7 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!-- SweetAlert2 must load BEFORE app.js (app.js references Swal) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 (function(){
@@ -228,7 +229,7 @@
   const ICONS  = { critical:'fa-skull-crossbones', danger:'fa-exclamation-triangle', warning:'fa-cloud-rain' };
   const LABELS = { critical:'CRITICAL', danger:'DANGER', warning:'WARNING' };
 
-  let lastPoll   = new Date(Date.now() - 30000).toISOString().replace('T',' ').slice(0,19);
+  let lastPoll   = new Date().toISOString().replace('T',' ').slice(0,19);
   let modalQueue = [];
   let modalOpen  = false;
   let seen       = {};
@@ -240,6 +241,7 @@
     if(n > 0){ badge.style.display='flex'; badge.classList.add('bump'); setTimeout(()=>badge.classList.remove('bump'),300); }
     else { badge.style.display='none'; }
   }
+  window.setBadge = setBadge;
 
   /* ── Drawer ── */
   bellBtn.addEventListener('click', ()=>{ drawer.classList.add('open'); overlay.classList.add('open'); });
