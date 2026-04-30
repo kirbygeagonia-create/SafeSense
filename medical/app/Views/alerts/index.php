@@ -5,7 +5,7 @@
   </div>
   <div class="d-flex gap-2">
     <span class="ss-unread-counter" id="unreadBadge">
-      <i class="fas fa-bell"></i><?php echo $unreadCount; ?> Unread
+      <i class="fas fa-bell"></i><span><?php echo $unreadCount; ?> Unread</span>
     </span>
     <button class="btn btn-outline-secondary btn-sm" id="markAllReadBtn">
       <i class="fas fa-check-double me-1"></i>Mark All Read
@@ -33,12 +33,11 @@
 <div class="row g-3" id="alertsGrid">
   <?php foreach ($alerts as $a): ?>
     <?php
-      $level  = $a['alert_level'];
+      $level      = $a['alert_level'];
       $levelClass = 'ss-level-' . $level;
-      $badge  = $level === 'critical' ? 'danger' : ($level === 'danger' ? 'warning' : 'info');
-      $icon   = $level === 'critical' ? 'fa-skull-crossbones' : ($level === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
-      $label  = $level === 'critical' ? '<i class="fas fa-exclamation-circle"></i> CRITICAL' : ($level === 'danger' ? '<i class="fas fa-exclamation-triangle"></i> DANGER' : '<i class="fas fa-info-circle"></i> WARNING');
-      $dt     = new DateTime($a['created_at']);
+      $icon       = $level === 'critical' ? 'fa-skull-crossbones' : ($level === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
+      $labelText  = strtoupper($level);
+      $dt         = new DateTime($a['created_at']);
       $unreadClass = (!$a['is_read']) ? 'ss-alert-card-unread' : '';
     ?>
     <div class="col-12 alert-card-wrap" data-level="<?php echo $level; ?>">
@@ -46,15 +45,17 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div class="d-flex gap-3 align-items-start flex-grow-1">
-              <div class="ss-alert-icon bg-<?php echo $badge; ?> bg-opacity-10 text-<?php echo $badge; ?>">
+              <div class="ss-alert-icon <?php echo $levelClass; ?>">
                 <i class="fas <?php echo $icon; ?>"></i>
               </div>
               <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="badge bg-<?php echo $badge; ?>"><?php echo $label; ?></span>
+                  <span class="ss-badge-level <?php echo $levelClass; ?>">
+                    <i class="fas <?php echo $icon; ?>"></i><?php echo $labelText; ?>
+                  </span>
                   <span class="badge bg-secondary"><i class="fas fa-tag"></i> <?php echo strtoupper(htmlspecialchars($a['event_type'])); ?></span>
                   <?php if (!$a['is_read']): ?>
-                    <span class="badge bg-primary"><i class="fas fa-bell"></i> NEW</span>
+                    <span class="ss-new-badge">NEW</span>
                   <?php endif; ?>
                 </div>
                 <p class="mb-2 fw-semibold"><?php echo htmlspecialchars($a['message']); ?></p>
@@ -100,8 +101,8 @@
 <?php endif; ?>
 
 <!-- IoT Connection Info box -->
-<div class="card mt-5 border-info border-2">
-  <div class="card-header bg-info text-white">
+<div class="card mt-5" style="border: 1.5px solid var(--ss-primary);">
+  <div class="card-header text-white" style="background: linear-gradient(135deg, var(--ss-primary) 0%, var(--ss-primary-dark) 100%);">
     <h6 class="mb-0"><i class="fas fa-plug me-2"></i>Arduino → System Connection Guide</h6>
   </div>
   <div class="card-body">
@@ -155,14 +156,18 @@ document.querySelectorAll('.dismiss-btn').forEach(btn=>{
   });
 });
 
-document.getElementById('markAllReadBtn').addEventListener('click',()=>{
+document.getElementById('markAllReadBtn').addEventListener('click', () => {
   ajaxPost(window.BASE_URL + '/api/alerts/read', { id: 'all' })
     .then(d => {
       document.querySelectorAll('.ss-alert-card-unread')
         .forEach(el => el.classList.remove('ss-alert-card-unread'));
       document.querySelectorAll('.badge.bg-primary').forEach(el => el.remove());
+
       const ub = document.getElementById('unreadBadge');
-      if (ub) ub.textContent = '0 Unread';
+      if (ub) {
+        ub.innerHTML = '<i class="fas fa-check-circle"></i><span>All Read</span>';
+        ub.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+      }
       if (typeof setBadge === 'function') setBadge(0);
     });
 });

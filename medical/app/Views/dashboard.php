@@ -135,26 +135,29 @@
       <div class="card-body p-0">
         <?php if (!empty($recentAlerts)): ?>
           <?php foreach ($recentAlerts as $a):
-            $lvl    = $a['alert_level'];
-            $badge  = $lvl==='critical'?'danger':($lvl==='danger'?'warning':'info');
-            $icon   = $lvl==='critical'?'fa-skull-crossbones':($lvl==='danger'?'fa-exclamation-triangle':'fa-cloud-rain');
-            $label  = $lvl==='critical'?'<i class="fas fa-exclamation-circle"></i> CRITICAL':($lvl==='danger'?'<i class="fas fa-exclamation-triangle"></i> DANGER':'<i class="fas fa-info-circle"></i> WARNING');
-            $dt     = new DateTime($a['created_at']);
+            $lvl        = $a['alert_level'];
+            $levelClass = 'ss-level-' . $lvl;
+            $icon       = $lvl === 'critical' ? 'fa-skull-crossbones' : ($lvl === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
+            $labelText  = strtoupper($lvl);
+            $dt         = new DateTime($a['created_at']);
           ?>
-          <div class="d-flex align-items-start gap-3 p-3 border-bottom <?php echo !$a['is_read']?'bg-light':''; ?>">
-            <div class="rounded-circle bg-<?php echo $badge; ?> bg-opacity-15 d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;">
-              <i class="fas <?php echo $icon; ?> text-<?php echo $badge; ?> fa-sm"></i>
+          <div class="ss-dash-alert-row <?php echo !$a['is_read'] ? 'unread' : ''; ?> <?php echo $levelClass; ?>">
+            <div class="ss-dash-alert-icon <?php echo $levelClass; ?>">
+              <i class="fas <?php echo $icon; ?> fa-sm"></i>
             </div>
             <div class="flex-grow-1 min-w-0">
               <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-<?php echo $badge; ?> badge-sm"><?php echo $label; ?></span>
-                <?php if(!$a['is_read']): ?><span class="badge bg-primary badge-sm">NEW</span><?php endif; ?>
+                <span class="ss-badge-level <?php echo $levelClass; ?>">
+                  <i class="fas <?php echo $icon; ?>"></i><?php echo $labelText; ?>
+                </span>
+                <?php if (!$a['is_read']): ?>
+                  <span class="ss-new-badge">NEW</span>
+                <?php endif; ?>
               </div>
               <div class="text-truncate small fw-medium"><?php echo htmlspecialchars($a['message']); ?></div>
-              <div class="text-muted" style="font-size:.75rem;">
-                <i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($a['location_name']??'—'); ?>
-                &nbsp;·&nbsp;
-                <i class="fas fa-clock me-1"></i><?php echo $dt->format('h:i A'); ?>
+              <div class="ss-dash-alert-meta">
+                <span><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($a['location_name'] ?? '—'); ?></span>
+                <span><i class="fas fa-clock me-1"></i><?php echo $dt->format('h:i A'); ?></span>
               </div>
             </div>
           </div>
@@ -235,6 +238,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function(){
+  function ajax(url) {
+    return fetch(url).then(r => r.json());
+  }
   ajax(window.BASE_URL + '/api/dashboard/stats')
     .then(data => {
       if (!data.success) return;

@@ -191,7 +191,7 @@
   const toastWrap     = $('ssToastWrap');
 
   const ICONS  = { critical:'fa-skull-crossbones', danger:'fa-exclamation-triangle', warning:'fa-cloud-rain' };
-  const LABELS = { critical:'🔴 CRITICAL', danger:'🟠 DANGER', warning:'🟡 WARNING' };
+  const LABELS = { critical:'CRITICAL', danger:'DANGER', warning:'WARNING' };
   const COLORS = { critical:'#dc2626', danger:'#ea580c', warning:'#d97706' };
 
   let lastPoll   = new Date(Date.now() - 30000).toISOString().replace('T',' ').slice(0,19);
@@ -227,15 +227,21 @@
     const div=document.createElement('div');
     div.className='ss-notif'+(a.is_read==0?' unread':'');
     div.dataset.level=a.alert_level; div.dataset.id=a.id;
-    div.innerHTML=`
-      <button class="ss-notif-x" data-dismiss="${a.id}">×</button>
-      <div class="ss-notif-level"><i class="fas ${ICONS[a.alert_level]||'fa-bell'} me-1"></i>${LABELS[a.alert_level]||a.alert_level.toUpperCase()}</div>
+    const levelLabel = a.alert_level.toUpperCase();
+    const icon = ICONS[a.alert_level] || 'fa-bell';
+    div.innerHTML = `
+      <button class="ss-notif-x" data-dismiss="${a.id}" title="Dismiss">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="ss-notif-level">
+        <i class="fas ${icon}"></i>${levelLabel}
+      </div>
       <div class="ss-notif-msg">${esc(a.message)}</div>
       <div class="ss-notif-meta">
-        <span><i class="fas fa-map-marker-alt"></i>${esc(a.location_name||'—')}</span>
+        <span><i class="fas fa-map-marker-alt"></i>${esc(a.location_name || '—')}</span>
         <span><i class="fas fa-clock"></i>${time}</span>
         <span><i class="fas fa-calendar-alt"></i>${date}</span>
-        <span><i class="fas fa-bolt"></i>${esc(a.event_type)}</span>
+        <span><i class="fas fa-bolt"></i>${esc(a.event_type || '—')}</span>
       </div>`;
     div.addEventListener('click',e=>{
       if(e.target.classList.contains('ss-notif-x')||e.target.dataset.dismiss) return;
@@ -269,19 +275,20 @@
   function showModal(a){ if(modalOpen){ modalQueue.push(a); return; } openModal(a); }
 
   function openModal(a){
+    console.log('Opening modal with alert:', a);
     modalOpen=true;
-    const dt=new Date(a.created_at);
+    const dt=new Date(a.created_at || Date.now());
     const time=dt.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const date=dt.toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
-    modal.dataset.level=a.alert_level; modal.dataset.id=a.id;
+    modal.dataset.level=a.alert_level||'warning'; modal.dataset.id=a.id||'0';
     $('ssModalIcon').innerHTML=`<i class="fas ${ICONS[a.alert_level]||'fa-bell'}"></i>`;
-    $('ssModalLevel').textContent=`${LABELS[a.alert_level]} ALERT`;
+    $('ssModalLevel').textContent=`${LABELS[a.alert_level]||'UNKNOWN'} ALERT`;
     $('ssModalDevice').textContent='Device: '+(a.device_id||'SafeSense');
-    $('ssModalMessage').textContent=a.message;
+    $('ssModalMessage').textContent=a.message||a.alert_message||'No message provided';
     $('ssModalLocation').textContent=a.location_name||'—';
     $('ssModalTime').textContent=time;
     $('ssModalDate').textContent=date;
-    $('ssModalEvent').textContent=(a.event_type||'—').toUpperCase();
+    $('ssModalEvent').textContent=(a.event_type||a.alert_type||'—').toUpperCase();
     $('ssModalWater').textContent=a.water_level ? a.water_level+' cm' : '—';
     $('ssModalDeviceId').textContent=a.device_id||'—';
     if(a.latitude && a.longitude){
@@ -312,14 +319,16 @@
     fetch(window.BASE_URL + '/api/alerts/poll?since='+encodeURIComponent(lastPoll))
     .then(r=>r.json())
     .then(data=>{
+      console.log('Poll data:', data);
       lastPoll=data.server_time||lastPoll;
       setBadge(data.unread_count||0);
       (data.alerts||[]).forEach(a=>{
+        console.log('Processing alert:', a);
         addDrawerItem(a);
         showToast(a);
-        if(a.alert_level==='critical'||a.alert_level==='danger') showModal(a);
+        // Note: Modal only opens when user clicks a notification, not automatically
       });
-    }).catch(()=>{});
+    }).catch(e=>{ console.error('Poll error:', e); });
   }
 
   /* ── Alarm (Web Audio) ── */
