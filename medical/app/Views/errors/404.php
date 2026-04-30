@@ -1,11 +1,11 @@
-<div class='container'>
-    <div class='row justify-content-center'>
-        <div class='col-md-6 text-center'>
-            <div class='alert alert-danger'>
-                <h4>404 - Page Not Found</h4>
-                <p>The page you are looking for could not be found.</p>
-                <a href='/' class='btn btn-primary'>Go to Homepage</a>
-            </div>
-        </div>
-    </div>
+<div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 60vh; padding: 3rem 1rem;">
+  <div class="mb-4" style="font-size:5rem;color:var(--ss-border-strong);">
+    <i class="fas fa-satellite-dish"></i>
+  </div>
+  <h1 class="fw-800 mb-2" style="font-size:4rem;letter-spacing:-.05em;color:var(--ss-text-3);">404</h1>
+  <h2 class="fw-700 mb-2" style="font-size:1.3rem;color:var(--ss-text);">Page Not Found</h2>
+  <p class="text-muted mb-4" style="max-width:400px;">The page you're looking for doesn't exist or has been moved. Check the URL or return to the dashboard.</p>
+  <a href="<?php echo url('/dashboard'); ?>" class="btn btn-primary">
+    <i class="fas fa-tachometer-alt me-2"></i>Back to Dashboard
+  </a>
 </div>

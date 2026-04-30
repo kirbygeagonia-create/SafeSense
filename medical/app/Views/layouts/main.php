@@ -26,6 +26,12 @@
   $flashSuccess = $_SESSION['flash_success'] ?? null;
   $flashError   = $_SESSION['flash_error']   ?? null;
   unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+  // Detect current path for active nav highlighting
+  $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+  $basePath    = rtrim(parse_url(url('/'), PHP_URL_PATH), '/');
+  $pagePath    = ltrim(str_replace($basePath, '', $currentPath), '/');
+  $navPage     = explode('/', $pagePath)[0] ?: 'dashboard';
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -38,19 +44,47 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/dashboard'); ?>"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/patients'); ?>"><i class="fas fa-user-injured me-1"></i>Patients</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/doctors'); ?>"><i class="fas fa-user-md me-1"></i>Doctors</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/appointments'); ?>"><i class="fas fa-calendar-check me-1"></i>Appointments</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/emr'); ?>"><i class="fas fa-file-medical me-1"></i>Medical Records</a></li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='dashboard'?'active':''; ?>" href="<?php echo url('/dashboard'); ?>">
+            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='patients'?'active':''; ?>" href="<?php echo url('/patients'); ?>">
+            <i class="fas fa-user-injured me-1"></i>Patients
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='doctors'?'active':''; ?>" href="<?php echo url('/doctors'); ?>">
+            <i class="fas fa-user-md me-1"></i>Doctors
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='appointments'?'active':''; ?>" href="<?php echo url('/appointments'); ?>">
+            <i class="fas fa-calendar-check me-1"></i>Appointments
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='emr'?'active':''; ?>" href="<?php echo url('/emr'); ?>">
+            <i class="fas fa-file-medical me-1"></i>Medical Records
+          </a>
+        </li>
         <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin','staff'])): ?>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/billing'); ?>"><i class="fas fa-file-invoice-dollar me-1"></i>Billing</a></li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='billing'?'active':''; ?>" href="<?php echo url('/billing'); ?>">
+            <i class="fas fa-file-invoice-dollar me-1"></i>Billing
+          </a>
+        </li>
         <?php endif; ?>
         <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/users'); ?>"><i class="fas fa-users-cog me-1"></i>Users</a></li>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='users'?'active':''; ?>" href="<?php echo url('/users'); ?>">
+            <i class="fas fa-users-cog me-1"></i>Users
+          </a>
+        </li>
         <?php endif; ?>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-1" href="<?php echo url('/alerts'); ?>">
+          <a class="nav-link d-flex align-items-center gap-1 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
             <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ms-1"></span>
           </a>
         </li>
@@ -155,13 +189,14 @@
   <?php echo $content ?? ''; ?>
 </main>
 
-<footer class="border-top py-3 mt-auto">
+<footer class="border-top mt-auto">
   <div class="container text-center">
     <small class="text-muted">
       &copy; <?php echo date('Y'); ?> <?php echo APP_NAME; ?>
       &nbsp;·&nbsp;
-      <span class="ss-live-dot" style="width:6px;height:6px;vertical-align:middle;"></span>
-      SafeSense IoT Active
+      <a href="<?php echo url('/alerts'); ?>" class="text-muted text-decoration-none d-inline-flex align-items-center gap-1">
+        <span class="ss-live-dot" style="width:6px;height:6px;"></span>SafeSense IoT Active
+      </a>
     </small>
   </div>
 </footer>
@@ -192,7 +227,6 @@
 
   const ICONS  = { critical:'fa-skull-crossbones', danger:'fa-exclamation-triangle', warning:'fa-cloud-rain' };
   const LABELS = { critical:'CRITICAL', danger:'DANGER', warning:'WARNING' };
-  const COLORS = { critical:'#dc2626', danger:'#ea580c', warning:'#d97706' };
 
   let lastPoll   = new Date(Date.now() - 30000).toISOString().replace('T',' ').slice(0,19);
   let modalQueue = [];
@@ -261,7 +295,7 @@
       <div class="ss-toast-icon"><i class="fas ${ICONS[a.alert_level]||'fa-bell'}"></i></div>
       <div class="ss-toast-body">
         <div class="ss-toast-title">${LABELS[a.alert_level]} — ${esc((a.event_type || 'ALERT').toUpperCase())}</div>
-        <div class="ss-toast-sub">${esc(a.location_name)} · ${time}</div>
+        <div class="ss-toast-sub">${esc(a.location_name || 'Unknown location')} · ${time}</div>
       </div>
       <button class="ss-toast-x"><i class="fas fa-times"></i></button>`;
     t.querySelector('.ss-toast-x').addEventListener('click',()=>killToast(t));
