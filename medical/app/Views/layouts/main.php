@@ -387,7 +387,29 @@
   function esc(s){ const d=document.createElement('div'); d.appendChild(document.createTextNode(s||'')); return d.innerHTML; }
 
   /* ── Init ── */
-  fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00').then(r=>r.json()).then(d=>{ if(d.unread_count) setBadge(d.unread_count); }).catch(()=>{});
+  // On page load: fetch ALL existing unread alerts, populate the drawer,
+  // fire modal for any critical/danger, and sync lastPoll to server time.
+  fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00')
+    .then(r => r.json())
+    .then(d => {
+      // Sync lastPoll to server clock immediately — eliminates UTC vs local-time mismatch
+      if (d.server_time) lastPoll = d.server_time;
+
+      // Set badge
+      if (d.unread_count) setBadge(d.unread_count);
+
+      // Populate drawer with all existing alerts (most recent first, already ordered by DB)
+      (d.alerts || []).forEach(a => addDrawerItem(a));
+
+      // Auto-open modal for the most recent critical/danger alert on page load
+      // (only the first one — subsequent ones queue automatically via modalQueue)
+      const urgent = (d.alerts || []).find(
+        a => (a.alert_level === 'critical' || a.alert_level === 'danger') && !a.is_read
+      );
+      if (urgent) showModal(urgent);
+    })
+    .catch(() => {});
+
   setInterval(poll, POLL_MS);
 })();
 </script>
