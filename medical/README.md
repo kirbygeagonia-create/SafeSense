@@ -66,7 +66,7 @@ Within 5 seconds of receiving that POST, the hospital dashboard shows a **live a
 The Arduino WiFi Shield sends a JSON POST request to this system when a critical event is detected:
 
 ```
-POST http://YOUR_SERVER_IP:8000/api/alert
+POST http://YOUR_SERVER_IP/SafeSense/medical/public/api/alert
 Content-Type: application/json
 ```
 
@@ -201,11 +201,11 @@ php 004_create_safesense_alerts_table.php
 ### Step 3 — Start the server
 
 ```bash
-cd public
-php -S localhost:8000
+# Use XAMPP (Apache on port 80) — start Apache and MySQL from the XAMPP Control Panel
+# Then open http://localhost/SafeSense/medical/public in your browser
 ```
 
-Then open `http://localhost:8000` in your browser.
+Then open `http://localhost/SafeSense/medical/public` in your browser.
 
 ### Step 4 — Log in
 
@@ -221,7 +221,7 @@ Then open `http://localhost:8000` in your browser.
    ```cpp
    const char* WIFI_SSID     = "YourWiFiName";
    const char* WIFI_PASSWORD = "YourWiFiPassword";
-   const char* SERVER_HOST   = "http://192.168.1.100:8000"; // your PC's IP
+   const char* SERVER_HOST   = "http://192.168.1.100"; // your PC's LAN IP (XAMPP on port 80)
    const char* API_KEY       = "SAFESENSE_SECRET_KEY";
    ```
 3. Upload to your Arduino board via Arduino IDE

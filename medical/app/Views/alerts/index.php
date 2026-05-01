@@ -3,13 +3,39 @@
     <h1 class="mb-0"><i class="fas fa-satellite-dish text-danger me-2"></i>SafeSense Alert Log</h1>
     <small class="text-muted">Real-time IoT flood &amp; hazard alerts from the field</small>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
     <span class="ss-unread-counter" id="unreadBadge">
       <i class="fas fa-bell"></i><span><?php echo $unreadCount; ?> Unread</span>
     </span>
     <button class="btn btn-outline-secondary btn-sm" id="markAllReadBtn">
       <i class="fas fa-check-double me-1"></i>Mark All Read
     </button>
+    <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+    <div class="dropdown">
+      <button class="btn btn-outline-danger btn-sm dropdown-toggle" data-bs-toggle="dropdown" title="Simulate Arduino alert for demo">
+        <i class="fas fa-flask"></i> Simulate Alert
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><h6 class="dropdown-header">Inject Test Alert</h6></li>
+        <li><button class="dropdown-item simulate-btn" data-level="critical" data-event="flood">
+          <i class="fas fa-skull-crossbones text-danger me-2"></i>Critical — Flood
+        </button></li>
+        <li><button class="dropdown-item simulate-btn" data-level="danger" data-event="flood">
+          <i class="fas fa-exclamation-triangle text-warning me-2"></i>Danger — Flood
+        </button></li>
+        <li><button class="dropdown-item simulate-btn" data-level="danger" data-event="accident">
+          <i class="fas fa-car-crash text-warning me-2"></i>Danger — Accident
+        </button></li>
+        <li><button class="dropdown-item simulate-btn" data-level="warning" data-event="rain">
+          <i class="fas fa-cloud-rain text-info me-2"></i>Warning — Rain
+        </button></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><small class="dropdown-item text-muted" style="font-size:.72rem;">
+          <i class="fas fa-info-circle me-1"></i>Dashboard updates within 5 seconds
+        </small></li>
+      </ul>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -181,5 +207,33 @@ document.getElementById('markAllReadBtn').addEventListener('click', () => {
       }
       if (typeof setBadge === 'function') setBadge(0);
     });
+});
+
+// Simulate alert buttons (admin only)
+document.querySelectorAll('.simulate-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const level = this.dataset.level;
+    const event = this.dataset.event;
+    const label = level.toUpperCase() + ' — ' + event;
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+    ajaxPost(window.BASE_URL + '/api/alert/simulate', { level, event })
+      .then(d => {
+        if (d.success) {
+          // Show brief success state then reload to show new alert
+          this.innerHTML = '<i class="fas fa-check me-1"></i>Sent!';
+          this.classList.replace('btn-outline-danger', 'btn-outline-success');
+          setTimeout(() => window.location.reload(), 1800);
+        } else {
+          alert('Simulation failed: ' + (d.error || 'Unknown error'));
+          this.disabled = false;
+          this.innerHTML = '<i class="fas fa-flask me-1"></i>' + label;
+        }
+      })
+      .catch(() => {
+        alert('Network error. Check server connection.');
+        this.disabled = false;
+      });
+  });
 });
 </script>

@@ -63,6 +63,7 @@ class App
         $this->router->get('/api/alerts/poll', 'AlertController@poll');
         $this->router->post('/api/alerts/read', 'AlertController@markRead');
         $this->router->post('/api/alerts/dismiss', 'AlertController@dismiss');
+        $this->router->post('/api/alert/simulate', 'AlertController@simulate');
 
         // Dashboard analytics API
         $this->router->get('/api/dashboard/stats', 'DashboardController@stats');

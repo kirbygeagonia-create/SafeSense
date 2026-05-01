@@ -65,6 +65,18 @@ class AlertController extends BaseController {
             }
         }
 
+        // --- Whitelist enum values to match DB constraints ---
+        $validLevels = ['warning', 'danger', 'critical'];
+        $validEvents = ['rain', 'flood', 'accident', 'vibration', 'test'];
+        if (!in_array($data['alert_level'], $validLevels, true)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid alert_level. Must be: warning, danger, or critical'], 400);
+            return;
+        }
+        if (!in_array($data['event_type'], $validEvents, true)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid event_type. Must be: rain, flood, accident, vibration, or test'], 400);
+            return;
+        }
+
         // --- Sanitize & store ---
         $database = new Database();
         $db       = $database->getConnection();
@@ -178,6 +190,67 @@ class AlertController extends BaseController {
         }
 
         $this->jsonResponse(['success' => true]);
+    }
+
+    // ---------------------------------------------------------------
+    // SIMULATE ALERT  —  POST /api/alert/simulate  (admin only)
+    // ---------------------------------------------------------------
+
+    /**
+     * Admin-only endpoint to inject a realistic test alert without hardware.
+     * Useful for demonstrations when the Arduino is not physically connected.
+     * The poll loop will pick it up within 5 seconds exactly like a real alert.
+     *
+     * POST body (form or JSON):
+     *   level  = warning | danger | critical   (default: critical)
+     *   event  = flood | rain | accident       (default: flood)
+     */
+    public function simulate() {
+        $this->requireLogin();
+        $this->requireRole('admin');
+        $this->validateCsrf();
+
+        $level = $_POST['level'] ?? 'critical';
+        $event = $_POST['event'] ?? 'flood';
+
+        $validLevels = ['warning', 'danger', 'critical'];
+        $validEvents = ['rain', 'flood', 'accident', 'vibration', 'test'];
+        if (!in_array($level, $validLevels)) $level = 'critical';
+        if (!in_array($event, $validEvents)) $event = 'flood';
+
+        $messages = [
+            'critical' => 'CRITICAL: Severe flood detected. Water level at 52.4 cm — DANGER threshold exceeded. Immediate response required!',
+            'danger'   => 'DANGER: Rising floodwater detected. Water level: 38.1 cm. Road hazard likely. Staff on alert.',
+            'warning'  => 'WARNING: Rain detected (moderate). Water level: 18.5 cm. Monitoring conditions.',
+        ];
+
+        $waterLevels = ['critical' => 52.4, 'danger' => 38.1, 'warning' => 18.5];
+
+        $database = new Database();
+        $db       = $database->getConnection();
+        $alert    = new Alert($db);
+
+        $alert->device_id     = 'SAFESENSE-001';
+        $alert->station_type  = 'hospital';
+        $alert->alert_level   = $level;
+        $alert->event_type    = $event;
+        $alert->rain_status   = ($level === 'critical') ? 'heavy' : ($level === 'danger' ? 'moderate' : 'light');
+        $alert->water_level   = $waterLevels[$level];
+        $alert->vibration     = ($event === 'accident') ? 1 : 0;
+        $alert->message       = $messages[$level];
+        $alert->latitude      = 8.1574;
+        $alert->longitude     = 124.9282;
+        $alert->location_name = 'Brgy. Casisang, Malaybalay City';
+
+        if ($alert->create()) {
+            $this->jsonResponse([
+                'success' => true,
+                'message' => "Simulated {$level} alert injected. Dashboard will update within 5 seconds.",
+                'level'   => $level,
+            ], 201);
+        } else {
+            $this->jsonResponse(['success' => false, 'error' => 'Database write failed.'], 500);
+        }
     }
 
     // ---------------------------------------------------------------

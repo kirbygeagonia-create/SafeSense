@@ -49,6 +49,7 @@
             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
           </a>
         </li>
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'doctor', 'nurse'])): ?>
         <li class="nav-item">
           <a class="nav-link <?php echo $navPage==='patients'?'active':''; ?>" href="<?php echo url('/patients'); ?>">
             <i class="fas fa-user-injured me-1"></i>Patients
@@ -59,6 +60,7 @@
             <i class="fas fa-user-md me-1"></i>Doctors
           </a>
         </li>
+        <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link <?php echo $navPage==='appointments'?'active':''; ?>" href="<?php echo url('/appointments'); ?>">
             <i class="fas fa-calendar-check me-1"></i>Appointments
@@ -359,7 +361,10 @@
       (data.alerts||[]).forEach(a=>{
         addDrawerItem(a);
         showToast(a);
-        // Note: Modal only opens when user clicks a notification, not automatically
+        // Auto-open modal for high-severity alerts so staff see it immediately
+        if (a.alert_level === 'critical' || a.alert_level === 'danger') {
+          showModal(a);
+        }
       });
     }).catch(e=>{ console.error('Poll error:', e); });
   }

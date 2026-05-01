@@ -75,9 +75,13 @@ const int PIN_BUZZER        = 7;   // Buzzer
 
 
 // ══════════════════════════════════════════════════════════════
-//  THRESHOLDS (cm from sensor to water surface)
-//  Adjust based on your sensor mounting height
+//  SENSOR MOUNTING & THRESHOLDS
+//  Adjust SENSOR_HEIGHT_CM to match your physical installation.
+//  water_level = SENSOR_HEIGHT_CM - (ultrasonic distance reading)
 // ══════════════════════════════════════════════════════════════
+
+const float SENSOR_HEIGHT_CM = 100.0; // Height of ultrasonic sensor above ground (cm)
+                                       // Measure from sensor face to dry ground surface
 
 const float WATER_WARNING  = 20.0;  // cm — Yellow LED on
 const float WATER_DANGER   = 35.0;  // cm — Red LED slow blink
@@ -232,7 +236,7 @@ float measureWaterLevel() {
   // If sensor is mounted 100 cm above ground:
   // water_level = 100 - distance
   // Adjust the 100.0 to your actual sensor height
-  float waterLevel = 100.0 - distanceCm;
+  float waterLevel = SENSOR_HEIGHT_CM - distanceCm;
   return max(0.0f, waterLevel);
 }
 
@@ -348,5 +352,16 @@ bool sendWithRetry(String level, String eventType, String rainStatus,
     }
   }
   Serial.println("[Alert] All retry attempts exhausted. Alert may not have been received.");
+  // Visual indicator: alternate-blink both LEDs 5 times to signal failed transmission
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(PIN_LED_RED,    HIGH);
+    digitalWrite(PIN_LED_YELLOW, LOW);
+    delay(200);
+    digitalWrite(PIN_LED_RED,    LOW);
+    digitalWrite(PIN_LED_YELLOW, HIGH);
+    delay(200);
+  }
+  digitalWrite(PIN_LED_RED,    LOW);
+  digitalWrite(PIN_LED_YELLOW, LOW);
   return false;
 }
