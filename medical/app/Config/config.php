@@ -1,7 +1,7 @@
 <?php
 
 // ── App ──────────────────────────────────────
-define('APP_NAME', 'SafeSense Hospital Management');
+define('APP_NAME', 'Tupi Hospital Management');
 define('APP_URL',  'http://localhost/SafeSense/medical');
 
 // ── Database ─────────────────────────────────

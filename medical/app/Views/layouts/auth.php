@@ -10,7 +10,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Task 8 — consistent title format -->
-    <title><?php echo htmlspecialchars($title ?? 'SafeSense'); ?> — SafeSense</title>
+    <title><?php echo htmlspecialchars($title ?? 'Tupi'); ?> — Tupi Hospital</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,9 +28,9 @@
     <!-- Task 8 — fa-shield-halved + "SafeSense" heading + #dc2626 accent bar -->
     <div class="text-center mb-4">
         <div class="auth-logo"><i class="fas fa-shield-halved"></i></div>
-        <div class="auth-brand-name">SafeSense</div>
+        <div class="auth-brand-name">Tupi Hospital</div>
         <div class="auth-accent-bar"></div>
-        <div class="auth-subtitle">Hospital Intelligence &amp; IoT Monitoring</div>
+        <div class="auth-subtitle">Powered by SafeSense IoT Monitoring</div>
     </div>
 
     <?php if ($flashError): ?>

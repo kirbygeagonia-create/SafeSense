@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Task 8 — always shows page title — SafeSense -->
-    <title><?php echo htmlspecialchars($title ?? 'SafeSense'); ?> — SafeSense</title>
+    <title><?php echo htmlspecialchars($title ?? 'Tupi'); ?> — Tupi Hospital</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -212,21 +212,21 @@
 <script>
 (function(){
   'use strict';
-  const POLL_MS    = 5000;
-  const TOAST_MS   = 9000;
+  const POLL_MS  = 5000;
+  const TOAST_MS = 9000;
 
   const $ = id => document.getElementById(id);
-  const badge         = $('ssBadge');
-  const bellBtn       = $('ssBellBtn');
-  const drawer        = $('ssDrawer');
-  const overlay       = $('ssDrawerOverlay');
-  const drawerClose   = $('ssDrawerClose');
-  const drawerBody    = $('ssDrawerBody');
-  const markAllBtn    = $('ssMarkAllRead');
-  const noAlerts      = $('ssNoAlerts');
-  const modalOverlay  = $('ssModalOverlay');
-  const modal         = $('ssModal');
-  const toastWrap     = $('ssToastWrap');
+  const badge        = $('ssBadge');
+  const bellBtn      = $('ssBellBtn');
+  const drawer       = $('ssDrawer');
+  const overlay      = $('ssDrawerOverlay');
+  const drawerClose  = $('ssDrawerClose');
+  const drawerBody   = $('ssDrawerBody');
+  const markAllBtn   = $('ssMarkAllRead');
+  const noAlerts     = $('ssNoAlerts');
+  const modalOverlay = $('ssModalOverlay');
+  const modal        = $('ssModal');
+  const toastWrap    = $('ssToastWrap');
 
   const ICONS  = { critical:'fa-skull-crossbones', danger:'fa-exclamation-triangle', warning:'fa-cloud-rain' };
   const LABELS = { critical:'CRITICAL', danger:'DANGER', warning:'WARNING' };
@@ -235,6 +235,23 @@
   let modalQueue = [];
   let modalOpen  = false;
   let seen       = {};
+
+  /* ── sessionStorage guard: tracks alert IDs that have already been modal-shown
+         in this browser session. Persists across page navigations. ── */
+  function getShown() {
+    try { return new Set(JSON.parse(sessionStorage.getItem('ss_modal_shown') || '[]')); }
+    catch(e) { return new Set(); }
+  }
+  function markShown(id) {
+    try {
+      const s = getShown(); s.add(String(id));
+      // Keep the Set bounded — evict oldest when over 100 entries
+      const arr = [...s];
+      if (arr.length > 100) arr.splice(0, arr.length - 100);
+      sessionStorage.setItem('ss_modal_shown', JSON.stringify(arr));
+    } catch(e) {}
+  }
+  function wasShown(id) { return getShown().has(String(id)); }
 
   /* ── Badge ── */
   function setBadge(n){
@@ -252,7 +269,8 @@
   function closeDrawer(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
 
   markAllBtn.addEventListener('click', ()=>{
-    post(window.BASE_URL + '/api/alerts/read','id=all').then(d=>{ setBadge(0); document.querySelectorAll('.ss-notif.unread').forEach(el=>el.classList.remove('unread')); });
+    post(window.BASE_URL + '/api/alerts/read','id=all')
+      .then(d=>{ setBadge(0); document.querySelectorAll('.ss-notif.unread').forEach(el=>el.classList.remove('unread')); });
   });
 
   /* ── Drawer item ── */
@@ -310,10 +328,20 @@
   function killToast(t){ t.classList.add('out'); setTimeout(()=>t.remove(),350); }
 
   /* ── Modal ── */
-  function showModal(a){ if(modalOpen){ modalQueue.push(a); return; } openModal(a); }
+  /* Guard: only show modal if this alert ID has NOT been shown before in this session */
+  function showModal(a){
+    if(wasShown(a.id)) return;         // already shown in this session — skip
+    if(modalOpen){ modalQueue.push(a); return; }
+    openModal(a);
+  }
+
+  /* alarmCtx and alarmStop allow stopping the siren when modal closes */
+  let alarmCtx  = null;
+  let alarmStop = null;
 
   function openModal(a){
     modalOpen=true;
+    markShown(a.id);                   // record in sessionStorage — won't show again
     const dt=new Date(a.created_at || Date.now());
     const time=dt.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const date=dt.toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
@@ -333,10 +361,16 @@
       $('ssMapLinkWrap').style.display='block';
     } else { $('ssMapLinkWrap').style.display='none'; }
     modalOverlay.classList.add('show');
-    if(a.alert_level==='critical') alarm();
+    if(a.alert_level==='critical') startAlarm('critical');
+    else if(a.alert_level==='danger') startAlarm('danger');
   }
 
-  function closeModal(){ modalOverlay.classList.remove('show'); modalOpen=false; if(modalQueue.length) setTimeout(()=>openModal(modalQueue.shift()),350); }
+  function closeModal(){
+    stopAlarm();
+    modalOverlay.classList.remove('show');
+    modalOpen=false;
+    if(modalQueue.length) setTimeout(()=>openModal(modalQueue.shift()),350);
+  }
 
   $('ssModalClose').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', e=>{ if(e.target===modalOverlay) closeModal(); });
@@ -351,62 +385,118 @@
     return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':csrfToken},body}).then(r=>r.json());
   }
 
-  /* ── Poll ── */
-  function poll(){
-    fetch(window.BASE_URL + '/api/alerts/poll?since='+encodeURIComponent(lastPoll))
-    .then(r=>r.json())
-    .then(data=>{
-      lastPoll=data.server_time||lastPoll;
-      setBadge(data.unread_count||0);
-      (data.alerts||[]).forEach(a=>{
-        addDrawerItem(a);
-        showToast(a);
-        // Auto-open modal for high-severity alerts so staff see it immediately
-        if (a.alert_level === 'critical' || a.alert_level === 'danger') {
-          showModal(a);
+  /* ── Alarm — continuous emergency siren, stops on modal close ── */
+  function startAlarm(level) {
+    stopAlarm(); // clear any previous alarm first
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      alarmCtx = ctx;
+
+      // DynamicsCompressor prevents clipping at high gain
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-6, ctx.currentTime);
+      compressor.knee.setValueAtTime(3, ctx.currentTime);
+      compressor.ratio.setValueAtTime(20, ctx.currentTime);
+      compressor.attack.setValueAtTime(0.001, ctx.currentTime);
+      compressor.release.setValueAtTime(0.1, ctx.currentTime);
+      compressor.connect(ctx.destination);
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.88, ctx.currentTime);
+      masterGain.connect(compressor);
+
+      // Two oscillator layers for a harsh, thick siren sound
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const g1   = ctx.createGain();
+      const g2   = ctx.createGain();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'square';
+
+      g1.gain.setValueAtTime(0.6, ctx.currentTime);
+      g2.gain.setValueAtTime(0.4, ctx.currentTime);
+
+      osc1.connect(g1); g1.connect(masterGain);
+      osc2.connect(g2); g2.connect(masterGain);
+
+      // Siren frequencies: critical = high-pitched warble, danger = slightly lower
+      const hiFreq = level === 'danger' ? 880  : 1100;
+      const loFreq = level === 'danger' ? 660  : 880;
+      const cycleMs = level === 'danger' ? 700  : 500; // ms per half-cycle
+
+      let phase = true; // true = high frequency, false = low frequency
+      let t = ctx.currentTime;
+
+      // Schedule the initial siren sweep cycles (10 seconds worth up front)
+      function scheduleCycles(fromTime, count) {
+        for (let i = 0; i < count; i++) {
+          const hi = phase ? hiFreq : loFreq;
+          const lo = phase ? loFreq : hiFreq;
+          const cycleStart = fromTime + i * (cycleMs / 1000);
+          const cycleEnd   = cycleStart + (cycleMs / 1000);
+
+          osc1.frequency.setValueAtTime(hi, cycleStart);
+          osc2.frequency.setValueAtTime(hi * 1.5, cycleStart);
+
+          // Smooth sweep to the other frequency
+          osc1.frequency.linearRampToValueAtTime(lo, cycleEnd);
+          osc2.frequency.linearRampToValueAtTime(lo * 1.5, cycleEnd);
+
+          phase = !phase;
         }
-      });
-    }).catch(e=>{ console.error('Poll error:', e); });
+      }
+
+      // Schedule 20 cycles (10 seconds) immediately
+      scheduleCycles(t, 20);
+
+      osc1.start(t);
+      osc2.start(t);
+
+      // Keep scheduling more cycles every 8 seconds so the alarm loops indefinitely
+      let scheduledUntil = t + 10;
+      const extendInterval = setInterval(() => {
+        if (!alarmCtx) { clearInterval(extendInterval); return; }
+        scheduleCycles(scheduledUntil, 20);
+        scheduledUntil += 10;
+      }, 8000);
+
+      // Expose stop function
+      alarmStop = () => {
+        clearInterval(extendInterval);
+        try {
+          // Fade out quickly instead of abrupt cut
+          masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.12);
+          setTimeout(() => {
+            try { osc1.stop(); osc2.stop(); ctx.close(); } catch(e) {}
+          }, 150);
+        } catch(e) {}
+        alarmCtx  = null;
+        alarmStop = null;
+      };
+
+    } catch(e) {
+      alarmCtx  = null;
+      alarmStop = null;
+    }
   }
 
-  /* ── Alarm (Web Audio) ── */
-  function alarm(){
-    try{
-      const ctx=new(window.AudioContext||window.webkitAudioContext)();
-      [[880,.00,.18],[660,.22,.18],[880,.44,.18],[1100,.65,.35]].forEach(([f,s,d])=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value=f; o.type='square';
-        g.gain.setValueAtTime(.18,ctx.currentTime+s);
-        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+s+d);
-        o.start(ctx.currentTime+s); o.stop(ctx.currentTime+s+d+.05);
-      });
-    }catch(e){}
+  function stopAlarm() {
+    if (typeof alarmStop === 'function') alarmStop();
   }
 
   function esc(s){ const d=document.createElement('div'); d.appendChild(document.createTextNode(s||'')); return d.innerHTML; }
 
   /* ── Init ── */
-  // On page load: fetch ALL existing unread alerts, populate the drawer,
-  // fire modal for any critical/danger, and sync lastPoll to server time.
+  // Fetch existing alerts to populate the drawer and sync the badge.
+  // DO NOT auto-show modals for existing old alerts — only new real-time polls trigger modals.
   fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00')
     .then(r => r.json())
     .then(d => {
-      // Sync lastPoll to server clock immediately — eliminates UTC vs local-time mismatch
       if (d.server_time) lastPoll = d.server_time;
-
-      // Set badge
       if (d.unread_count) setBadge(d.unread_count);
-
-      // Populate drawer with all existing alerts (most recent first, already ordered by DB)
+      // Populate the drawer only — no modals for historical alerts
       (d.alerts || []).forEach(a => addDrawerItem(a));
-
-      // Auto-open modal for the most recent critical/danger alert on page load
-      // (only the first one — subsequent ones queue automatically via modalQueue)
-      const urgent = (d.alerts || []).find(
-        a => (a.alert_level === 'critical' || a.alert_level === 'danger') && !a.is_read
-      );
-      if (urgent) showModal(urgent);
     })
     .catch(() => {});
 
