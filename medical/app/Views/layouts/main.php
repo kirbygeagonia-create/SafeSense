@@ -489,14 +489,27 @@
 
   /* ── Init ── */
   // Fetch existing alerts to populate the drawer and sync the badge.
-  // DO NOT auto-show modals for existing old alerts — only new real-time polls trigger modals.
+  // Modals are suppressed for old alerts (prevents cross-page repeat).
+  // Exception: alerts created within the last 30 seconds are considered "just arrived"
+  // (e.g. from a simulation that reloaded the page) and ARE shown in the modal.
   fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00')
     .then(r => r.json())
     .then(d => {
       if (d.server_time) lastPoll = d.server_time;
       if (d.unread_count) setBadge(d.unread_count);
-      // Populate the drawer only — no modals for historical alerts
-      (d.alerts || []).forEach(a => addDrawerItem(a));
+      (d.alerts || []).forEach(a => {
+        addDrawerItem(a);
+        // Show modal only for very recent unread critical/danger alerts not yet shown.
+        // 30-second window covers simulation-reload delay (~1.8s) with a wide margin.
+        const ageMs = Date.now() - new Date(a.created_at).getTime();
+        if (
+          ageMs < 30000 &&
+          !a.is_read &&
+          (a.alert_level === 'critical' || a.alert_level === 'danger')
+        ) {
+          showModal(a);
+        }
+      });
     })
     .catch(() => {});
 
