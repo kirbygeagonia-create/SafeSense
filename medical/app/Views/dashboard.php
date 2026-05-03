@@ -171,7 +171,7 @@
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-bold">
-          <span class="ss-live-dot"></span>SafeSense Live Alerts
+          <span class="ss-live-dot me-1"></span>SafeSense Live Alerts
         </h6>
         <a href="<?php echo url('/alerts'); ?>" class="btn btn-sm btn-outline-danger">View All</a>
       </div>
@@ -345,14 +345,14 @@
             }
           }
         });
+        document.getElementById('alertsChart').style.display = '';
       }
-      // Hide alerts chart skeleton and show canvas
+      // Hide alerts chart skeleton (runs in both cases)
       const skelAlertsChart = document.getElementById('skelAlertsChart');
       if (skelAlertsChart) {
         skelAlertsChart.classList.add('ss-fading');
         setTimeout(() => skelAlertsChart.classList.add('ss-loaded'), 200);
       }
-      document.getElementById('alertsChart').style.display = '';
 
       // Task 7 — Appointments chart with empty-state fallback
       const apptLabels = (data.appointments || []).map(r => r.week_start || r.yw);
@@ -387,14 +387,14 @@
             }
           }
         });
+        document.getElementById('appointmentsChart').style.display = '';
       }
-      // Hide appointments chart skeleton and show canvas
+      // Hide appointments chart skeleton (runs in both cases)
       const skelApptChart = document.getElementById('skelApptChart');
       if (skelApptChart) {
         skelApptChart.classList.add('ss-fading');
         setTimeout(() => skelApptChart.classList.add('ss-loaded'), 200);
       }
-      document.getElementById('appointmentsChart').style.display = '';
     })
     .catch(() => {});
 })();

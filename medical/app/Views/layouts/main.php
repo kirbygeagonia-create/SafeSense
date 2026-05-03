@@ -88,7 +88,7 @@
         <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
-            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ss-live-dot--sm"></span>
+            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ss-live-dot--sm ms-1"></span>
           </a>
         </li>
       </ul>

@@ -52,8 +52,7 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 .card-body { padding: 1.25rem; }
 
 /* Stat cards */
-.stat-card { border: 1px solid var(--ss-border); border-radius: var(--r-lg); background: var(--ss-surface); padding: 1.25rem 1.5rem; box-shadow: var(--shadow-xs); transition: box-shadow var(--t-base), transform var(--t-base); height: 100%; overflow: hidden; }
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.stat-card { border: 1px solid var(--ss-border); border-radius: var(--r-lg); background: var(--ss-surface); padding: 1.25rem 1.5rem; box-shadow: var(--shadow-xs); transition: box-shadow var(--t-base), transform var(--t-base), border-left-color var(--t-base); height: 100%; overflow: hidden; }
 .stat-card > div > div:first-child { min-width: 0; flex: 1; }
 .stat-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ss-text-3); margin-bottom: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--ss-text); line-height: 1.1; letter-spacing: -.03em; word-break: break-all; }
@@ -76,7 +75,7 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 .table-dark thead th { background: var(--ss-primary-dark) !important; color: rgba(255,255,255,.85) !important; border-color: rgba(255,255,255,.1) !important; }
 
 /* Buttons */
-.btn { border-radius: var(--r-md); font-weight: 500; font-size: .875rem; transition: background var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast), border-color var(--t-fast); min-height: 44px; padding: .55rem 1.1rem; display: inline-flex; align-items: center; gap: .35rem; }
+.btn { border-radius: var(--r-md); font-weight: 500; font-size: .875rem; transition: background var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast), border-color var(--t-fast); min-height: 44px; padding: .55rem 1.1rem; display: inline-flex; align-items: center; gap: .35rem; overflow: hidden; position: relative; }
 .btn:active { transform: scale(.97); }
 .btn:focus-visible { outline: 3px solid var(--ss-primary); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(29,78,216,.2); }
 .btn-sm { min-height: 34px; font-size: .8rem; padding: .35rem .75rem; border-radius: var(--r-sm); }
@@ -104,7 +103,6 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 
 /* Alerts Page */
 .ss-alert-card { border: 1px solid var(--ss-border); border-radius: var(--r-lg) !important; transition: box-shadow var(--t-base), transform var(--t-base); box-shadow: var(--shadow-xs); }
-.ss-alert-card:hover { box-shadow: var(--shadow-md) !important; transform: translateY(-1px); }
 .ss-alert-card-unread { background: #f5f8ff !important; }
 .ss-level-critical { border-left-color: var(--ss-critical) !important; }
 .ss-level-danger { border-left-color: var(--ss-danger) !important; }
@@ -165,24 +163,6 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 .dt-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
 .dt-header .dataTables_length { margin: 0; }
 .dt-header .dataTables_filter { margin: 0; }
-
-/* ════════════════════════════════════════════
-   LIVE DOT (animated green pulse)
-════════════════════════════════════════════ */
-.ss-live-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #22c55e;
-  border-radius: 50%;
-  flex-shrink: 0;
-  animation: ss-pulse 2s infinite;
-}
-@keyframes ss-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.55); }
-  70%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-}
 
 /* ════════════════════════════════════════════
    X CLOSE BUTTON
@@ -857,6 +837,8 @@ footer .ss-live-dot {
 .ss-iot-guide-code-sm {
   font-size: .8rem;
 }
+.ss-alert-meta-row { font-size: .82rem; }
+.ss-simulate-hint  { font-size: .72rem; }
 
 /* ════════════════════════════════════════════
    DASHBOARD ALERT ICONS
@@ -1048,7 +1030,6 @@ footer .ss-live-dot {
   border-radius: 50%;
   flex-shrink: 0;
   position: relative;
-  animation: ss-pulse 2s infinite;
 }
 /* Ripple rings using box-shadow animation */
 @keyframes ss-live-ripple {
@@ -1101,9 +1082,6 @@ footer .ss-live-dot {
 ════════════════════════════════════════════ */
 
 /* Stat card — lift + left accent color brightens on hover */
-.stat-card {
-  transition: box-shadow var(--t-base), transform var(--t-base), border-left-color var(--t-base);
-}
 .stat-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
@@ -1118,9 +1096,6 @@ footer .ss-live-dot {
 }
 
 /* Alert card — slide right on hover (animata list hover pattern) */
-.ss-alert-card {
-  transition: box-shadow var(--t-base), transform var(--t-base);
-}
 .ss-alert-card:hover {
   transform: translateX(4px) translateY(-1px);
   box-shadow: var(--shadow-md) !important;
@@ -1156,7 +1131,6 @@ footer .ss-live-dot {
 .navbar .nav-link.active::after { transform: scaleX(1); }
 
 /* Button — ripple effect (animata button pattern) */
-.btn { overflow: hidden; position: relative; }
 .btn::after {
   content: '';
   position: absolute;
@@ -1228,6 +1202,8 @@ main.container {
   transform: none; /* override base .form-control focus if any */
   box-shadow: 0 0 0 3px rgba(59,130,246,.28), 0 1px 6px rgba(15,23,42,.15);
 }
+
+.ss-home-subtitle { font-size: .9rem; opacity: .8; }
 
 /* Responsive */
 @media (max-width: 768px) {

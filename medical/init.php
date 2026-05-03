@@ -17,5 +17,4 @@ if (file_exists('.env')) {
     $dotenv->load();
 }
 
-echo "Hospital Management System initialized successfully!";
 ?>

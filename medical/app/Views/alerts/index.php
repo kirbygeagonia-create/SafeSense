@@ -30,7 +30,7 @@
           <i class="fas fa-cloud-rain text-info me-2"></i>Warning — Rain
         </button></li>
         <li><hr class="dropdown-divider"></li>
-        <li><small class="dropdown-item text-muted" style="font-size:.72rem;">
+        <li><small class="dropdown-item text-muted ss-simulate-hint">
           <i class="fas fa-info-circle me-1"></i>Dashboard updates within 5 seconds
         </small></li>
       </ul>
@@ -85,7 +85,7 @@
                   <?php endif; ?>
                 </div>
                 <p class="mb-2 fw-semibold"><?php echo htmlspecialchars($a['message']); ?></p>
-                <div class="d-flex flex-wrap gap-3 text-muted" style="font-size:.82rem;">
+                <div class="d-flex flex-wrap gap-3 text-muted ss-alert-meta-row">
                   <span><i class="fas fa-map-marker-alt me-1 text-danger"></i><?php echo htmlspecialchars($a['location_name'] ?? '—'); ?></span>
                   <span><i class="fas fa-clock me-1"></i><?php echo $dt->format('h:i:s A'); ?></span>
                   <span><i class="fas fa-calendar-alt me-1"></i><?php echo $dt->format('M d, Y'); ?></span>
@@ -134,7 +134,7 @@
   <div class="card-body">
     <p class="text-muted mb-3">Your SafeSense Arduino with WiFi Shield should POST to:</p>
     <code class="d-block bg-dark text-success p-3 rounded mb-3">
-      POST <?php echo APP_URL; ?>/api/alert<br>
+      POST <?php echo url('/api/alert'); ?><br>
       Content-Type: application/json
     </code>
     <p class="text-muted mb-2">Required JSON fields:</p>

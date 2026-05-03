@@ -4,7 +4,7 @@
     <i class="fas fa-satellite-dish fa-2x" style="color:#f87171;"></i>
     <div>
       <h1 class="mb-0 fw-bolder" style="font-size:2rem;letter-spacing:-.03em;">Tupi Hospital Management</h1>
-      <div style="font-size:.9rem;opacity:.8;">Hospital Intelligence &amp; SafeSense IoT Monitoring Platform</div>
+      <div class="ss-home-subtitle">Hospital Intelligence &amp; SafeSense IoT Monitoring Platform</div>
     </div>
   </div>
   <p class="mb-0" style="opacity:.85;max-width:560px;font-size:.95rem;line-height:1.65;">
