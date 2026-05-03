@@ -197,7 +197,7 @@
       &copy; <?php echo date('Y'); ?> <?php echo APP_NAME; ?>
       &nbsp;·&nbsp;
       <a href="<?php echo url('/alerts'); ?>" class="text-muted text-decoration-none d-inline-flex align-items-center gap-1">
-        <span class="ss-live-dot" style="width:6px;height:6px;"></span>SafeSense IoT Active
+        <span class="ss-live-dot ss-live-dot--sm"></span>SafeSense IoT Active
       </a>
     </small>
   </div>
@@ -326,6 +326,23 @@
     setTimeout(()=>killToast(t), TOAST_MS);
   }
   function killToast(t){ t.classList.add('out'); setTimeout(()=>t.remove(),350); }
+
+  /* ── Poll — fetches new alerts since lastPoll every POLL_MS ── */
+  function poll(){
+    fetch(window.BASE_URL + '/api/alerts/poll?since=' + encodeURIComponent(lastPoll))
+    .then(r => r.json())
+    .then(data => {
+      lastPoll = data.server_time || lastPoll;
+      setBadge(data.unread_count || 0);
+      (data.alerts || []).forEach(a => {
+        addDrawerItem(a);
+        showToast(a);
+        if (a.alert_level === 'critical' || a.alert_level === 'danger') {
+          showModal(a);
+        }
+      });
+    }).catch(e => { console.error('Poll error:', e); });
+  }
 
   /* ── Modal ── */
   /* Guard: only show modal if this alert ID has NOT been shown before in this session */
