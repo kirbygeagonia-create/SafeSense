@@ -133,12 +133,12 @@
   </div>
   <div class="card-body">
     <p class="text-muted mb-3">Your SafeSense Arduino with WiFi Shield should POST to:</p>
-    <code class="d-block bg-dark text-success p-3 rounded mb-3" style="font-size:.85rem;">
+    <code class="d-block bg-dark text-success p-3 rounded mb-3">
       POST <?php echo APP_URL; ?>/api/alert<br>
       Content-Type: application/json
     </code>
     <p class="text-muted mb-2">Required JSON fields:</p>
-    <code class="d-block bg-dark text-info p-3 rounded" style="font-size:.8rem;">
+    <code class="d-block bg-dark text-info p-3 rounded ss-iot-guide-code-sm">
       {<br>
       &nbsp;&nbsp;"api_key": "your-key-from-.env",<br>
       &nbsp;&nbsp;"device_id": "SAFESENSE-001",<br>

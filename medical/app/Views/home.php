@@ -1,5 +1,5 @@
 <!-- Hero / Home Page -->
-<div class="ss-home-hero rounded-xl p-5 mb-4 text-white" style="background: linear-gradient(135deg, var(--ss-primary-dark) 0%, var(--ss-primary) 100%);">
+<div class="rounded-3 p-5 mb-4 text-white" style="background: linear-gradient(135deg, var(--ss-primary-dark) 0%, var(--ss-primary) 100%);">
   <div class="d-flex align-items-center gap-3 mb-3">
     <i class="fas fa-satellite-dish fa-2x" style="color:#f87171;"></i>
     <div>

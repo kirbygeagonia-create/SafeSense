@@ -126,7 +126,7 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 /* Notification Bell */
 .ss-bell-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; cursor: pointer; color: #fff; font-size: 1.1rem; border-radius: var(--r-md); transition: background var(--t-fast); }
 .ss-bell-wrap:hover { background: rgba(255,255,255,0.1); }
-.ss-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 6px; font-size: .7rem; font-weight: 700; color: #fff; background: #ef4444; border-radius: 99px; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.ss-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 6px; font-size: .7rem; font-weight: 700; color: #fff; background: #ef4444; border-radius: 99px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 /* Bell badge bump — triggered by JS setBadge() */
 .ss-badge.bump {
@@ -854,6 +854,9 @@ footer .ss-live-dot {
 .ss-iot-guide code {
   font-size: .85rem;
 }
+.ss-iot-guide-code-sm {
+  font-size: .8rem;
+}
 
 /* ════════════════════════════════════════════
    DASHBOARD ALERT ICONS
@@ -990,7 +993,11 @@ footer .ss-live-dot {
 .ss-skel-chart-bar:nth-child(8) { height: 40%; animation-delay: .7s; }
 
 /* ── Skeleton visibility toggle (JS adds/removes .ss-loaded) ── */
-.ss-skeleton-wrap { transition: opacity var(--t-base); }
+.ss-skeleton-wrap {
+  transition: opacity var(--t-base);
+  pointer-events: none;
+}
+.ss-skeleton-wrap.ss-fading { opacity: 0; }
 .ss-skeleton-wrap.ss-loaded { display: none !important; }
 .ss-content-wrap  { opacity: 0; transition: opacity var(--t-slow); }
 .ss-content-wrap.ss-loaded  { opacity: 1; }

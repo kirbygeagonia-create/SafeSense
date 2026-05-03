@@ -314,11 +314,12 @@
       const alertLabels = (data.alerts || []).map(r => r.date);
       const alertValues = (data.alerts || []).map(r => parseInt(r.count));
       if (alertLabels.length === 0) {
-        document.getElementById('alertsChart').style.display = 'none';
+        const wrap = document.getElementById('alertsChartWrap');
+        wrap.style.minHeight = '200px';
         const p = document.createElement('p');
-        p.className = 'text-center text-muted py-4';
-        p.textContent = 'No data yet.';
-        document.getElementById('alertsChartWrap').appendChild(p);
+        p.className = 'text-muted mb-0 text-center w-100';
+        p.innerHTML = '<i class="fas fa-chart-line fa-2x d-block mb-2 text-muted opacity-50"></i>No alert data in the last 30 days.';
+        wrap.appendChild(p);
       } else {
         new Chart(document.getElementById('alertsChart'), {
           type: 'line',
@@ -347,18 +348,22 @@
       }
       // Hide alerts chart skeleton and show canvas
       const skelAlertsChart = document.getElementById('skelAlertsChart');
-      if (skelAlertsChart) skelAlertsChart.classList.add('ss-loaded');
+      if (skelAlertsChart) {
+        skelAlertsChart.classList.add('ss-fading');
+        setTimeout(() => skelAlertsChart.classList.add('ss-loaded'), 200);
+      }
       document.getElementById('alertsChart').style.display = '';
 
       // Task 7 — Appointments chart with empty-state fallback
       const apptLabels = (data.appointments || []).map(r => r.week_start || r.yw);
       const apptValues = (data.appointments || []).map(r => parseInt(r.count));
       if (apptLabels.length === 0) {
-        document.getElementById('appointmentsChart').style.display = 'none';
+        const wrap = document.getElementById('appointmentsChartWrap');
+        wrap.style.minHeight = '200px';
         const p = document.createElement('p');
-        p.className = 'text-center text-muted py-4';
-        p.textContent = 'No data yet.';
-        document.getElementById('appointmentsChartWrap').appendChild(p);
+        p.className = 'text-muted mb-0 text-center w-100';
+        p.innerHTML = '<i class="fas fa-calendar-times fa-2x d-block mb-2 text-muted opacity-50"></i>No appointment data in the last 8 weeks.';
+        wrap.appendChild(p);
       } else {
         new Chart(document.getElementById('appointmentsChart'), {
           type: 'bar',
@@ -385,7 +390,10 @@
       }
       // Hide appointments chart skeleton and show canvas
       const skelApptChart = document.getElementById('skelApptChart');
-      if (skelApptChart) skelApptChart.classList.add('ss-loaded');
+      if (skelApptChart) {
+        skelApptChart.classList.add('ss-fading');
+        setTimeout(() => skelApptChart.classList.add('ss-loaded'), 200);
+      }
       document.getElementById('appointmentsChart').style.display = '';
     })
     .catch(() => {});
@@ -393,6 +401,11 @@
 
 // Show skeleton → reveal real content after a brief moment (or after chart loads)
 (function() {
+  function hideSkel(el) {
+    if (!el) return;
+    el.classList.add('ss-fading');
+    setTimeout(() => el.classList.add('ss-loaded'), 200);
+  }
   const skelStats  = document.getElementById('skelStats');
   const realStats  = document.getElementById('realStats');
   const skelBilling = document.getElementById('skelBilling');
@@ -400,9 +413,9 @@
 
   // Real content was hidden at start; reveal after 350ms (feels natural, hides flash)
   setTimeout(() => {
-    if (skelStats)   skelStats.classList.add('ss-loaded');
+    hideSkel(skelStats);
+    hideSkel(skelBilling);
     if (realStats)   realStats.classList.add('ss-loaded');
-    if (skelBilling) skelBilling.classList.add('ss-loaded');
     if (realBilling) realBilling.classList.add('ss-loaded');
   }, 350);
 })();

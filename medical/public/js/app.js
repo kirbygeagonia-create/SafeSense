@@ -77,6 +77,13 @@
     return item ? item.name : '—';
   }
 
+  /* Fade skeleton out, then hide it */
+  function hideSkeleton(el) {
+    if (!el) return;
+    el.classList.add('ss-fading');
+    setTimeout(() => el.classList.add('ss-loaded'), 200);
+  }
+
   /* ──────────────────────────────────────────────
      Fix DataTables "Show N entries" select overlap
   ────────────────────────────────────────────── */
@@ -157,7 +164,7 @@
       initComplete: function() {
         // Hide skeleton, reveal table
         const skel = document.getElementById(skelId);
-        if (skel) skel.classList.add('ss-loaded');
+        hideSkeleton(skel);
         tableEl.style.transition = 'opacity 0.3s ease';
         tableEl.style.opacity = '1';
 
@@ -508,10 +515,10 @@
       buildRow: (d) => [
         esc(d.invoice_number),
         esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
-        Number(d.amount || 0).toFixed(2),
-        Number(d.discount || 0).toFixed(2),
-        Number(d.tax || 0).toFixed(2),
-        Number(d.total_amount || 0).toFixed(2),
+        '₱' + Number(d.amount || 0).toFixed(2),
+        '₱' + Number(d.discount || 0).toFixed(2),
+        '₱' + Number(d.tax || 0).toFixed(2),
+        '₱' + Number(d.total_amount || 0).toFixed(2),
         paymentStatusBadge(d.payment_status),
         esc(d.payment_method || '—'),
         esc(d.payment_date || '—'),

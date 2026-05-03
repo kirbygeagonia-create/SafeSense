@@ -24,10 +24,10 @@ $allPatients = isset($allPatients) ? $allPatients : [];
             <tr>
                 <th>Invoice #</th>
                 <th>Patient</th>
-                <th>Amount</th>
-                <th>Discount</th>
-                <th>Tax</th>
-                <th>Total</th>
+                <th>Amount (₱)</th>
+                <th>Discount (₱)</th>
+                <th>Tax (₱)</th>
+                <th>Total (₱)</th>
                 <th>Status</th>
                 <th>Method</th>
                 <th>Date</th>
@@ -48,10 +48,10 @@ $allPatients = isset($allPatients) ? $allPatients : [];
                 <tr>
                     <td><?php echo htmlspecialchars($r['invoice_number']); ?></td>
                     <td><?php echo htmlspecialchars($r['patient_name'] ?? '—'); ?></td>
-                    <td><?php echo number_format((float)$r['amount'], 2); ?></td>
-                    <td><?php echo number_format((float)$r['discount'], 2); ?></td>
-                    <td><?php echo number_format((float)$r['tax'], 2); ?></td>
-                    <td><?php echo number_format((float)$r['total_amount'], 2); ?></td>
+                    <td>₱<?php echo number_format((float)$r['amount'], 2); ?></td>
+                    <td>₱<?php echo number_format((float)$r['discount'], 2); ?></td>
+                    <td>₱<?php echo number_format((float)$r['tax'], 2); ?></td>
+                    <td>₱<?php echo number_format((float)$r['total_amount'], 2); ?></td>
                     <td><span class="badge bg-<?php echo $statusColor; ?>"><?php echo ucfirst(htmlspecialchars($r['payment_status'])); ?></span></td>
                     <td><?php echo htmlspecialchars($r['payment_method'] ?? '—'); ?></td>
                     <td><?php echo htmlspecialchars($r['payment_date'] ?? '—'); ?></td>
