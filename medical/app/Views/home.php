@@ -14,7 +14,7 @@
 
 <div class="row g-3">
   <div class="col-md-4">
-    <div class="card h-100 border-primary border-top border-3">
+    <div class="card h-100" style="border-top: 3px solid var(--ss-primary);">
       <div class="card-body">
         <h5 class="card-title fw-bold"><i class="fas fa-user-injured me-2 text-primary"></i>Patients</h5>
         <p class="card-text text-muted small">Manage patient records, personal information, medical history, and contact details.</p>
@@ -23,7 +23,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 border-success border-top border-3">
+    <div class="card h-100" style="border-top: 3px solid #16a34a;">
       <div class="card-body">
         <h5 class="card-title fw-bold"><i class="fas fa-user-md me-2 text-success"></i>Doctors</h5>
         <p class="card-text text-muted small">Manage doctor profiles, specializations, schedules, and availability.</p>
@@ -32,7 +32,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 border-info border-top border-3">
+    <div class="card h-100" style="border-top: 3px solid #0891b2;">
       <div class="card-body">
         <h5 class="card-title fw-bold"><i class="fas fa-calendar-check me-2 text-info"></i>Appointments</h5>
         <p class="card-text text-muted small">Schedule and manage patient appointments with doctors and track status.</p>

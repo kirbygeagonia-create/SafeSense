@@ -26,14 +26,35 @@
     });
   }
 
+  // Progress bar helpers
+  const progBar = document.getElementById('ssProgressBar');
+  function progStart() {
+    if (!progBar) return;
+    progBar.style.width = '0%';
+    progBar.classList.add('active');
+    // Simulate incremental progress
+    let w = 0;
+    progBar._timer = setInterval(() => {
+      w = Math.min(w + Math.random() * 15, 85);
+      progBar.style.width = w + '%';
+    }, 200);
+  }
+  function progDone() {
+    if (!progBar) return;
+    clearInterval(progBar._timer);
+    progBar.style.width = '100%';
+    setTimeout(() => { progBar.classList.remove('active'); progBar.style.width = '0%'; }, 400);
+  }
+
   function ajaxPost(url, formData) {
+    progStart();
     return ajax(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(formData).toString()
-    });
+    }).finally(progDone);
   }
-  
+
   window.ajax = ajax;
   window.ajaxPost = ajaxPost;
 
@@ -108,6 +129,24 @@
     const tableEl = document.getElementById(cfg.tableId);
     if (!tableEl) return;
 
+    // Show skeleton before DataTable init
+    const tableWrapper = tableEl.parentElement;
+    const skelId = 'skel-' + cfg.tableId;
+    const skelHtml = `
+      <div id="${skelId}" class="ss-skeleton-wrap">
+        ${Array.from({length: 6}).map(() => `
+          <div class="ss-skel-table-row">
+            <div class="ss-skel skel-cell-sm"></div>
+            <div class="ss-skel skel-cell-md"></div>
+            <div class="ss-skel skel-cell-lg"></div>
+            <div class="ss-skel skel-cell-lg"></div>
+            <div class="ss-skel skel-cell-btn"></div>
+          </div>
+        `).join('')}
+      </div>`;
+    tableWrapper.insertAdjacentHTML('beforebegin', skelHtml);
+    tableEl.style.opacity = '0';
+
     // Init DataTables
     const dt = new DataTable('#' + cfg.tableId, {
       pageLength: 10,
@@ -116,6 +155,12 @@
       columnDefs: [{ orderable: false, targets: -1 }],
       dom: '<"dt-header"lf>rtip',
       initComplete: function() {
+        // Hide skeleton, reveal table
+        const skel = document.getElementById(skelId);
+        if (skel) skel.classList.add('ss-loaded');
+        tableEl.style.transition = 'opacity 0.3s ease';
+        tableEl.style.opacity = '1';
+
         const lengthSel = tableEl.closest('.dataTables_wrapper')
           ?.querySelector('.dataTables_length select');
         if (lengthSel) {

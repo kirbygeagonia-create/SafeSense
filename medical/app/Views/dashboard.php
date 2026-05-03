@@ -1,10 +1,31 @@
 <div class="page-header">
   <div>
-    <h1><i class="fas fa-tachometer-alt text-primary"></i>Dashboard</h1>
+    <h1><i class="fas fa-tachometer-alt"></i><span class="ss-shimmer-text">Dashboard</span></h1>
     <div class="page-subtitle">Welcome back — <?php echo date('l, F j, Y'); ?></div>
   </div>
 </div>
 
+<!-- ── Stat Cards Skeleton (shown for ~400ms on load, then hidden) ── -->
+<div class="ss-skeleton-wrap" id="skelStats">
+  <div class="row g-3 mb-4">
+    <?php for ($i = 0; $i < 4; $i++): ?>
+    <div class="col-sm-6 col-lg-3">
+      <div class="ss-skel-stat-card">
+        <div class="skel-row">
+          <div>
+            <div class="ss-skel skel-label"></div>
+            <div class="ss-skel skel-value"></div>
+            <div class="ss-skel skel-sub"></div>
+          </div>
+          <div class="ss-skel skel-icon"></div>
+        </div>
+      </div>
+    </div>
+    <?php endfor; ?>
+  </div>
+</div>
+<!-- ── Real stat cards (initially hidden, revealed after skeleton) ── -->
+<div class="ss-content-wrap" id="realStats">
 <!-- Stats row -->
 <div class="row g-3 mb-4">
   <!-- Task 2 — Convert first 4 stat cards -->
@@ -63,7 +84,28 @@
     </a>
   </div>
 </div>
+</div><!-- end #realStats -->
 
+<!-- Billing Stats Skeleton -->
+<div class="ss-skeleton-wrap" id="skelBilling">
+  <div class="row g-3 mb-4">
+    <?php for ($i = 0; $i < 4; $i++): ?>
+    <div class="col-sm-6 col-lg-3">
+      <div class="ss-skel-stat-card">
+        <div class="skel-row">
+          <div>
+            <div class="ss-skel skel-label"></div>
+            <div class="ss-skel skel-value"></div>
+            <div class="ss-skel skel-sub"></div>
+          </div>
+          <div class="ss-skel skel-icon"></div>
+        </div>
+      </div>
+    </div>
+    <?php endfor; ?>
+  </div>
+</div>
+<div class="ss-content-wrap" id="realBilling">
 <!-- Billing summary row -->
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
@@ -119,6 +161,7 @@
     </div>
   </div>
 </div>
+</div><!-- end #realBilling -->
 
 <!-- Main content row -->
 <div class="row g-4">
@@ -219,7 +262,18 @@
         <h6 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-danger"></i>Alerts Over Time (30 Days)</h6>
       </div>
       <div class="card-body d-flex align-items-center justify-content-center" id="alertsChartWrap">
-        <canvas id="alertsChart" height="200"></canvas>
+        <!-- Skeleton chart bars (shown while AJAX loads) -->
+        <div id="skelAlertsChart" class="ss-skel-chart ss-skeleton-wrap w-100">
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+        </div>
+        <canvas id="alertsChart" height="200" style="display:none;"></canvas>
       </div>
     </div>
   </div>
@@ -229,7 +283,18 @@
         <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>Appointments by Week (8 Weeks)</h6>
       </div>
       <div class="card-body d-flex align-items-center justify-content-center" id="appointmentsChartWrap">
-        <canvas id="appointmentsChart" height="200"></canvas>
+        <!-- Skeleton chart bars (shown while AJAX loads) -->
+        <div id="skelApptChart" class="ss-skel-chart ss-skeleton-wrap w-100">
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+          <div class="ss-skel ss-skel-chart-bar"></div>
+        </div>
+        <canvas id="appointmentsChart" height="200" style="display:none;"></canvas>
       </div>
     </div>
   </div>
@@ -280,6 +345,10 @@
           }
         });
       }
+      // Hide alerts chart skeleton and show canvas
+      const skelAlertsChart = document.getElementById('skelAlertsChart');
+      if (skelAlertsChart) skelAlertsChart.classList.add('ss-loaded');
+      document.getElementById('alertsChart').style.display = '';
 
       // Task 7 — Appointments chart with empty-state fallback
       const apptLabels = (data.appointments || []).map(r => r.week_start || r.yw);
@@ -314,7 +383,27 @@
           }
         });
       }
+      // Hide appointments chart skeleton and show canvas
+      const skelApptChart = document.getElementById('skelApptChart');
+      if (skelApptChart) skelApptChart.classList.add('ss-loaded');
+      document.getElementById('appointmentsChart').style.display = '';
     })
     .catch(() => {});
+})();
+
+// Show skeleton → reveal real content after a brief moment (or after chart loads)
+(function() {
+  const skelStats  = document.getElementById('skelStats');
+  const realStats  = document.getElementById('realStats');
+  const skelBilling = document.getElementById('skelBilling');
+  const realBilling = document.getElementById('realBilling');
+
+  // Real content was hidden at start; reveal after 350ms (feels natural, hides flash)
+  setTimeout(() => {
+    if (skelStats)   skelStats.classList.add('ss-loaded');
+    if (realStats)   realStats.classList.add('ss-loaded');
+    if (skelBilling) skelBilling.classList.add('ss-loaded');
+    if (realBilling) realBilling.classList.add('ss-loaded');
+  }, 350);
 })();
 </script>

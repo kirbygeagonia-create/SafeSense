@@ -20,6 +20,7 @@
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 </head>
 <body>
+<div id="ssProgressBar"></div>
 
 <?php
   // Session flash — read and immediately destroy
@@ -133,9 +134,20 @@
     </div>
   </div>
   <div class="ss-drawer-body" id="ssDrawerBody">
-    <p class="text-muted text-center py-4" id="ssNoAlerts">
-      <i class="fas fa-check-circle text-success fa-2x d-block mb-2"></i>No new alerts — all clear.
-    </p>
+  <!-- Skeleton shown while init fetch runs -->
+  <div id="ssDrawerSkel" class="ss-skeleton-wrap p-2">
+    <?php for ($i = 0; $i < 4; $i++): ?>
+    <div class="ss-skel-notif mb-1">
+      <div class="ss-skel skel-notif-level"></div>
+      <div class="ss-skel skel-notif-msg-1"></div>
+      <div class="ss-skel skel-notif-msg-2"></div>
+      <div class="ss-skel skel-notif-meta"></div>
+    </div>
+    <?php endfor; ?>
+  </div>
+  <p class="text-muted text-center py-4" id="ssNoAlerts" style="display:none;">
+    <i class="fas fa-check-circle text-success fa-2x d-block mb-2"></i>No new alerts — all clear.
+  </p>
   </div>
   <div class="ss-drawer-footer">
     <a href="<?php echo url('/alerts'); ?>" class="btn btn-primary btn-sm w-100">
@@ -512,6 +524,12 @@
   fetch(window.BASE_URL + '/api/alerts/poll?since=1970-01-01+00:00:00')
     .then(r => r.json())
     .then(d => {
+      // Hide drawer skeleton once data arrives
+      const drawerSkel = document.getElementById('ssDrawerSkel');
+      if (drawerSkel) drawerSkel.classList.add('ss-loaded');
+      if (!d.alerts || d.alerts.length === 0) {
+        noAlerts.style.display = '';
+      }
       if (d.server_time) lastPoll = d.server_time;
       if (d.unread_count) setBadge(d.unread_count);
       (d.alerts || []).forEach(a => {

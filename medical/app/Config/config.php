@@ -43,6 +43,7 @@ define('GENDER_OTHER',  'other');
 define('ROLE_ADMIN',   'admin');
 define('ROLE_DOCTOR',  'doctor');
 define('ROLE_NURSE',   'nurse');
+define('ROLE_STAFF',   'staff');
 
 // ── Pagination ───────────────────────────────
 define('ITEMS_PER_PAGE', 10);
