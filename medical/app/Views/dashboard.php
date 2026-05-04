@@ -5,6 +5,69 @@
   </div>
 </div>
 
+<?php if (($userRole ?? 'staff') === 'doctor' && !empty($myAppointments)): ?>
+<div class="card mb-4" style="border-left: 4px solid var(--ss-primary);">
+  <div class="card-header">
+    <i class="fas fa-calendar-check me-2"></i>Your Upcoming Appointments
+    <span class="badge bg-primary ms-2"><?php echo count($myAppointments); ?></span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Reason</th><th>Status</th></tr></thead>
+        <tbody>
+          <?php foreach ($myAppointments as $a):
+            $sc = ['pending'=>'warning','confirmed'=>'primary','completed'=>'success','cancelled'=>'secondary'][$a['status']] ?? 'secondary';
+          ?>
+          <tr>
+            <td><?php echo date('M d, Y', strtotime($a['appointment_date'])); ?></td>
+            <td><?php echo date('h:i A', strtotime($a['appointment_time'])); ?></td>
+            <td><strong><?php echo htmlspecialchars($a['patient_name']); ?></strong></td>
+            <td><?php echo htmlspecialchars(mb_strimwidth($a['reason'] ?? '—', 0, 40, '…')); ?></td>
+            <td><span class="badge bg-<?php echo $sc; ?>"><?php echo ucfirst($a['status']); ?></span></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<?php if (($userRole ?? 'staff') === 'nurse' && !empty($myAlerts)): ?>
+<div class="card mb-4" style="border-left: 4px solid var(--ss-critical);">
+  <div class="card-header" style="background:#fef2f2; border-color:#fecaca;">
+    <i class="fas fa-satellite-dish me-2 text-danger"></i>
+    <span class="text-danger fw-bold">Unread Alerts Requiring Attention</span>
+    <span class="badge bg-danger ms-2"><?php echo count($myAlerts); ?></span>
+  </div>
+  <div class="card-body p-0">
+    <?php foreach (array_slice($myAlerts, 0, 5) as $a):
+      $colors = ['critical'=>'#b91c1c','danger'=>'#c2410c','warning'=>'#b45309'];
+      $c = $colors[$a['alert_level']] ?? '#64748b';
+    ?>
+    <div class="d-flex align-items-start gap-3 p-3 border-bottom">
+      <div class="stat-icon flex-shrink-0" style="background:<?php echo $c; ?>18; color:<?php echo $c; ?>;">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div>
+        <div class="fw-semibold" style="font-size:.875rem;"><?php echo htmlspecialchars($a['message']); ?></div>
+        <div class="text-muted" style="font-size:.78rem;">
+          <?php echo htmlspecialchars($a['location_name'] ?? '—'); ?> &middot;
+          <?php echo date('M d, h:i A', strtotime($a['created_at'])); ?>
+        </div>
+      </div>
+    </div>
+    <?php endforeach; ?>
+    <div class="p-2 text-center">
+      <a href="<?php echo url('/alerts'); ?>" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-list me-1"></i>View All Alerts
+      </a>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- ── Stat Cards Skeleton (shown for ~400ms on load, then hidden) ── -->
 <div class="ss-skeleton-wrap" id="skelStats">
   <div class="row g-3 mb-4">

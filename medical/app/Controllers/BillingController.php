@@ -29,6 +29,31 @@ class BillingController extends BaseController {
         ]);
     }
 
+    public function printInvoice()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'doctor', 'nurse', 'staff']);
+
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            $_SESSION['flash_error'] = 'Invalid invoice ID.';
+            $this->redirect('/billing');
+            return;
+        }
+
+        $found = $this->billingModel->getById($id);
+        if (!$found) {
+            $_SESSION['flash_error'] = 'Invoice not found.';
+            $this->redirect('/billing');
+            return;
+        }
+
+        // Render the print view — no main layout, standalone page
+        $billing = $this->billingModel;
+        include APP_PATH . '/Views/billing/print.php';
+        exit;
+    }
+
     public function store() {
         if (!$this->isPostRequest()) {
             if ($this->isAjax())

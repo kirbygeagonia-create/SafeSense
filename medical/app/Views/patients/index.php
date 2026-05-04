@@ -36,6 +36,10 @@
                     <td><?php echo htmlspecialchars($p['gender']); ?></td>
                     <td>
                         <?php if (in_array($currentRole ?? '', ['admin','doctor','nurse'])): ?>
+                        <a href="<?php echo url('/patients/view?id='.$p['id']); ?>"
+                           class="btn btn-sm btn-outline-info me-1" title="View Profile">
+                          <i class="fas fa-id-card"></i>
+                        </a>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $p['id']; ?>"><i class="fas fa-edit"></i></button>
                         <?php endif; ?>
                         <?php if (($currentRole ?? '') === 'admin'): ?>

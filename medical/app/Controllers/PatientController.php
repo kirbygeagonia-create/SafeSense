@@ -24,6 +24,55 @@ class PatientController extends BaseController
         ]);
     }
 
+    public function view()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'doctor', 'nurse']);
+
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            $_SESSION['flash_error'] = 'Invalid patient ID.';
+            $this->redirect('/patients');
+            return;
+        }
+
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        // Patient details
+        $found = $this->patientModel->getById($id);
+        if (!$found) {
+            $_SESSION['flash_error'] = 'Patient not found.';
+            $this->redirect('/patients');
+            return;
+        }
+
+        // EMR records
+        $emrModel  = new Emr($db);
+        $emrStmt   = $emrModel->getByPatient($id);
+        $emrRecords = $emrStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Appointments
+        $apptModel   = new Appointment($db);
+        $apptStmt    = $apptModel->getByPatient($id);
+        $appointments = $apptStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Billing
+        $billingModel  = new Billing($db);
+        $billingStmt   = $billingModel->getByPatient($id);
+        $billingRecords = $billingStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->render('patients/view', [
+            'title'          => 'Patient Profile — ' . htmlspecialchars($this->patientModel->name),
+            'navPage'        => 'patients',
+            'patient'        => $this->patientModel,
+            'emrRecords'     => $emrRecords,
+            'appointments'   => $appointments,
+            'billingRecords' => $billingRecords,
+            'currentRole'    => $this->currentRole(),
+        ]);
+    }
+
     public function store()
     {
         if ($this->isPostRequest()) {

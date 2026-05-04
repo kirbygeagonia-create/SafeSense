@@ -13,11 +13,12 @@ class App
     private function initRoutes()
     {
         $this->router->get('/', 'AuthController@dashboard');
-        $this->router->get('/patients', 'PatientController@index');
+        $this->router->get('/patients',        'PatientController@index');
+        $this->router->get('/patients/view',   'PatientController@view');
         $this->router->post('/patients/store', 'PatientController@store');
-        $this->router->get('/patients/edit', 'PatientController@edit');
-        $this->router->post('/patients/update', 'PatientController@update');
-        $this->router->post('/patients/delete', 'PatientController@delete');
+        $this->router->get('/patients/edit',   'PatientController@edit');
+        $this->router->post('/patients/update','PatientController@update');
+        $this->router->post('/patients/delete','PatientController@delete');
 
         $this->router->get('/doctors', 'DoctorController@index');
         $this->router->post('/doctors/store', 'DoctorController@store');
@@ -52,6 +53,7 @@ class App
 
         // Billing Module
         $this->router->get('/billing',          'BillingController@index');
+        $this->router->get('/billing/print',    'BillingController@printInvoice');
         $this->router->post('/billing/store',   'BillingController@store');
         $this->router->get('/billing/edit',     'BillingController@edit');
         $this->router->post('/billing/update',  'BillingController@update');

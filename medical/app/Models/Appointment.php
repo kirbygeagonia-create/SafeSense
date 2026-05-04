@@ -49,6 +49,18 @@ class Appointment {
         return false;
     }
 
+    public function getByPatient($patientId) {
+        $query = 'SELECT a.*, p.name as patient_name, d.name as doctor_name
+                  FROM ' . $this->table_name . ' a
+                  JOIN patients p ON a.patient_id = p.id
+                  JOIN doctors  d ON a.doctor_id  = d.id
+                  WHERE a.patient_id = ?
+                  ORDER BY a.appointment_date DESC, a.appointment_time DESC';
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$patientId]);
+        return $stmt;
+    }
+
     public function create() {
         $query = 'INSERT INTO ' . $this->table_name . ' 
                   SET patient_id=:patient_id, doctor_id=:doctor_id, 

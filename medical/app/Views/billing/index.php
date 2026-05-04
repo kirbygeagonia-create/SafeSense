@@ -56,6 +56,10 @@ $allPatients = isset($allPatients) ? $allPatients : [];
                     <td><?php echo htmlspecialchars($r['payment_method'] ?? '—'); ?></td>
                     <td><?php echo htmlspecialchars($r['payment_date'] ?? '—'); ?></td>
                     <td>
+                        <a href="<?php echo url('/billing/print?id='.$r['id']); ?>" target="_blank"
+                           class="btn btn-sm btn-outline-secondary me-1" title="Print Invoice">
+                          <i class="fas fa-print"></i>
+                        </a>
                         <?php if (in_array($currentRole ?? '', ['admin','staff'])): ?>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $r['id']; ?>"><i class="fas fa-edit"></i></button>
                         <?php endif; ?>

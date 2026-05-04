@@ -46,6 +46,7 @@ class AuthController extends BaseController {
         }
 
                 if ($user) {
+            session_regenerate_id(true);          // Prevent session fixation on login
             $_SESSION['user']       = $user;
             $_SESSION['login_time'] = time();
             $_SESSION['flash_success'] = 'Welcome back, ' . $user['name'] . '!';
@@ -135,6 +136,42 @@ class AuthController extends BaseController {
             $upcomingAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {}
 
+        // Role-specific data
+        $role = $_SESSION['user']['role'] ?? 'staff';
+        $myAppointments = [];
+        $myAlerts       = [];
+
+        try {
+            if ($role === 'doctor') {
+                // Find the doctor record matching the logged-in user's email
+                $stmt = $db->prepare(
+                    "SELECT a.*, p.name as patient_name
+                     FROM appointments a
+                     JOIN patients p ON a.patient_id = p.id
+                     JOIN doctors   d ON a.doctor_id  = d.id
+                     WHERE d.email = ? AND a.appointment_date >= CURDATE()
+                     ORDER BY a.appointment_date ASC, a.appointment_time ASC
+                     LIMIT 10"
+                );
+                $stmt->execute([$_SESSION['user']['email']]);
+                $myAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } catch (Exception $e) {}
+
+        try {
+            if ($role === 'nurse') {
+                $alertModelFile = APP_PATH . '/Models/Alert.php';
+                if (file_exists($alertModelFile)) {
+                    require_once $alertModelFile;
+                    $alertModel = new Alert($db);
+                    $myAlerts   = $alertModel->getUnread();
+                    $myAlerts   = is_array($myAlerts)
+                        ? $myAlerts
+                        : $myAlerts->fetchAll(PDO::FETCH_ASSOC);
+                }
+            }
+        } catch (Exception $e) {}
+
         $this->render('dashboard', [
             'title'                => 'Dashboard',
             'patientCount'         => $patientCount,
@@ -144,6 +181,9 @@ class AuthController extends BaseController {
             'unreadAlerts'         => $unreadAlerts,
             'recentAlerts'         => $recentAlerts,
             'upcomingAppointments' => $upcomingAppointments,
+            'userRole'             => $role,
+            'myAppointments'       => $myAppointments,
+            'myAlerts'             => $myAlerts,
         ]);
     }
 
