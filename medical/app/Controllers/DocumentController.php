@@ -82,8 +82,8 @@ class DocumentController extends BaseController
             return;
         }
 
-        // Create upload directory if not exists
-        $uploadDir = __DIR__ . '/../../../uploads/documents/';
+        // Create upload directory if not exists (inside public folder for direct access)
+        $uploadDir = dirname(__DIR__, 3) . '/public/uploads/documents/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -161,7 +161,7 @@ class DocumentController extends BaseController
         }
 
         // Delete file from filesystem
-        $filePath = __DIR__ . '/../../../uploads/documents/' . $document['file_path'];
+        $filePath = dirname(__DIR__, 3) . '/public/uploads/documents/' . $document['file_path'];
         if (file_exists($filePath)) {
             unlink($filePath);
         }

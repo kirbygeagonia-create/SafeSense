@@ -24,7 +24,7 @@
     <div class="card-body">
       <!-- Upload form -->
       <form method="POST" action="<?php echo url('/patients/documents/upload'); ?>" enctype="multipart/form-data" class="mb-4">
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+        <input type="hidden" name="_csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
         <input type="hidden" name="patient_id" value="<?php echo $patient['id']; ?>">
 
         <div class="row g-3 align-items-end">
@@ -87,8 +87,11 @@
                 <td><?php echo htmlspecialchars($doc['uploaded_by']); ?></td>
                 <td><?php echo date('M d, Y h:i A', strtotime($doc['created_at'])); ?></td>
                 <td>
+                  <a href="<?php echo url('/uploads/documents/' . $doc['file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="View/Download">
+                    <i class="fas fa-download"></i>
+                  </a>
                   <form method="POST" action="<?php echo url('/patients/documents/delete'); ?>" style="display:inline;" onsubmit="return confirm('Delete this document?');">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                    <input type="hidden" name="_csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                     <input type="hidden" name="id" value="<?php echo $doc['id']; ?>">
                     <input type="hidden" name="patient_id" value="<?php echo $patient['id']; ?>">
                     <button type="submit" class="btn btn-sm btn-outline-danger">

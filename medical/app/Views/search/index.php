@@ -6,8 +6,8 @@
 </div>
 
 <!-- Search form -->
-<form method="GET" action="<?php echo url('/search'); ?>" class="mb-4">
-  <div class="input-group input-group-lg" style="max-width: 700px;">
+<form method="GET" action="<?php echo url('/search'); ?>" class="mb-4 ss-search-form">
+  <div class="input-group input-group-lg">
     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
     <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name, email, phone, diagnosis, etc." value="<?php echo htmlspecialchars($q); ?>" autofocus>
     <button type="submit" class="btn btn-primary">Search</button>

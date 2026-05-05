@@ -1218,3 +1218,102 @@ main.container {
   .stat-value { font-size: 1.6rem; }
   .nav-user-info { border-left: none; margin-left: 0; padding-left: .75rem; }
 }
+
+/* ════════════════════════════════════════════
+   NAVBAR DROPDOWN & SEARCH ICON (Part 2)
+════════════════════════════════════════════ */
+
+/* Search icon nav button */
+.ss-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  padding: 0 !important;
+}
+
+/* Dropdown menus in navbar */
+.navbar .dropdown-menu {
+  background: var(--ss-surface);
+  border: 1px solid var(--ss-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: .4rem;
+  min-width: 200px;
+  margin-top: .5rem;
+}
+.navbar .dropdown-item {
+  border-radius: var(--r-sm);
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--ss-text);
+  padding: .55rem .85rem;
+  display: flex;
+  align-items: center;
+  transition: background var(--t-fast);
+}
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+  background: var(--ss-primary-light);
+  color: var(--ss-primary);
+}
+.navbar .dropdown-item.active {
+  background: var(--ss-primary);
+  color: #fff;
+}
+.navbar .dropdown-item.active i { color: #fff !important; }
+.navbar .dropdown-divider { border-color: var(--ss-border); margin: .35rem .5rem; }
+
+/* Make dropdown toggle arrow smaller */
+.navbar .dropdown-toggle::after {
+  margin-left: .3em;
+  vertical-align: .2em;
+}
+
+/* ════════════════════════════════════════════
+   UTILITY ADDITIONS — Extracted Inline CSS (Part 3)
+════════════════════════════════════════════ */
+
+/* Home page hero */
+.ss-home-hero {
+  background: linear-gradient(135deg, var(--ss-primary-dark) 0%, var(--ss-primary) 100%);
+  border-radius: var(--r-xl);
+  padding: 3rem;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+.ss-home-hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+.ss-home-hero-icon { color: #f87171; }
+.ss-home-subtitle { opacity: .85; font-size: .88rem; }
+.ss-home-lead { opacity: .85; max-width: 560px; font-size: .95rem; line-height: 1.65; }
+
+/* Home cards with color top borders */
+.ss-card-top-primary { border-top: 3px solid var(--ss-primary) !important; }
+.ss-card-top-success { border-top: 3px solid #16a34a !important; }
+.ss-card-top-info    { border-top: 3px solid #0891b2 !important; }
+.ss-card-top-warning { border-top: 3px solid #d97706 !important; }
+
+/* Patient profile page */
+.ss-profile-header h1 { margin: 0; }
+.ss-stat-value-sm { font-size: 1.2rem; }
+.ss-stat-value-success { font-size: 1.2rem; color: #15803d; }
+.ss-stat-value-danger  { font-size: 1.2rem; color: #b91c1c; }
+.ss-table-date { white-space: nowrap; }
+.ss-table-meta { white-space: nowrap; font-size: .8rem; color: #64748b; }
+.ss-mono-sm   { font-family: var(--font-mono, monospace); font-size: .8rem; }
+
+/* Dashboard role widgets */
+.ss-dash-primary-card  { border-left: 4px solid var(--ss-primary)  !important; }
+.ss-dash-critical-card { border-left: 4px solid var(--ss-critical) !important; }
+.ss-dash-alert-header  { background: #fef2f2; border-color: #fecaca; }
+.ss-dash-alert-msg     { font-size: .875rem; font-weight: 500; }
+.ss-dash-alert-meta    { font-size: .78rem; }
+.ss-chart-hidden       { display: none; }
+
+/* Search form */
+.ss-search-form { max-width: 700px; }
+
+/* Rounded pill utility (Bootstrap compatible) */
+.rounded-pill { border-radius: 99px !important; }

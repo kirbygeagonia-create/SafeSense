@@ -48,71 +48,99 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto gap-1">
+
+        <!-- Dashboard -->
         <li class="nav-item">
           <a class="nav-link <?php echo $navPage==='dashboard'?'active':''; ?>" href="<?php echo url('/dashboard'); ?>">
             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
           </a>
         </li>
-        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'doctor', 'nurse'])): ?>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='patients'?'active':''; ?>" href="<?php echo url('/patients'); ?>">
-            <i class="fas fa-user-injured me-1"></i>Patients
+
+        <!-- People dropdown (admin/doctor/nurse) -->
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin','doctor','nurse'])): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?php echo in_array($navPage,['patients','doctors','documents'])?'active':''; ?>"
+             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-users me-1"></i>People
           </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='doctors'?'active':''; ?>" href="<?php echo url('/doctors'); ?>">
-            <i class="fas fa-user-md me-1"></i>Doctors
-          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item <?php echo $navPage==='patients'?'active':''; ?>" href="<?php echo url('/patients'); ?>">
+              <i class="fas fa-user-injured me-2 text-primary"></i>Patients
+            </a></li>
+            <li><a class="dropdown-item <?php echo $navPage==='doctors'?'active':''; ?>" href="<?php echo url('/doctors'); ?>">
+              <i class="fas fa-user-md me-2 text-success"></i>Doctors
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="<?php echo url('/patients/documents'); ?>">
+              <i class="fas fa-file-upload me-2 text-info"></i>Documents
+            </a></li>
+          </ul>
         </li>
         <?php endif; ?>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='appointments'?'active':''; ?>" href="<?php echo url('/appointments'); ?>">
-            <i class="fas fa-calendar-check me-1"></i>Appointments
+
+        <!-- Clinical dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?php echo in_array($navPage,['appointments','emr'])?'active':''; ?>"
+             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-stethoscope me-1"></i>Clinical
           </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item <?php echo $navPage==='appointments'?'active':''; ?>" href="<?php echo url('/appointments'); ?>">
+              <i class="fas fa-calendar-check me-2 text-primary"></i>Appointments
+            </a></li>
+            <li><a class="dropdown-item <?php echo $navPage==='emr'?'active':''; ?>" href="<?php echo url('/emr'); ?>">
+              <i class="fas fa-file-medical me-2 text-info"></i>Medical Records
+            </a></li>
+          </ul>
         </li>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='emr'?'active':''; ?>" href="<?php echo url('/emr'); ?>">
-            <i class="fas fa-file-medical me-1"></i>Medical Records
-          </a>
-        </li>
-        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin','staff'])): ?>
+
+        <!-- Billing (role-gated: admin/doctor/nurse/staff) -->
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin','doctor','nurse','staff'])): ?>
         <li class="nav-item">
           <a class="nav-link <?php echo $navPage==='billing'?'active':''; ?>" href="<?php echo url('/billing'); ?>">
             <i class="fas fa-file-invoice-dollar me-1"></i>Billing
           </a>
         </li>
         <?php endif; ?>
-        <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+
+        <!-- SafeSense Alerts — always visible, prominent -->
         <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='users'?'active':''; ?>" href="<?php echo url('/users'); ?>">
-            <i class="fas fa-users-cog me-1"></i>Users
+          <a class="nav-link d-flex align-items-center gap-1 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
+            <i class="fas fa-satellite-dish me-1"></i>Alerts<span class="ss-live-dot ss-live-dot--sm ms-1"></span>
           </a>
+        </li>
+
+        <!-- Admin dropdown (admin only) -->
+        <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?php echo in_array($navPage,['reports','audit','users'])?'active':''; ?>"
+             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-cog me-1"></i>Admin
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item <?php echo $navPage==='reports'?'active':''; ?>" href="<?php echo url('/reports'); ?>">
+              <i class="fas fa-chart-bar me-2 text-primary"></i>Reports & Analytics
+            </a></li>
+            <li><a class="dropdown-item <?php echo $navPage==='audit'?'active':''; ?>" href="<?php echo url('/audit'); ?>">
+              <i class="fas fa-clipboard-list me-2 text-warning"></i>Audit Log
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item <?php echo $navPage==='users'?'active':''; ?>" href="<?php echo url('/users'); ?>">
+              <i class="fas fa-users-cog me-2 text-danger"></i>User Management
+            </a></li>
+          </ul>
         </li>
         <?php endif; ?>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
-            <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ss-live-dot--sm ms-1"></span>
-          </a>
-        </li>
-        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'doctor', 'nurse'])): ?>
+
+        <!-- Reports only (non-admin doctor/nurse) -->
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['doctor','nurse'])): ?>
         <li class="nav-item">
           <a class="nav-link <?php echo $navPage==='reports'?'active':''; ?>" href="<?php echo url('/reports'); ?>">
             <i class="fas fa-chart-bar me-1"></i>Reports
           </a>
         </li>
         <?php endif; ?>
-        <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='audit'?'active':''; ?>" href="<?php echo url('/audit'); ?>">
-            <i class="fas fa-clipboard-list me-1"></i>Audit Log
-          </a>
-        </li>
-        <?php endif; ?>
-        <li class="nav-item">
-          <a class="nav-link <?php echo $navPage==='search'?'active':''; ?>" href="<?php echo url('/search'); ?>">
-            <i class="fas fa-search me-1"></i>Search
-          </a>
-        </li>
+
       </ul>
 
       <!-- Vertical separator -->
@@ -120,6 +148,23 @@
 
       <ul class="navbar-nav align-items-center gap-2">
         <?php if (isset($_SESSION['user'])): ?>
+
+        <!-- Search icon button -->
+        <li class="nav-item">
+          <a class="nav-link ss-icon-btn <?php echo $navPage==='search'?'active':''; ?>" href="<?php echo url('/search'); ?>" title="Global Search">
+            <i class="fas fa-search"></i>
+          </a>
+        </li>
+
+        <!-- Alert bell -->
+        <li class="nav-item">
+          <div class="ss-bell-wrap" id="ssBellBtn" title="Open SafeSense Alerts">
+            <i class="fas fa-bell"></i>
+            <span class="ss-badge" id="ssBadge" data-count="0">0</span>
+          </div>
+        </li>
+
+        <!-- User pill -->
         <li class="nav-item">
           <div class="nav-user-pill">
             <i class="fas fa-user-circle"></i>
@@ -127,12 +172,9 @@
             <small>(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'])); ?>)</small>
           </div>
         </li>
-        <?php endif; ?>
-        <li class="nav-item d-flex align-items-center gap-2">
-          <div class="ss-bell-wrap" id="ssBellBtn" title="Open SafeSense Alerts">
-            <i class="fas fa-bell"></i>
-            <span class="ss-badge" id="ssBadge" data-count="0">0</span>
-          </div>
+
+        <!-- Logout -->
+        <li class="nav-item">
           <form method="post" action="<?php echo url('/logout'); ?>" class="d-inline">
             <input type="hidden" name="_csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit" class="btn btn-outline-light btn-sm">
@@ -140,6 +182,8 @@
             </button>
           </form>
         </li>
+
+        <?php endif; ?>
       </ul>
     </div>
   </div>

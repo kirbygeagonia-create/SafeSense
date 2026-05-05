@@ -17,13 +17,13 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
     <a href="<?php echo url('/patients'); ?>" class="btn btn-sm btn-outline-secondary">
       <i class="fas fa-arrow-left"></i>
     </a>
-    <div>
-      <h1 style="margin:0;"><i class="fas fa-id-card"></i><?php echo htmlspecialchars($patient->name); ?></h1>
+    <div class="ss-profile-header">
+      <h1><i class="fas fa-id-card"></i><?php echo htmlspecialchars($patient->name); ?></h1>
       <div class="page-subtitle">Patient Profile &mdash; Full Medical Record</div>
     </div>
   </div>
   <div class="d-flex gap-2">
-    <span class="badge bg-<?php echo $patient->gender==='female'?'danger':'primary'; ?> px-3 py-2" style="border-radius:99px;">
+    <span class="badge bg-<?php echo $patient->gender==='female'?'danger':'primary'; ?> px-3 py-2 rounded-pill">
       <i class="fas <?php echo $genderIcon; ?> me-1"></i><?php echo ucfirst(htmlspecialchars($patient->gender ?? '—')); ?>
     </span>
   </div>
@@ -36,7 +36,7 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
     <div class="card h-100">
       <div class="card-header"><i class="fas fa-user me-2"></i>Personal Information</div>
       <div class="card-body">
-        <table class="table table-sm table-borderless mb-0" style="font-size:.875rem;">
+        <table class="table table-sm table-borderless mb-0 small">
           <tr><td class="text-muted" style="width:40%">Age</td><td><strong><?php echo $age; ?> years</strong> (<?php echo date('M d, Y', strtotime($patient->date_of_birth)); ?>)</td></tr>
           <tr><td class="text-muted">Email</td><td><?php echo htmlspecialchars($patient->email ?? '—'); ?></td></tr>
           <tr><td class="text-muted">Phone</td><td><?php echo htmlspecialchars($patient->phone ?? '—'); ?></td></tr>
@@ -71,19 +71,19 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
       <div class="col-4">
         <div class="stat-card text-center">
           <div class="stat-label">Total Billed</div>
-          <div class="stat-value" style="font-size:1.2rem;">₱<?php echo number_format($totalBilled, 0); ?></div>
+          <div class="stat-value ss-stat-value-sm">₱<?php echo number_format($totalBilled, 0); ?></div>
         </div>
       </div>
       <div class="col-4">
         <div class="stat-card text-center">
           <div class="stat-label">Paid</div>
-          <div class="stat-value" style="font-size:1.2rem; color:#15803d;">₱<?php echo number_format($totalPaid, 0); ?></div>
+          <div class="stat-value ss-stat-value-success">₱<?php echo number_format($totalPaid, 0); ?></div>
         </div>
       </div>
       <div class="col-4">
         <div class="stat-card text-center">
           <div class="stat-label">Unpaid</div>
-          <div class="stat-value" style="font-size:1.2rem; color:#b91c1c;">₱<?php echo number_format($totalUnpaid, 0); ?></div>
+          <div class="stat-value ss-stat-value-danger">₱<?php echo number_format($totalUnpaid, 0); ?></div>
         </div>
       </div>
     </div>
@@ -105,11 +105,11 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
         <tbody>
           <?php foreach ($emrRecords as $r): ?>
           <tr>
-            <td style="white-space:nowrap;"><?php echo date('M d, Y', strtotime($r['visit_date'])); ?></td>
+            <td class="ss-table-date"><?php echo date('M d, Y', strtotime($r['visit_date'])); ?></td>
             <td><?php echo htmlspecialchars($r['doctor_name'] ?? '—'); ?></td>
             <td><?php echo htmlspecialchars(mb_strimwidth($r['chief_complaint'] ?? '—', 0, 50, '…')); ?></td>
             <td><?php echo htmlspecialchars(mb_strimwidth($r['diagnosis'] ?? '—', 0, 50, '…')); ?></td>
-            <td style="white-space:nowrap; font-size:.8rem; color:#64748b;">
+            <td class="ss-table-meta">
               <?php if ($r['blood_pressure']): ?><span title="BP"><i class="fas fa-heartbeat me-1"></i><?php echo htmlspecialchars($r['blood_pressure']); ?></span><?php endif; ?>
               <?php if ($r['temperature']): ?> <span title="Temp"><i class="fas fa-thermometer-half me-1 ms-1"></i><?php echo $r['temperature']; ?>°C</span><?php endif; ?>
             </td>
@@ -172,7 +172,7 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
             $pc = $psColors[$b['payment_status']] ?? 'secondary';
           ?>
           <tr>
-            <td style="font-family:monospace; font-size:.8rem;"><?php echo htmlspecialchars($b['invoice_number']); ?></td>
+            <td class="ss-mono-sm"><?php echo htmlspecialchars($b['invoice_number']); ?></td>
             <td><?php echo htmlspecialchars(mb_strimwidth($b['service_description'] ?? '—', 0, 40, '…')); ?></td>
             <td><strong>₱<?php echo number_format($b['total_amount'], 2); ?></strong></td>
             <td><span class="badge bg-<?php echo $pc; ?>"><?php echo ucfirst($b['payment_status']); ?></span></td>

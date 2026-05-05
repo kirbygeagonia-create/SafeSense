@@ -11,7 +11,7 @@ class BillingController extends BaseController {
 
     public function index() {
         $this->requireLogin();
-        $this->requireRole(['admin','staff']);
+        $this->requireRole(['admin','doctor','nurse','staff']);
 
         $database = new Database();
         $db = $database->getConnection();

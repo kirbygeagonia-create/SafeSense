@@ -6,7 +6,7 @@
 </div>
 
 <?php if (($userRole ?? 'staff') === 'doctor' && !empty($myAppointments)): ?>
-<div class="card mb-4" style="border-left: 4px solid var(--ss-primary);">
+<div class="card mb-4 ss-dash-primary-card">
   <div class="card-header">
     <i class="fas fa-calendar-check me-2"></i>Your Upcoming Appointments
     <span class="badge bg-primary ms-2"><?php echo count($myAppointments); ?></span>
@@ -35,8 +35,8 @@
 <?php endif; ?>
 
 <?php if (($userRole ?? 'staff') === 'nurse' && !empty($myAlerts)): ?>
-<div class="card mb-4" style="border-left: 4px solid var(--ss-critical);">
-  <div class="card-header" style="background:#fef2f2; border-color:#fecaca;">
+<div class="card mb-4 ss-dash-critical-card">
+  <div class="card-header ss-dash-alert-header">
     <i class="fas fa-satellite-dish me-2 text-danger"></i>
     <span class="text-danger fw-bold">Unread Alerts Requiring Attention</span>
     <span class="badge bg-danger ms-2"><?php echo count($myAlerts); ?></span>
@@ -51,8 +51,8 @@
         <i class="fas fa-exclamation-triangle"></i>
       </div>
       <div>
-        <div class="fw-semibold" style="font-size:.875rem;"><?php echo htmlspecialchars($a['message']); ?></div>
-        <div class="text-muted" style="font-size:.78rem;">
+        <div class="fw-semibold ss-dash-alert-msg"><?php echo htmlspecialchars($a['message']); ?></div>
+        <div class="text-muted ss-dash-alert-meta">
           <?php echo htmlspecialchars($a['location_name'] ?? '—'); ?> &middot;
           <?php echo date('M d, h:i A', strtotime($a['created_at'])); ?>
         </div>
@@ -336,7 +336,7 @@
           <div class="ss-skel ss-skel-chart-bar"></div>
           <div class="ss-skel ss-skel-chart-bar"></div>
         </div>
-        <canvas id="alertsChart" height="200" style="display:none;"></canvas>
+        <canvas id="alertsChart" height="200" class="ss-chart-hidden"></canvas>
       </div>
     </div>
   </div>
@@ -357,7 +357,7 @@
           <div class="ss-skel ss-skel-chart-bar"></div>
           <div class="ss-skel ss-skel-chart-bar"></div>
         </div>
-        <canvas id="appointmentsChart" height="200" style="display:none;"></canvas>
+        <canvas id="appointmentsChart" height="200" class="ss-chart-hidden"></canvas>
       </div>
     </div>
   </div>
@@ -408,7 +408,7 @@
             }
           }
         });
-        document.getElementById('alertsChart').style.display = '';
+        document.getElementById('alertsChart').classList.remove('ss-chart-hidden');
       }
       // Hide alerts chart skeleton (runs in both cases)
       const skelAlertsChart = document.getElementById('skelAlertsChart');
@@ -450,7 +450,7 @@
             }
           }
         });
-        document.getElementById('appointmentsChart').style.display = '';
+        document.getElementById('appointmentsChart').classList.remove('ss-chart-hidden');
       }
       // Hide appointments chart skeleton (runs in both cases)
       const skelApptChart = document.getElementById('skelApptChart');
