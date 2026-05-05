@@ -108,6 +108,7 @@ class PatientController extends BaseController
                 }
 
                 if ($created) {
+                    $this->logAction('create', 'patient', (int)$this->patientModel->id, 'Patient created: ' . $this->patientModel->name);
                     if ($this->isAjax()) {
                         $this->jsonResponse([
                             'success' => true,
@@ -224,12 +225,13 @@ class PatientController extends BaseController
                     }
 
                     if ($updated) {
+                        $this->logAction('update', 'patient', (int)$id, 'Patient updated: ' . $this->patientModel->name);
                         if ($this->isAjax()) {
                             $this->jsonResponse([
                                 'success' => true,
                                 'message' => 'Patient updated successfully',
                                 'data'    => [
-                                    'id'            => $this->patientModel->id,
+                                    'id'            => $id,
                                     'name'          => $this->patientModel->name,
                                     'email'         => $this->patientModel->email,
                                     'phone'         => $this->patientModel->phone,
@@ -282,6 +284,7 @@ class PatientController extends BaseController
             if ($id) {
                 $this->patientModel->id = $id;
                 if ($this->patientModel->delete()) {
+                    $this->logAction('delete', 'patient', (int)$id, 'Patient deleted ID: ' . $id);
                     if ($this->isAjax()) {
                         $this->jsonResponse(['success' => true, 'message' => 'Patient deleted successfully']);
                     }

@@ -65,6 +65,7 @@ class DoctorController extends BaseController
         }
 
         if ($created) {
+            $this->logAction('create', 'doctor', (int)$this->doctorModel->id, 'Doctor created: ' . $this->doctorModel->name);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -171,6 +172,7 @@ class DoctorController extends BaseController
         }
 
         if ($updated) {
+            $this->logAction('update', 'doctor', (int)$id, 'Doctor updated: ' . $this->doctorModel->name);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -216,6 +218,7 @@ class DoctorController extends BaseController
         }
         $this->doctorModel->id = $id;
         if ($this->doctorModel->delete()) {
+            $this->logAction('delete', 'doctor', (int)$id, 'Doctor deleted ID: ' . $id);
             if ($this->isAjax())
                 $this->jsonResponse(['success' => true, 'message' => 'Doctor deleted successfully']);
             $_SESSION['flash_success'] = 'Doctor deleted successfully';

@@ -29,6 +29,55 @@ class AppointmentController extends BaseController
         ]);
     }
 
+    /**
+     * GET /api/appointments/events
+     * Returns all appointments as FullCalendar-compatible JSON events.
+     */
+    public function calendarEvents()
+    {
+        $this->requireLogin();
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $query = "SELECT a.id, a.appointment_date, a.appointment_time,
+                         a.status, a.reason,
+                         p.name AS patient_name,
+                         d.name AS doctor_name
+                  FROM appointments a
+                  JOIN patients p ON a.patient_id = p.id
+                  JOIN doctors  d ON a.doctor_id  = d.id
+                  ORDER BY a.appointment_date ASC, a.appointment_time ASC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $statusColors = [
+            'pending'   => '#f59e0b',
+            'confirmed' => '#1d4ed8',
+            'completed' => '#15803d',
+            'cancelled' => '#94a3b8',
+        ];
+
+        $events = [];
+        foreach ($rows as $r) {
+            $start = $r['appointment_date'] . 'T' . $r['appointment_time'];
+            $events[] = [
+                'id'    => $r['id'],
+                'title' => $r['patient_name'] . ' → Dr. ' . $r['doctor_name'],
+                'start' => $start,
+                'color' => $statusColors[$r['status']] ?? '#64748b',
+                'extendedProps' => [
+                    'status'  => $r['status'],
+                    'reason'  => $r['reason'],
+                    'patient' => $r['patient_name'],
+                    'doctor'  => $r['doctor_name'],
+                ],
+            ];
+        }
+
+        $this->jsonResponse(['success' => true, 'events' => $events]);
+    }
+
     public function store()
     {
         if (!$this->isPostRequest()) {
@@ -66,6 +115,7 @@ class AppointmentController extends BaseController
         }
 
         if ($this->appointmentModel->create()) {
+            $this->logAction('create', 'appointment', (int)$this->appointmentModel->id, 'Appointment scheduled');
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -181,6 +231,7 @@ class AppointmentController extends BaseController
         }
 
         if ($this->appointmentModel->update()) {
+            $this->logAction('update', 'appointment', (int)$id, 'Appointment updated');
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -227,6 +278,7 @@ class AppointmentController extends BaseController
         }
         $this->appointmentModel->id = $id;
         if ($this->appointmentModel->delete()) {
+            $this->logAction('delete', 'appointment', (int)$id, 'Appointment deleted ID: ' . $id);
             if ($this->isAjax())
                 $this->jsonResponse(['success' => true, 'message' => 'Appointment deleted successfully']);
             $_SESSION['flash_success'] = 'Appointment deleted successfully';

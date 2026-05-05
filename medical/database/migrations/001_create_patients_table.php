@@ -1,9 +1,19 @@
 <?php
 // Migration: Create patients table
-$host = 'localhost';
-$db_name = 'hospital_db';
-$username = 'root';
-$password = '';
+// Load .env if running as standalone migration script
+$envFile = __DIR__ . '/../../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($val, " \t\n\r\0\x0B\"'");
+    }
+}
+$host     = $_ENV['DB_HOST']  ?? 'localhost';
+$db_name  = $_ENV['DB_NAME']  ?? 'hospital_db';
+$username = $_ENV['DB_USER']  ?? 'root';
+$password = $_ENV['DB_PASS']  ?? '';
 
 try {
     $pdo = new PDO("mysql:host=$host", $username, $password);

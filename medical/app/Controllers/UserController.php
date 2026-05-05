@@ -66,7 +66,8 @@ class UserController extends BaseController {
                 ':password' => $hash,
                 ':role'     => $role
             ]);
-            $id = $db->lastInsertId();
+            $newId = $db->lastInsertId();
+            $this->logAction('create', 'user', (int)$newId, 'User created: ' . $name . ' (' . $email . ')');
 
             if ($this->isAjax()) {
                 $this->jsonResponse([
@@ -209,6 +210,7 @@ class UserController extends BaseController {
                     ]
                 ]);
             }
+            $this->logAction('update', 'user', (int)$id, 'User updated: ' . $name . ' (' . $email . ')');
             $_SESSION['flash_success'] = 'User updated successfully';
             $this->redirect('/users');
         } catch (PDOException $e) {
@@ -260,6 +262,8 @@ class UserController extends BaseController {
 
         $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
         $stmt->execute([$id]);
+
+        $this->logAction('delete', 'user', (int)$id, 'User deleted ID: ' . $id);
 
         if ($this->isAjax()) {
             $this->jsonResponse(['success' => true, 'message' => 'User deleted successfully']);

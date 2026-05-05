@@ -27,6 +27,7 @@ class App
         $this->router->post('/doctors/delete', 'DoctorController@delete');
 
         $this->router->get('/appointments', 'AppointmentController@index');
+        $this->router->get('/api/appointments/events', 'AppointmentController@calendarEvents');
         $this->router->post('/appointments/store', 'AppointmentController@store');
         $this->router->get('/appointments/edit', 'AppointmentController@edit');
         $this->router->post('/appointments/update', 'AppointmentController@update');
@@ -69,6 +70,12 @@ class App
 
         // Dashboard analytics API
         $this->router->get('/api/dashboard/stats', 'DashboardController@stats');
+        $this->router->get('/reports', 'ReportsController@index');
+        $this->router->get('/audit',   'AuditController@index');
+        $this->router->get('/search',   'SearchController@index');
+        $this->router->get('/patients/documents', 'DocumentController@index');
+        $this->router->post('/patients/documents/upload', 'DocumentController@upload');
+        $this->router->post('/patients/documents/delete', 'DocumentController@delete');
 
         $this->router->get('/{any:.*}', 'ErrorController@notFound');
     }

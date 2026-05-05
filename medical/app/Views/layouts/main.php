@@ -18,6 +18,9 @@
     }
     ?>
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+    <!-- FullCalendar (loaded globally, used on appointments page) -->
+    <link  href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 <body>
 <div id="ssProgressBar"></div>
@@ -89,6 +92,25 @@
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2 <?php echo $navPage==='alerts'?'active':''; ?>" href="<?php echo url('/alerts'); ?>">
             <i class="fas fa-satellite-dish me-1"></i>SafeSense Alerts<span class="ss-live-dot ss-live-dot--sm ms-1"></span>
+          </a>
+        </li>
+        <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'doctor', 'nurse'])): ?>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='reports'?'active':''; ?>" href="<?php echo url('/reports'); ?>">
+            <i class="fas fa-chart-bar me-1"></i>Reports
+          </a>
+        </li>
+        <?php endif; ?>
+        <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='audit'?'active':''; ?>" href="<?php echo url('/audit'); ?>">
+            <i class="fas fa-clipboard-list me-1"></i>Audit Log
+          </a>
+        </li>
+        <?php endif; ?>
+        <li class="nav-item">
+          <a class="nav-link <?php echo $navPage==='search'?'active':''; ?>" href="<?php echo url('/search'); ?>">
+            <i class="fas fa-search me-1"></i>Search
           </a>
         </li>
       </ul>

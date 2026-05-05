@@ -121,4 +121,37 @@ class BaseController {
     protected function currentRole(): string {
         return $_SESSION['user']['role'] ?? 'staff';
     }
+
+    /**
+     * Write an entry to the audit_logs table.
+     * Call this inside any store(), update(), or delete() method after a successful DB operation.
+     *
+     * @param string   $action     e.g. 'create', 'update', 'delete'
+     * @param string   $resource   e.g. 'patient', 'appointment', 'billing'
+     * @param int|null $resourceId The ID of the affected record
+     * @param string   $detail     Optional human-readable description
+     */
+    protected function logAction(string $action, string $resource, ?int $resourceId = null, string $detail = ''): void
+    {
+        try {
+            $database = new Database();
+            $db       = $database->getConnection();
+            $stmt = $db->prepare(
+                "INSERT INTO audit_logs (user_email, user_role, action, resource, resource_id, detail, ip_address)
+                 VALUES (:email, :role, :action, :resource, :resource_id, :detail, :ip)"
+            );
+            $stmt->execute([
+                ':email'       => $_SESSION['user']['email']  ?? 'unknown',
+                ':role'        => $_SESSION['user']['role']   ?? 'unknown',
+                ':action'      => $action,
+                ':resource'    => $resource,
+                ':resource_id' => $resourceId,
+                ':detail'      => $detail,
+                ':ip'          => $_SERVER['REMOTE_ADDR']     ?? null,
+            ]);
+        } catch (Exception $e) {
+            // Audit log failure must never crash the app — log silently
+            error_log('Audit log error: ' . $e->getMessage());
+        }
+    }
 }

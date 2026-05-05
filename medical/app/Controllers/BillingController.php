@@ -88,6 +88,7 @@ class BillingController extends BaseController {
         $this->billingModel->created_by          = $_SESSION['user']['id'] ?? null;
 
         if ($this->billingModel->create()) {
+            $this->logAction('create', 'billing', (int)$this->billingModel->id, 'Invoice created for patient ID: ' . $this->billingModel->patient_id);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -201,6 +202,7 @@ class BillingController extends BaseController {
         $this->billingModel->notes               = $this->getPostData('notes', '');
 
         if ($this->billingModel->update()) {
+            $this->logAction('update', 'billing', (int)$id, 'Invoice updated for patient ID: ' . $this->billingModel->patient_id);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -253,6 +255,7 @@ class BillingController extends BaseController {
 
         $this->billingModel->id = $id;
         if ($this->billingModel->delete()) {
+            $this->logAction('delete', 'billing', (int)$id, 'Invoice deleted ID: ' . $id);
             if ($this->isAjax())
                 $this->jsonResponse(['success' => true, 'message' => 'Invoice deleted successfully']);
             $_SESSION['flash_success'] = 'Invoice deleted successfully';

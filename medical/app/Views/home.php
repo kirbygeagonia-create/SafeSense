@@ -13,6 +13,7 @@
 </div>
 
 <div class="row g-3">
+  <?php if (in_array($_SESSION['user']['role'] ?? '', ['admin', 'doctor', 'nurse'])): ?>
   <div class="col-md-4">
     <div class="card h-100" style="border-top: 3px solid var(--ss-primary);">
       <div class="card-body">
@@ -31,6 +32,7 @@
       </div>
     </div>
   </div>
+  <?php endif; ?>
   <div class="col-md-4">
     <div class="card h-100" style="border-top: 3px solid #0891b2;">
       <div class="card-body">

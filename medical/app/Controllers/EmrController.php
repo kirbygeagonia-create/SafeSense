@@ -72,6 +72,7 @@ class EmrController extends BaseController {
         $this->emrModel->weight          = $this->getPostData('weight') !== '' ? (float)$this->getPostData('weight') : null;
 
         if ($this->emrModel->create()) {
+            $this->logAction('create', 'emr', (int)$this->emrModel->id, 'EMR created for patient ID: ' . $this->emrModel->patient_id);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -185,6 +186,7 @@ class EmrController extends BaseController {
         $this->emrModel->weight          = $this->getPostData('weight') !== '' ? (float)$this->getPostData('weight') : null;
 
         if ($this->emrModel->update()) {
+            $this->logAction('update', 'emr', (int)$id, 'EMR updated for patient ID: ' . $this->emrModel->patient_id);
             if ($this->isAjax()) {
                 $this->jsonResponse([
                     'success' => true,
@@ -232,19 +234,6 @@ class EmrController extends BaseController {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid record ID'], 400);
             $_SESSION['flash_error'] = 'Invalid record ID';
             $this->redirect('/emr');
-            return;
-        }
-
-        $this->emrModel->id = $id;
-        if ($this->emrModel->delete()) {
-            if ($this->isAjax())
-                $this->jsonResponse(['success' => true, 'message' => 'Medical record deleted successfully']);
-            $_SESSION['flash_success'] = 'Medical record deleted successfully';
-            $this->redirect('/emr');
-        } else {
-            if ($this->isAjax())
-                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete medical record'], 500);
-            $_SESSION['flash_error'] = 'Failed to delete medical record';
             $this->redirect('/emr');
         }
     }

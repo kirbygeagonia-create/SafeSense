@@ -21,6 +21,22 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
     <?php endif; ?>
 </div>
 
+<!-- View toggle tabs -->
+<ul class="nav nav-tabs mb-3" id="appointmentViewTabs">
+  <li class="nav-item">
+    <button class="nav-link active" id="tableTabBtn" data-view="table">
+      <i class="fas fa-table me-1"></i>Table View
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" id="calendarTabBtn" data-view="calendar">
+      <i class="fas fa-calendar-alt me-1"></i>Calendar View
+    </button>
+  </li>
+</ul>
+
+<!-- Table view (existing table stays exactly as-is) -->
+<div id="tableView">
 <div class="table-responsive mb-3">
     <table id="appointmentsTable" class="table table-striped table-hover" style="width:100%">
         <thead class="table-dark">
@@ -67,6 +83,12 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
             <?php endif; ?>
         </tbody>
     </table>
+</div>
+</div><!-- end tableView -->
+
+<!-- Calendar view -->
+<div id="calendarView" style="display:none;">
+  <div id="ssCalendar" style="background:#fff; padding:1rem; border-radius:var(--r-lg); border:1px solid var(--ss-border);"></div>
 </div>
 
 <!-- Appointment Modal -->
@@ -128,3 +150,57 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
     </div>
   </div>
 </div>
+
+<script>
+// ── Calendar view toggle ──────────────────────────────
+(function () {
+  const tableView    = document.getElementById('tableView');
+  const calView      = document.getElementById('calendarView');
+  const tableTabBtn  = document.getElementById('tableTabBtn');
+  const calTabBtn    = document.getElementById('calendarTabBtn');
+  let calInitialised = false;
+
+  function initCalendar() {
+    if (calInitialised) return;
+    calInitialised = true;
+    const calEl = document.getElementById('ssCalendar');
+    const calendar = new FullCalendar.Calendar(calEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+      height: 'auto',
+      events: window.BASE_URL + '/api/appointments/events',
+      eventClick: function (info) {
+        const p = info.event.extendedProps;
+        Swal.fire({
+          title: info.event.title,
+          html: `<div style="text-align:left;font-size:.9rem;">
+            <p><strong>Status:</strong> ${p.status}</p>
+            <p><strong>Reason:</strong> ${p.reason || '—'}</p>
+            <p><strong>Date:</strong> ${info.event.startStr.slice(0,10)}</p>
+            <p><strong>Time:</strong> ${info.event.startStr.slice(11,16)}</p>
+          </div>`,
+          icon: 'info',
+          confirmButtonText: 'Close',
+          confirmButtonColor: '#1d4ed8',
+        });
+      },
+    });
+    calendar.render();
+  }
+
+  tableTabBtn.addEventListener('click', () => {
+    tableTabBtn.classList.add('active');
+    calTabBtn.classList.remove('active');
+    tableView.style.display = '';
+    calView.style.display = 'none';
+  });
+
+  calTabBtn.addEventListener('click', () => {
+    calTabBtn.classList.add('active');
+    tableTabBtn.classList.remove('active');
+    tableView.style.display = 'none';
+    calView.style.display = '';
+    initCalendar();
+  });
+})();
+</script>
