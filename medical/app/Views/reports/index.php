@@ -16,11 +16,15 @@
     ['label'=>'Total Doctors',      'val'=>$totals['doctors']??0,                            'icon'=>'fa-user-md',            'color'=>'#15803d'],
     ['label'=>'Total Appointments', 'val'=>$totals['appointments']??0,                       'icon'=>'fa-calendar-check',     'color'=>'#0369a1'],
     ['label'=>'Total Invoices',     'val'=>$totals['invoices']??0,                           'icon'=>'fa-file-invoice-dollar','color'=>'#7c3aed'],
-    ['label'=>'Total Revenue',      'val'=>'₱'.number_format($totals['revenue']??0,0),      'icon'=>'fa-hand-holding-usd',   'color'=>'#15803d'],
-    ['label'=>'Collected',          'val'=>'₱'.number_format($totals['collected']??0,0),    'icon'=>'fa-check-circle',       'color'=>'#15803d'],
+    // TASK-3G: Revenue only visible to admin
+    ['label'=>'Total Revenue',      'val'=>'₱'.number_format($totals['revenue']??0,0),      'icon'=>'fa-hand-holding-usd',   'color'=>'#15803d', 'admin_only'=>true],
+    ['label'=>'Collected',          'val'=>'₱'.number_format($totals['collected']??0,0),    'icon'=>'fa-check-circle',       'color'=>'#15803d', 'admin_only'=>true],
     ['label'=>'IoT Alerts',         'val'=>$totals['alerts']??0,                             'icon'=>'fa-satellite-dish',     'color'=>'#b91c1c'],
   ];
-  foreach ($summaryCards as $c): ?>
+  foreach ($summaryCards as $c):
+    // Skip revenue cards for non-admin users
+    if (!empty($c['admin_only']) && ($_SESSION['user']['role'] ?? '') !== 'admin') continue;
+  ?>
   <div class="col-6 col-md-3">
     <div class="stat-card">
       <div class="d-flex align-items-start justify-content-between mb-2">
@@ -55,6 +59,8 @@
 
 <!-- Charts row 2 -->
 <div class="row g-4 mb-4">
+  <?php if (($_SESSION['user']['role'] ?? '') === 'admin'): ?>
+  <!-- TASK-3G: Revenue chart only for admin -->
   <div class="col-md-8">
     <div class="card h-100">
       <div class="card-header"><i class="fas fa-chart-line me-2"></i>Revenue — Last 6 Months</div>
@@ -69,6 +75,17 @@
       </div>
     </div>
   </div>
+  <?php else: ?>
+  <!-- Non-admin: only show alerts chart -->
+  <div class="col-12">
+    <div class="card h-100">
+      <div class="card-header"><i class="fas fa-satellite-dish me-2"></i>Alerts by Level</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="chartAlerts" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>
 
 <script>

@@ -175,4 +175,50 @@ class DocumentController extends BaseController
         $_SESSION['flash_success'] = 'Document deleted successfully';
         $this->redirect('/patients/documents' . ($patientId ? '?patient_id=' . $patientId : ''));
     }
+
+    public function download()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'doctor', 'nurse', 'staff']);
+
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) {
+            $_SESSION['flash_error'] = 'Invalid document ID.';
+            $this->redirect('/patients/documents');
+            return;
+        }
+
+        $stmt = $db->prepare("SELECT * FROM patient_documents WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$doc) {
+            $_SESSION['flash_error'] = 'Document not found.';
+            $this->redirect('/patients/documents');
+            return;
+        }
+
+        // File is stored relative to public/uploads/documents/
+        $filePath = dirname(__DIR__, 3) . '/public/uploads/documents/' . basename($doc['file_path']);
+
+        if (!file_exists($filePath)) {
+            $_SESSION['flash_error'] = 'File no longer exists on disk.';
+            $this->redirect('/patients/documents?patient_id=' . $doc['patient_id']);
+            return;
+        }
+
+        $this->logAction('read', 'document', $id, 'Document downloaded: ' . $doc['file_name']);
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . rawurlencode($doc['file_name']) . '"');
+        header('Content-Length: ' . filesize($filePath));
+        header('Pragma: no-cache');
+        header('Cache-Control: must-revalidate');
+        readfile($filePath);
+        exit;
+    }
 }

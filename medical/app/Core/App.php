@@ -28,6 +28,7 @@ class App
 
         $this->router->get('/appointments', 'AppointmentController@index');
         $this->router->get('/api/appointments/events', 'AppointmentController@calendarEvents');
+        $this->router->get('/api/appointments/today', 'AppointmentController@upcomingToday');
         $this->router->post('/appointments/store', 'AppointmentController@store');
         $this->router->get('/appointments/edit', 'AppointmentController@edit');
         $this->router->post('/appointments/update', 'AppointmentController@update');
@@ -47,6 +48,7 @@ class App
 
         // EMR Module
         $this->router->get('/emr',          'EmrController@index');
+        $this->router->get('/emr/print',    'EmrController@printRecord');
         $this->router->post('/emr/store',   'EmrController@store');
         $this->router->get('/emr/edit',     'EmrController@edit');
         $this->router->post('/emr/update',  'EmrController@update');
@@ -74,6 +76,7 @@ class App
         $this->router->get('/audit',   'AuditController@index');
         $this->router->get('/search',   'SearchController@index');
         $this->router->get('/patients/documents', 'DocumentController@index');
+        $this->router->get('/patients/documents/download', 'DocumentController@download');
         $this->router->post('/patients/documents/upload', 'DocumentController@upload');
         $this->router->post('/patients/documents/delete', 'DocumentController@delete');
 

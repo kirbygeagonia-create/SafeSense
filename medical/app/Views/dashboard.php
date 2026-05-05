@@ -149,6 +149,37 @@
 </div>
 </div><!-- end #realStats -->
 
+<!-- Today's Activity Stats (TASK-3F) -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <h6 class="text-muted fw-semibold mb-2"><i class="fas fa-clock me-1"></i>Today's Activity</h6>
+  </div>
+  <div class="col-6 col-md-4 col-lg">
+    <div class="stat-card border-start border-success border-3">
+      <div class="text-muted small">Appointments Today</div>
+      <div class="fs-4 fw-bold text-success"><?php echo (int)($todayStats['appointments_today'] ?? 0); ?></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg">
+    <div class="stat-card border-start border-primary border-3">
+      <div class="text-muted small">New Patients</div>
+      <div class="fs-4 fw-bold text-primary"><?php echo (int)($todayStats['new_patients_today'] ?? 0); ?></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg">
+    <div class="stat-card border-start border-danger border-3">
+      <div class="text-muted small">IoT Alerts Today</div>
+      <div class="fs-4 fw-bold text-danger"><?php echo (int)($todayStats['alerts_today'] ?? 0); ?></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg">
+    <div class="stat-card border-start border-warning border-3">
+      <div class="text-muted small">Unpaid Invoices</div>
+      <div class="fs-4 fw-bold text-warning"><?php echo (int)($todayStats['unpaid_invoices'] ?? 0); ?></div>
+    </div>
+  </div>
+</div>
+
 <!-- Billing Stats Skeleton -->
 <div class="ss-skeleton-wrap" id="skelBilling">
   <div class="row g-3 mb-4">

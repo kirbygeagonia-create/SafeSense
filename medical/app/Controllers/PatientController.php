@@ -62,6 +62,9 @@ class PatientController extends BaseController
         $billingStmt   = $billingModel->getByPatient($id);
         $billingRecords = $billingStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // FIXED: Audit log for patient profile view
+        $this->logAction('read', 'patient', $id, 'Patient profile viewed: ' . $this->patientModel->name);
+
         $this->render('patients/view', [
             'title'          => 'Patient Profile — ' . htmlspecialchars($this->patientModel->name),
             'navPage'        => 'patients',
@@ -120,7 +123,8 @@ class PatientController extends BaseController
                                 'phone'         => $this->patientModel->phone,
                                 'address'       => $this->patientModel->address,
                                 'date_of_birth' => $this->patientModel->date_of_birth,
-                                'gender'        => $this->patientModel->gender
+                                'gender'        => $this->patientModel->gender,
+                                'created_at'    => date('Y-m-d H:i:s')  // FIXED: include for buildRow
                             ]
                         ]);
                     }
@@ -237,7 +241,8 @@ class PatientController extends BaseController
                                     'phone'         => $this->patientModel->phone,
                                     'address'       => $this->patientModel->address,
                                     'date_of_birth' => $this->patientModel->date_of_birth,
-                                    'gender'        => $this->patientModel->gender
+                                    'gender'        => $this->patientModel->gender,
+                                    'created_at'    => date('Y-m-d H:i:s')  // FIXED: include for buildRow
                                 ]
                             ]);
                         }

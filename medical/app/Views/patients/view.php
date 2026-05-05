@@ -1,7 +1,20 @@
 <?php
-// Age calculation helper
-$dob = new DateTime($patient->date_of_birth ?? 'now');
-$age = (new DateTime())->diff($dob)->y;
+// Age calculation helper with months
+$age = '—';
+if (!empty($patient->date_of_birth)) {
+    try {
+        $dob  = new DateTime($patient->date_of_birth);
+        $now  = new DateTime();
+        $diff = $now->diff($dob);
+        $age  = $diff->y . ' yrs ' . $diff->m . ' mo';
+    } catch (Exception $e) {}
+}
+
+// Latest weight from EMR
+$latestWeight = null;
+foreach ($emrRecords as $rec) {
+    if (!empty($rec['weight'])) { $latestWeight = $rec['weight']; break; }
+}
 
 // Totals for billing summary
 $totalBilled    = array_sum(array_column($billingRecords, 'total_amount'));
@@ -37,7 +50,7 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
       <div class="card-header"><i class="fas fa-user me-2"></i>Personal Information</div>
       <div class="card-body">
         <table class="table table-sm table-borderless mb-0 small">
-          <tr><td class="text-muted" style="width:40%">Age</td><td><strong><?php echo $age; ?> years</strong> (<?php echo date('M d, Y', strtotime($patient->date_of_birth)); ?>)</td></tr>
+          <tr><td class="text-muted" style="width:40%">Age</td><td><strong><?php echo $age; ?></strong> (<?php echo date('M d, Y', strtotime($patient->date_of_birth)); ?>) <?php if ($latestWeight): ?><span class="badge bg-secondary ms-1">Last Weight: <?php echo htmlspecialchars($latestWeight); ?> kg</span><?php endif; ?></td></tr>
           <tr><td class="text-muted">Email</td><td><?php echo htmlspecialchars($patient->email ?? '—'); ?></td></tr>
           <tr><td class="text-muted">Phone</td><td><?php echo htmlspecialchars($patient->phone ?? '—'); ?></td></tr>
           <tr><td class="text-muted">Address</td><td><?php echo htmlspecialchars($patient->address ?? '—'); ?></td></tr>
@@ -123,6 +136,51 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
     <?php endif; ?>
   </div>
 </div>
+
+<!-- Vitals Trend Chart -->
+<?php if (!empty($emrRecords)): ?>
+<div class="card mt-4">
+  <div class="card-header d-flex align-items-center gap-2">
+    <i class="fas fa-chart-line text-primary"></i>
+    <strong>Vitals Trend</strong>
+    <small class="text-muted ms-auto">Last <?php echo count($emrRecords); ?> visits</small>
+  </div>
+  <div class="card-body">
+    <canvas id="vitalsChart" height="110"></canvas>
+  </div>
+</div>
+<script>
+(function(){
+  const records = <?php echo json_encode(array_reverse($emrRecords)); ?>;
+  const labels  = records.map(r => r.visit_date ? r.visit_date.slice(0,10) : '—');
+  const bp      = records.map(r => {
+    // Parse systolic from "120/80" format
+    const m = (r.blood_pressure || '').match(/^(\d+)/);
+    return m ? parseInt(m[1]) : null;
+  });
+  const temp = records.map(r => parseFloat(r.temperature) || null);
+  const hr   = records.map(r => parseInt(r.heart_rate)    || null);
+
+  new Chart(document.getElementById('vitalsChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'BP Systolic (mmHg)', data: bp,   borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.08)',   tension: .4, spanGaps: true },
+        { label: 'Temperature (°C)',   data: temp, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.08)',  tension: .4, spanGaps: true },
+        { label: 'Heart Rate (bpm)',   data: hr,   borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)',   tension: .4, spanGaps: true },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+})();
+</script>
+<?php endif; ?>
 
 <!-- Appointments -->
 <div class="card mb-4">

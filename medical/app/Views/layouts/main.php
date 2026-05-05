@@ -156,6 +156,14 @@
           </a>
         </li>
 
+        <!-- Today's Appointments Badge -->
+        <li class="nav-item me-1" id="todayApptWrap" style="display:none;">
+          <a class="nav-link position-relative" href="<?php echo url('/appointments'); ?>" title="Today's Appointments">
+            <i class="fas fa-calendar-check"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="todayApptBadge" style="font-size:.65rem;">0</span>
+          </a>
+        </li>
+
         <!-- Alert bell -->
         <li class="nav-item">
           <div class="ss-bell-wrap" id="ssBellBtn" title="Open SafeSense Alerts">
@@ -290,6 +298,17 @@
 <script>
 (function(){
   'use strict';
+  /* FIXED: On every page load, ensure the drawer overlay is not stuck open
+     (caused by browser back/forward navigation not triggering closeDrawer). */
+  document.addEventListener('DOMContentLoaded', () => {
+    const staleOverlay = document.getElementById('ssDrawerOverlay');
+    if (staleOverlay) {
+      staleOverlay.classList.remove('open');
+      staleOverlay.style.pointerEvents = 'none';
+    }
+    document.body.style.pointerEvents = '';
+  });
+
   const POLL_MS  = 5000;
   const TOAST_MS = 9000;
 
@@ -474,6 +493,19 @@
 
   /* ── API helpers ── */
   function markRead(id){ post(window.BASE_URL + '/api/alerts/read','id='+id).then(d=>setBadge(d.unread_count||0)); }
+
+  // Today's appointments count badge (TASK-3D)
+  fetch(window.BASE_URL + '/api/appointments/today', {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success && d.count > 0) {
+      document.getElementById('todayApptBadge').textContent = d.count;
+      document.getElementById('todayApptWrap').style.display = '';
+    }
+  })
+  .catch(() => {});
   function dismissItem(id,el){ post(window.BASE_URL + '/api/alerts/dismiss','id='+id); if(el){ el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); } }
   function post(url,body){
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -614,6 +646,12 @@
     })
     .catch(() => {});
 
+  setInterval(poll, POLL_MS);
+})();
+</script>
+<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=2"></script>
+</body>
+</html>
   setInterval(poll, POLL_MS);
 })();
 </script>

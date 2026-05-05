@@ -78,6 +78,37 @@ class AppointmentController extends BaseController
         $this->jsonResponse(['success' => true, 'events' => $events]);
     }
 
+    /**
+     * GET /api/appointments/today
+     * Returns today's appointments count and list for navbar badge.
+     */
+    public function upcomingToday()
+    {
+        $this->requireLogin();
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $stmt = $db->prepare(
+            "SELECT a.id, a.appointment_time, a.status, a.reason,
+                    p.name AS patient_name, d.name AS doctor_name
+             FROM appointments a
+             JOIN patients p ON a.patient_id = p.id
+             JOIN doctors  d ON a.doctor_id  = d.id
+             WHERE a.appointment_date = CURDATE()
+               AND a.status IN ('pending','confirmed')
+             ORDER BY a.appointment_time ASC
+             LIMIT 20"
+        );
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($this->isAjax()) {
+            $this->jsonResponse(['success' => true, 'count' => count($rows), 'appointments' => $rows]);
+            return;
+        }
+        $this->jsonResponse(['success' => false, 'message' => 'AJAX only'], 400);
+    }
+
     public function store()
     {
         if (!$this->isPostRequest()) {

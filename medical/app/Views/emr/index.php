@@ -44,6 +44,10 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
                     <td><?php echo htmlspecialchars($r['diagnosis']); ?></td>
                     <td><?php echo htmlspecialchars($r['blood_pressure'] ?? '—'); ?></td>
                     <td>
+                        <a href="<?php echo url('/emr/print?id=' . $r['id']); ?>" target="_blank"
+                           class="btn btn-sm btn-outline-secondary me-1" title="Print Prescription">
+                          <i class="fas fa-print"></i>
+                        </a>
                         <?php if (in_array($currentRole ?? '', ['admin','doctor'])): ?>
                         <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="<?php echo $r['id']; ?>"><i class="fas fa-edit"></i></button>
                         <?php endif; ?>
@@ -66,7 +70,7 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 <?php endif; ?>
 
 <!-- EMR Modal -->
-<div class="modal fade" id="emrModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="emrModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">

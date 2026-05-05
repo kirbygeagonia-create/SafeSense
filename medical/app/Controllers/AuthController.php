@@ -172,6 +172,18 @@ class AuthController extends BaseController {
             }
         } catch (Exception $e) {}
 
+        // Today's summary metrics (TASK-3F)
+        $todayStats = [];
+        try {
+            $todayStats['appointments_today']  = $db->query("SELECT COUNT(*) FROM appointments WHERE appointment_date = CURDATE()")->fetchColumn();
+            $todayStats['new_patients_today']  = $db->query("SELECT COUNT(*) FROM patients WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+            $todayStats['alerts_today']        = $db->query("SELECT COUNT(*) FROM safesense_alerts WHERE DATE(created_at) = CURDATE()")->fetchColumn();
+            $todayStats['unread_alerts']       = $db->query("SELECT COUNT(*) FROM safesense_alerts WHERE is_read = 0")->fetchColumn();
+            $todayStats['unpaid_invoices']     = $db->query("SELECT COUNT(*) FROM billing WHERE payment_status = 'unpaid'")->fetchColumn();
+        } catch (Exception $e) {
+            $todayStats = array_fill_keys(['appointments_today','new_patients_today','alerts_today','unread_alerts','unpaid_invoices'], 0);
+        }
+
         $this->render('dashboard', [
             'title'                => 'Dashboard',
             'patientCount'         => $patientCount,
@@ -184,6 +196,7 @@ class AuthController extends BaseController {
             'userRole'             => $role,
             'myAppointments'       => $myAppointments,
             'myAlerts'             => $myAlerts,
+            'todayStats'           => $todayStats,
         ]);
     }
 

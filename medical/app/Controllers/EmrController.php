@@ -237,4 +237,33 @@ class EmrController extends BaseController {
             $this->redirect('/emr');
         }
     }
+
+    public function printRecord()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin','doctor','nurse']);
+
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) { $this->redirect('/emr'); return; }
+
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $stmt = $db->prepare("SELECT * FROM emr_records WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) { $_SESSION['flash_error'] = 'EMR record not found.'; $this->redirect('/emr'); return; }
+
+        // Load patient and doctor
+        $patientModel = new Patient($db);
+        $patientModel->getById($row['patient_id']);
+
+        $doctorModel = new Doctor($db);
+        $doctorModel->getById($row['doctor_id']);
+
+        // Use a minimal view (no main layout)
+        extract(['record' => (object)$row, 'patient' => $patientModel, 'doctor' => $doctorModel]);
+        include dirname(__DIR__) . '/Views/emr/print.php';
+        exit;
+    }
 }

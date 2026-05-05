@@ -48,6 +48,9 @@ class BillingController extends BaseController {
             return;
         }
 
+        // FIXED: Audit log for invoice print
+        $this->logAction('read', 'billing', $id, 'Invoice printed: ' . ($this->billingModel->invoice_number ?? $id));
+
         // Render the print view — no main layout, standalone page
         $billing = $this->billingModel;
         include APP_PATH . '/Views/billing/print.php';
@@ -62,7 +65,7 @@ class BillingController extends BaseController {
             return;
         }
         $this->requireLogin();
-        $this->requireRole(['admin','staff']);
+        $this->requireRole(['admin','nurse','staff']);
         $this->validateCsrf();
 
         $requiredFields = ['patient_id','service_description','amount'];
@@ -121,7 +124,7 @@ class BillingController extends BaseController {
 
     public function edit() {
         $this->requireLogin();
-        $this->requireRole(['admin','staff']);
+        $this->requireRole(['admin','nurse','staff']);
 
         $id = (int)($this->getGetData('id') ?? 0);
         if (!$id || !$this->billingModel->getById($id)) {
@@ -167,7 +170,7 @@ class BillingController extends BaseController {
             return;
         }
         $this->requireLogin();
-        $this->requireRole(['admin','staff']);
+        $this->requireRole(['admin','nurse','staff']);
         $this->validateCsrf();
 
         $id = (int)($this->getPostData('id') ?? 0);

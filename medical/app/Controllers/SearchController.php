@@ -14,7 +14,8 @@ class SearchController extends BaseController
         $emrResults      = [];
         $billingResults  = [];
 
-        if ($q !== '') {
+        // FIXED: Minimum 2-character guard to prevent huge unfiltered result sets
+        if (strlen($q) >= 2) {
             $database = new Database();
             $db       = $database->getConnection();
 

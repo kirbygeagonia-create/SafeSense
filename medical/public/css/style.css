@@ -194,10 +194,14 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
   position: fixed;
   inset: 0;
   background: rgba(15,23,42,.5);
-  z-index: 1050;
+  z-index: 1045; /* FIXED: Must be below Bootstrap backdrop (1050) so CRUD modals stay interactive */
   backdrop-filter: blur(4px);
+  pointer-events: none; /* Default: non-blocking */
 }
-.ss-drawer-overlay.open { display: block; }
+.ss-drawer-overlay.open {
+  display: block;
+  pointer-events: all; /* Only capture clicks when truly open */
+}
 
 /* Drawer panel */
 .ss-drawer {
@@ -208,7 +212,7 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
   max-width: 96vw;
   height: 100vh;
   background: var(--ss-surface);
-  z-index: 1051;
+  z-index: 1046; /* FIXED: Stay above its overlay but below Bootstrap modal */
   display: flex;
   flex-direction: column;
   box-shadow: -12px 0 48px rgba(15,23,42,.22);
