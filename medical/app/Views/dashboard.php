@@ -180,6 +180,26 @@
   </div>
 </div>
 
+<!-- ENH-3: Alert Summary Widget -->
+<?php if (!empty($alertStats['total_unread'])): ?>
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="alert alert-warning mb-0 py-2">
+      <div class="d-flex align-items-center gap-3">
+        <i class="fas fa-satellite-dish fa-lg"></i>
+        <div>
+          <strong>Alert Summary:</strong>
+          <span class="badge bg-danger ms-1"><?php echo $alertStats['critical']; ?> Critical</span>
+          <span class="badge bg-warning text-dark ms-1"><?php echo $alertStats['warning']; ?> Warning</span>
+          <span class="badge bg-info text-dark ms-1"><?php echo $alertStats['info']; ?> Info</span>
+          <a href="<?php echo url('/alerts'); ?>" class="btn btn-sm btn-outline-dark ms-2">View Alerts</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- Billing Stats Skeleton -->
 <div class="ss-skeleton-wrap" id="skelBilling">
   <div class="row g-3 mb-4">

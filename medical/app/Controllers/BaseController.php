@@ -88,6 +88,7 @@ class BaseController {
             }
             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
             $this->redirect('/dashboard');
+            exit;  // ← missing exit added
         }
     }
 

@@ -316,4 +316,28 @@ class PatientController extends BaseController
             $this->redirect('/patients');
         }
     }
+
+    public function exportCsv()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'staff']);
+
+        $this->logAction('export', 'patients', 0, 'Exported patient list to CSV');
+
+        $database = new Database();
+        $db       = $database->getConnection();
+        $stmt = $db->query("SELECT name, email, phone, date_of_birth, gender, created_at FROM patients ORDER BY id DESC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=patients_' . date('Y-m-d') . '.csv');
+
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Name', 'Email', 'Phone', 'Date of Birth', 'Gender', 'Created At']);
+        foreach ($rows as $r) {
+            fputcsv($out, $r);
+        }
+        fclose($out);
+        exit;
+    }
 }

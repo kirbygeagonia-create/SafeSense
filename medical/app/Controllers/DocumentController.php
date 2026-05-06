@@ -69,7 +69,11 @@ class DocumentController extends BaseController
         $maxSize = 10 * 1024 * 1024; // 10MB
 
         // Validate file type
-        if (!in_array($file['type'], $allowedTypes)) {
+        // FIX M4: Real MIME validation using finfo_file (not just browser-side $_FILES['type'])
+        $tmpPath  = $file['tmp_name'];
+        $realMime = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmpPath);
+        $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!in_array($realMime, $allowedMimes, true)) {
             $_SESSION['flash_error'] = 'Invalid file type. Allowed: PDF, JPG, PNG, GIF, DOC, DOCX';
             $this->redirect('/patients/documents?patient_id=' . $patientId);
             return;

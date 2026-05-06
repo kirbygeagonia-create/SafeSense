@@ -54,6 +54,16 @@ class UserController extends BaseController {
             $role = 'staff';
         }
 
+        // FIX M1: Enforce minimum password length
+        $PASSWORD_MIN_LENGTH = 8;
+        if (strlen($password) < $PASSWORD_MIN_LENGTH) {
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => "Password must be at least {$PASSWORD_MIN_LENGTH} characters long."], 422);
+            $_SESSION['flash_error'] = "Password must be at least {$PASSWORD_MIN_LENGTH} characters long.";
+            $this->redirect('/users');
+            return;
+        }
+
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
         $database = new Database();
@@ -74,7 +84,7 @@ class UserController extends BaseController {
                     'success' => true,
                     'message' => 'User created successfully',
                     'data'    => [
-                        'id'         => $id,
+                        'id'         => $newId,
                         'name'       => $name,
                         'email'      => $email,
                         'role'       => $role,

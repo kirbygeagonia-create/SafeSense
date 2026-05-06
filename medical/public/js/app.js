@@ -5,6 +5,14 @@
 (function () {
   'use strict';
 
+  // FIX L3: Cleanup orphaned modals on every AJAX navigation
+  document.addEventListener('hidden.bs.modal', function () {
+    if (document.querySelectorAll('.modal.show').length === 0) {
+      document.body.classList.remove('modal-open');
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    }
+  });
+
   /* ──────────────────────────────────────────────
      AJAX Helper — enforces X-Requested-With + CSRF
   ────────────────────────────────────────────── */

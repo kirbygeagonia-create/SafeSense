@@ -44,10 +44,10 @@ class SearchController extends BaseController
             // EMR (diagnosis/notes)
             if (in_array($tab, ['all','emr'])) {
                 $stmt = $db->prepare(
-                    "SELECT e.id, e.diagnosis, e.treatment, e.created_at, p.name as patient_name
-                     FROM emr e
+                    "SELECT e.id, e.diagnosis, e.prescription, e.created_at, p.name as patient_name
+                     FROM emr_records e
                      JOIN patients p ON e.patient_id = p.id
-                     WHERE e.diagnosis LIKE :q OR e.treatment LIKE :q OR e.notes LIKE :q
+                     WHERE e.diagnosis LIKE :q OR e.prescription LIKE :q OR e.notes LIKE :q
                      ORDER BY e.created_at DESC LIMIT 50"
                 );
                 $stmt->execute([':q' => '%' . $q . '%']);

@@ -321,4 +321,32 @@ class AppointmentController extends BaseController
             $this->redirect('/appointments');
         }
     }
+
+    public function exportCsv()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'doctor']);
+
+        $this->logAction('export', 'appointments', 0, 'Exported appointments to CSV');
+
+        $database = new Database();
+        $db       = $database->getConnection();
+        $stmt = $db->query("SELECT a.appointment_date, a.appointment_time, p.name AS patient_name, d.name AS doctor_name, a.status, a.reason
+                             FROM appointments a
+                             JOIN patients p ON a.patient_id = p.id
+                             JOIN doctors d ON a.doctor_id = d.id
+                             ORDER BY a.appointment_date DESC, a.appointment_time DESC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=appointments_' . date('Y-m-d') . '.csv');
+
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Date', 'Time', 'Patient', 'Doctor', 'Status', 'Reason']);
+        foreach ($rows as $r) {
+            fputcsv($out, $r);
+        }
+        fclose($out);
+        exit;
+    }
 }

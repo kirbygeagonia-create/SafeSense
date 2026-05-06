@@ -20,6 +20,16 @@ class AuthController extends BaseController {
         // Validate CSRF token
         $this->validateCsrf();
 
+        // FIX M2: Brute-force protection
+        $ip   = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $key  = 'login_attempts_' . md5($ip);
+        $_SESSION[$key] = ($_SESSION[$key] ?? 0) + 1;
+        if ($_SESSION[$key] > 5) {
+            $_SESSION['flash_error'] = 'Too many login attempts. Please try again in 15 minutes.';
+            $this->redirect('/login');
+            return;
+        }
+
         $email    = trim($this->getPostData('email') ?? '');
         $password = $this->getPostData('password') ?? '';
 
@@ -46,6 +56,8 @@ class AuthController extends BaseController {
         }
 
                 if ($user) {
+            // FIX M2: Reset failed attempts on success
+            unset($_SESSION[$key]);
             session_regenerate_id(true);          // Prevent session fixation on login
             $_SESSION['user']       = $user;
             $_SESSION['login_time'] = time();
@@ -70,7 +82,6 @@ class AuthController extends BaseController {
 
         session_destroy();
         session_start();
-        session_regenerate_id(true);
 
         $_SESSION['flash_success'] = 'You have been logged out successfully.';
         $this->redirect('/login');
@@ -110,6 +121,7 @@ class AuthController extends BaseController {
         $recentAlerts        = [];
         $unreadAlerts        = 0;
         $upcomingAppointments = [];
+        $alertStats          = ['critical' => 0, 'warning' => 0, 'info' => 0, 'total_unread' => 0];
 
         try {
             // Load alert model
@@ -119,6 +131,13 @@ class AuthController extends BaseController {
                 $alertModel  = new Alert($db);
                 $recentAlerts = $alertModel->getAll(5);
                 $unreadAlerts = $alertModel->countUnread();
+
+                // ENH-3: Alert stats by level
+                $stmt = $db->query("SELECT level, COUNT(*) AS cnt FROM safesense_alerts WHERE is_read = 0 GROUP BY level");
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                    $alertStats[$r['level']] = (int)$r['cnt'];
+                }
+                $alertStats['total_unread'] = $unreadAlerts;
             }
         } catch (Exception $e) {}
 
@@ -197,6 +216,7 @@ class AuthController extends BaseController {
             'myAppointments'       => $myAppointments,
             'myAlerts'             => $myAlerts,
             'todayStats'           => $todayStats,
+            'alertStats'           => $alertStats,
         ]);
     }
 

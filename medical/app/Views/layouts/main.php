@@ -9,7 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="<?php echo ASSETS_URL; ?>/css/style.css?v=2" rel="stylesheet">
+    <link href="<?php echo ASSETS_URL; ?>/css/style.css?v=<?php echo filemtime(__DIR__ . '/../../public/css/style.css'); ?>" rel="stylesheet">
     <script>window.BASE_URL = '<?php echo url(); ?>';</script>
     <?php
     // Task 2 — generate CSRF token once per session and expose it as a meta tag
@@ -649,12 +649,6 @@
   setInterval(poll, POLL_MS);
 })();
 </script>
-<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=2"></script>
-</body>
-</html>
-  setInterval(poll, POLL_MS);
-})();
-</script>
-<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=2"></script>
+<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=<?php echo filemtime(__DIR__ . '/../../public/js/app.js'); ?>"></script>
 </body>
 </html>

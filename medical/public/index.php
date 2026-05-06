@@ -3,6 +3,19 @@
  * SafeSense Hospital Management System — Entry Point
  */
 
+// FIX M3: Harden session cookies before starting session
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+           (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'domain'   => $_SERVER['HTTP_HOST'] ?? '',
+    'secure'   => $isHttps,
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
 // Start session once here; controllers must NOT call session_start() again
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -22,6 +35,21 @@ if (file_exists($envFile)) {
 // Core configuration
 require_once __DIR__ . '/../app/Config/config.php';
 require_once __DIR__ . '/../app/Config/database.php';
+
+// ENH-1: Global error handler (catch fatal errors and log them)
+if (defined('LOG_PATH')) {
+    register_shutdown_function(function() {
+        $error = error_get_last();
+        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR])) {
+            error_log(sprintf(
+                "[Fatal Error] %s:%d - %s",
+                $error['file'],
+                $error['line'],
+                $error['message']
+            ));
+        }
+    });
+}
 
 // Core framework files
 require_once __DIR__ . '/../app/Core/Router.php';

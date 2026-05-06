@@ -234,8 +234,26 @@ class EmrController extends BaseController {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid record ID'], 400);
             $_SESSION['flash_error'] = 'Invalid record ID';
             $this->redirect('/emr');
-            $this->redirect('/emr');
+            return;  // ← was missing
         }
+
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        $this->emrModel->conn = $db;
+        $this->emrModel->id   = $id;
+
+        if ($this->emrModel->delete()) {
+            $this->logAction('delete', 'emr', $id);
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => true, 'message' => 'EMR record deleted successfully']);
+            $_SESSION['flash_success'] = 'EMR record deleted successfully';
+        } else {
+            if ($this->isAjax())
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete record'], 500);
+            $_SESSION['flash_error'] = 'Failed to delete EMR record';
+        }
+        $this->redirect('/emr');
     }
 
     public function printRecord()

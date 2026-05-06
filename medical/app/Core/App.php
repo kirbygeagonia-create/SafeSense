@@ -15,6 +15,7 @@ class App
         $this->router->get('/', 'AuthController@dashboard');
         $this->router->get('/patients',        'PatientController@index');
         $this->router->get('/patients/view',   'PatientController@view');
+        $this->router->get('/patients/export', 'PatientController@exportCsv');
         $this->router->post('/patients/store', 'PatientController@store');
         $this->router->get('/patients/edit',   'PatientController@edit');
         $this->router->post('/patients/update','PatientController@update');
@@ -29,6 +30,7 @@ class App
         $this->router->get('/appointments', 'AppointmentController@index');
         $this->router->get('/api/appointments/events', 'AppointmentController@calendarEvents');
         $this->router->get('/api/appointments/today', 'AppointmentController@upcomingToday');
+        $this->router->get('/appointments/export', 'AppointmentController@exportCsv');
         $this->router->post('/appointments/store', 'AppointmentController@store');
         $this->router->get('/appointments/edit', 'AppointmentController@edit');
         $this->router->post('/appointments/update', 'AppointmentController@update');
@@ -57,6 +59,7 @@ class App
         // Billing Module
         $this->router->get('/billing',          'BillingController@index');
         $this->router->get('/billing/print',    'BillingController@printInvoice');
+        $this->router->get('/billing/export',   'BillingController@exportCsv');
         $this->router->post('/billing/store',   'BillingController@store');
         $this->router->get('/billing/edit',     'BillingController@edit');
         $this->router->post('/billing/update',  'BillingController@update');

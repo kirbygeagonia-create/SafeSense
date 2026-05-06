@@ -85,10 +85,13 @@ class Billing {
         
         $stmt = $this->conn->prepare($query);
         
+        $desc  = htmlspecialchars(strip_tags($this->service_description));
+        $notes = htmlspecialchars(strip_tags($this->notes));
+        
         $stmt->bindParam(':patient_id', $this->patient_id, PDO::PARAM_INT);
         $stmt->bindParam(':appointment_id', $this->appointment_id, $this->appointment_id ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindParam(':invoice_number', $this->invoice_number);
-        $stmt->bindParam(':service_description', htmlspecialchars(strip_tags($this->service_description)));
+        $stmt->bindParam(':service_description', $desc);
         $stmt->bindParam(':amount', $this->amount);
         $stmt->bindParam(':discount', $this->discount);
         $stmt->bindParam(':tax', $this->tax);
@@ -96,7 +99,7 @@ class Billing {
         $stmt->bindParam(':payment_status', $this->payment_status);
         $stmt->bindParam(':payment_method', $this->payment_method);
         $stmt->bindParam(':payment_date', $this->payment_date);
-        $stmt->bindParam(':notes', htmlspecialchars(strip_tags($this->notes)));
+        $stmt->bindParam(':notes', $notes);
         $stmt->bindParam(':created_by', $this->created_by, $this->created_by ? PDO::PARAM_INT : PDO::PARAM_NULL);
         
         if($stmt->execute()) {
@@ -119,9 +122,12 @@ class Billing {
         
         $stmt = $this->conn->prepare($query);
         
+        $desc  = htmlspecialchars(strip_tags($this->service_description));
+        $notes = htmlspecialchars(strip_tags($this->notes));
+        
         $stmt->bindParam(':patient_id', $this->patient_id, PDO::PARAM_INT);
         $stmt->bindParam(':appointment_id', $this->appointment_id, $this->appointment_id ? PDO::PARAM_INT : PDO::PARAM_NULL);
-        $stmt->bindParam(':service_description', htmlspecialchars(strip_tags($this->service_description)));
+        $stmt->bindParam(':service_description', $desc);
         $stmt->bindParam(':amount', $this->amount);
         $stmt->bindParam(':discount', $this->discount);
         $stmt->bindParam(':tax', $this->tax);
@@ -129,7 +135,7 @@ class Billing {
         $stmt->bindParam(':payment_status', $this->payment_status);
         $stmt->bindParam(':payment_method', $this->payment_method);
         $stmt->bindParam(':payment_date', $this->payment_date);
-        $stmt->bindParam(':notes', htmlspecialchars(strip_tags($this->notes)));
+        $stmt->bindParam(':notes', $notes);
         $stmt->bindParam(':id', $this->id);
         
         if($stmt->execute()) {

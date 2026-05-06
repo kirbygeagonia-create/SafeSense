@@ -270,4 +270,31 @@ class BillingController extends BaseController {
             $this->redirect('/billing');
         }
     }
+
+    public function exportCsv()
+    {
+        $this->requireLogin();
+        $this->requireRole(['admin', 'staff']);
+
+        $this->logAction('export', 'billing', 0, 'Exported billing to CSV');
+
+        $database = new Database();
+        $db       = $database->getConnection();
+        $stmt = $db->query("SELECT b.invoice_number, p.name AS patient_name, b.service_description, b.total_amount, b.payment_status, b.payment_date, b.created_at
+                             FROM billing b
+                             JOIN patients p ON b.patient_id = p.id
+                             ORDER BY b.created_at DESC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=invoices_' . date('Y-m-d') . '.csv');
+
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Invoice #', 'Patient', 'Service', 'Total', 'Status', 'Payment Date', 'Created At']);
+        foreach ($rows as $r) {
+            fputcsv($out, $r);
+        }
+        fclose($out);
+        exit;
+    }
 }
