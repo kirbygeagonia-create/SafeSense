@@ -3,7 +3,7 @@
         <h1><i class="fas fa-user-md me-2"></i>Doctors</h1>
         <div class="page-subtitle">Medical staff and practitioner directory</div>
     </div>
-    <?php if (in_array($currentRole ?? '', ['admin'])): ?>
+    <?php if (($currentRole ?? '') === 'admin'): ?>
     <button type="button" class="btn btn-primary" id="addDoctorBtn">
         <i class="fas fa-plus me-1"></i>Add Doctor
     </button>
@@ -47,7 +47,7 @@
 </div>
 
 <!-- Doctor Modal -->
-<div class="modal fade" id="doctorModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="doctorModal" tabindex="-1" aria-hidden="true" style="display:none;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">

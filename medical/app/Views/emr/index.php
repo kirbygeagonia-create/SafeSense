@@ -3,8 +3,8 @@ $allPatients = isset($allPatients) ? $allPatients : [];
 $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 ?>
 <script>
-  const PATIENTS = <?php echo json_encode($allPatients); ?>;
-  const DOCTORS  = <?php echo json_encode($allDoctors); ?>;
+  const PATIENTS = <?php echo json_encode($allPatients ?? []); ?>;
+  const DOCTORS  = <?php echo json_encode($allDoctors  ?? []); ?>;
 </script>
 
 <!-- Task 1 — Page header -->
@@ -70,7 +70,7 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 <?php endif; ?>
 
 <!-- EMR Modal -->
-<div class="modal fade" id="emrModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal fade" id="emrModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="display:none;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">

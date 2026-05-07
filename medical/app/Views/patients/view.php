@@ -50,7 +50,7 @@ $genderIcon = $patient->gender === 'female' ? 'fa-venus' : 'fa-mars';
       <div class="card-header"><i class="fas fa-user me-2"></i>Personal Information</div>
       <div class="card-body">
         <table class="table table-sm table-borderless mb-0 small">
-          <tr><td class="text-muted" style="width:40%">Age</td><td><strong><?php echo $age; ?></strong> (<?php echo date('M d, Y', strtotime($patient->date_of_birth)); ?>) <?php if ($latestWeight): ?><span class="badge bg-secondary ms-1">Last Weight: <?php echo htmlspecialchars($latestWeight); ?> kg</span><?php endif; ?></td></tr>
+          <tr><td class="text-muted ss-profile-label">Age</td><td><strong><?php echo $age; ?></strong> (<?php echo date('M d, Y', strtotime($patient->date_of_birth)); ?>) <?php if ($latestWeight): ?><span class="badge bg-secondary ms-1">Last Weight: <?php echo htmlspecialchars($latestWeight); ?> kg</span><?php endif; ?></td></tr>
           <tr><td class="text-muted">Email</td><td><?php echo htmlspecialchars($patient->email ?? '—'); ?></td></tr>
           <tr><td class="text-muted">Phone</td><td><?php echo htmlspecialchars($patient->phone ?? '—'); ?></td></tr>
           <tr><td class="text-muted">Address</td><td><?php echo htmlspecialchars($patient->address ?? '—'); ?></td></tr>

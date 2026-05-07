@@ -9,7 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="<?php echo ASSETS_URL; ?>/css/style.css?v=<?php echo filemtime(__DIR__ . '/../../public/css/style.css'); ?>" rel="stylesheet">
+    <link href="<?php echo ASSETS_URL; ?>/css/style.css?v=<?php echo file_exists(__DIR__ . '/../../../public/css/style.css') ? filemtime(__DIR__ . '/../../../public/css/style.css') : '1'; ?>" rel="stylesheet">
     <script>window.BASE_URL = '<?php echo url(); ?>';</script>
     <?php
     // Task 2 — generate CSRF token once per session and expose it as a meta tag
@@ -144,7 +144,7 @@
       </ul>
 
       <!-- Vertical separator -->
-      <div class="d-none d-lg-block mx-2" style="width:1px;height:28px;background:rgba(255,255,255,0.15);"></div>
+      <div class="d-none d-lg-block mx-2 ss-nav-divider"></div>
 
       <ul class="navbar-nav align-items-center gap-2">
         <?php if (isset($_SESSION['user'])): ?>
@@ -160,7 +160,7 @@
         <li class="nav-item me-1" id="todayApptWrap" style="display:none;">
           <a class="nav-link position-relative" href="<?php echo url('/appointments'); ?>" title="Today's Appointments">
             <i class="fas fa-calendar-check"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="todayApptBadge" style="font-size:.65rem;">0</span>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success ss-appt-badge" id="todayApptBadge">0</span>
           </a>
         </li>
 
@@ -198,12 +198,12 @@
 </nav>
 
 <!-- ── Notification Drawer ── -->
-<div class="ss-drawer-overlay" id="ssDrawerOverlay"></div>
-<div class="ss-drawer" id="ssDrawer">
+<div class="ss-drawer-overlay" id="ssDrawerOverlay" style="display:none;pointer-events:none;"></div>
+<div class="ss-drawer" id="ssDrawer" style="display:none;">
   <div class="ss-drawer-header">
     <h5 class="mb-0"><i class="fas fa-satellite-dish me-2"></i>Live Alerts</h5>
     <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-sm btn-outline-light py-0" id="ssMarkAllRead" style="font-size:.75rem">Mark all read</button>
+      <button class="btn btn-sm btn-outline-light py-0" id="ssMarkAllRead">Mark all read</button>
       <button class="ss-x-btn" id="ssDrawerClose"><i class="fas fa-times"></i></button>
     </div>
   </div>
@@ -231,7 +231,7 @@
 </div>
 
 <!-- ── Alert Modal ── -->
-<div class="ss-modal-overlay" id="ssModalOverlay">
+<div class="ss-modal-overlay" id="ssModalOverlay" style="display:none;">
   <div class="ss-modal" id="ssModal" data-level="critical">
     <div class="ss-modal-header">
       <div class="ss-modal-icon" id="ssModalIcon"><i class="fas fa-exclamation-triangle"></i></div>
@@ -360,10 +360,28 @@
   window.setBadge = setBadge;
 
   /* ── Drawer ── */
-  bellBtn.addEventListener('click', ()=>{ drawer.classList.add('open'); overlay.classList.add('open'); });
+  function openDrawer(){
+    overlay.style.display = 'block';
+    overlay.style.pointerEvents = 'all';
+    drawer.style.display = 'flex';
+    overlay.classList.add('open');
+    drawer.classList.add('open');
+  }
+  function closeDrawer(){
+    overlay.classList.remove('open');
+    drawer.classList.remove('open');
+    overlay.style.pointerEvents = 'none';
+    // delay display:none so CSS transition can complete
+    setTimeout(() => { 
+      if (!overlay.classList.contains('open')) {
+        overlay.style.display = 'none'; 
+        drawer.style.display = 'none';
+      }
+    }, 320);
+  }
+  bellBtn.addEventListener('click', openDrawer);
   drawerClose.addEventListener('click', closeDrawer);
   overlay.addEventListener('click', closeDrawer);
-  function closeDrawer(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
 
   markAllBtn.addEventListener('click', ()=>{
     post(window.BASE_URL + '/api/alerts/read','id=all')
@@ -474,6 +492,7 @@
       $('ssMapLink').href=`https://www.google.com/maps?q=${a.latitude},${a.longitude}`;
       $('ssMapLinkWrap').style.display='block';
     } else { $('ssMapLinkWrap').style.display='none'; }
+    modalOverlay.style.display = 'flex';
     modalOverlay.classList.add('show');
     if(a.alert_level==='critical') startAlarm('critical');
     else if(a.alert_level==='danger') startAlarm('danger');
@@ -482,6 +501,7 @@
   function closeModal(){
     stopAlarm();
     modalOverlay.classList.remove('show');
+    modalOverlay.style.display = 'none';
     modalOpen=false;
     if(modalQueue.length) setTimeout(()=>openModal(modalQueue.shift()),350);
   }
@@ -649,6 +669,6 @@
   setInterval(poll, POLL_MS);
 })();
 </script>
-<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=<?php echo filemtime(__DIR__ . '/../../public/js/app.js'); ?>"></script>
+<script src="<?php echo ASSETS_URL; ?>/js/app.js?v=<?php echo file_exists(__DIR__ . '/../../../public/js/app.js') ? filemtime(__DIR__ . '/../../../public/js/app.js') : '1'; ?>"></script>
 </body>
 </html>

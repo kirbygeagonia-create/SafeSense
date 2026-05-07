@@ -348,7 +348,7 @@
             </div>
             <div class="flex-grow-1">
               <div class="fw-medium small"><?php echo htmlspecialchars($appt['patient_name']??'—'); ?></div>
-              <div class="text-muted" style="font-size:.75rem;">
+              <div class="ss-table-meta">
                 <?php echo htmlspecialchars($appt['appointment_date']??''); ?>
                 &nbsp;<?php echo htmlspecialchars($appt['appointment_time']??''); ?>
               </div>

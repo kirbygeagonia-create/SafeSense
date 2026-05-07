@@ -54,7 +54,7 @@
 </div>
 
 <!-- Patient Modal -->
-<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true" style="display:none;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">

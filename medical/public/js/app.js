@@ -76,6 +76,7 @@
   }
 
   function buildOptions(arr, labelKey) {
+    if (!Array.isArray(arr)) return '';
     return arr.map(item => `<option value="${item.id}">${esc(item[labelKey] || item.name)}</option>`).join('');
   }
 
@@ -186,9 +187,11 @@
       }
     });
 
-    const modalEl    = document.getElementById(cfg.modalId);
-    const modal      = new bootstrap.Modal(modalEl);
+    const modalEl = document.getElementById(cfg.modalId);
+    if (!modalEl) return;                          // guard against missing modal
+    const modal   = new bootstrap.Modal(modalEl);
     const form       = document.getElementById(cfg.formId);
+    if (!form) return;                             // guard against missing form
     const modalTitle = modalEl.querySelector('.modal-title');
     let editingRow   = null;
 
@@ -362,8 +365,8 @@
   ────────────────────────────────────────────── */
   const apptEl = document.getElementById('appointmentsTable');
   if (apptEl) {
-    const patientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
-    const doctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
+    const patientOpts = buildOptions(Array.isArray(PATIENTS) ? PATIENTS : [], 'name');
+    const doctorOpts  = buildOptions(Array.isArray(DOCTORS)  ? DOCTORS  : [], 'name');
 
     function populateDropdowns(form) {
       const ps = form.querySelector('[name="patient_id"]');
@@ -397,8 +400,8 @@
       },
       buildRow: (d) => [
         d.id,
-        esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
-        esc(findName(typeof DOCTORS  !== 'undefined' ? DOCTORS  : [], d.doctor_id)),
+        esc(findName(Array.isArray(PATIENTS) ? PATIENTS : [], d.patient_id)),
+        esc(findName(Array.isArray(DOCTORS)  ? DOCTORS  : [], d.doctor_id)),
         esc(d.appointment_date),
         esc(d.appointment_time),
         statusBadge(d.status),
@@ -446,8 +449,8 @@
   ────────────────────────────────────────────── */
   const emrEl = document.getElementById('emrTable');
   if (emrEl) {
-    const emrPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
-    const emrDoctorOpts  = typeof DOCTORS  !== 'undefined' ? buildOptions(DOCTORS,  'name') : '';
+    const emrPatientOpts = buildOptions(Array.isArray(PATIENTS) ? PATIENTS : [], 'name');
+    const emrDoctorOpts  = buildOptions(Array.isArray(DOCTORS)  ? DOCTORS  : [], 'name');
 
     function populateEmrDropdowns(form) {
       const ps = form.querySelector('[name="patient_id"]');
@@ -476,8 +479,8 @@
       },
       buildRow: (d) => [
         d.id,
-        esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
-        esc(findName(typeof DOCTORS  !== 'undefined' ? DOCTORS  : [], d.doctor_id)),
+        esc(findName(Array.isArray(PATIENTS) ? PATIENTS : [], d.patient_id)),
+        esc(findName(Array.isArray(DOCTORS)  ? DOCTORS  : [], d.doctor_id)),
         esc(d.visit_date),
         esc(d.diagnosis),
         esc(d.blood_pressure || '—'),
@@ -492,7 +495,7 @@
   ────────────────────────────────────────────── */
   const billEl = document.getElementById('billingTable');
   if (billEl) {
-    const billPatientOpts = typeof PATIENTS !== 'undefined' ? buildOptions(PATIENTS, 'name') : '';
+    const billPatientOpts = buildOptions(Array.isArray(PATIENTS) ? PATIENTS : [], 'name');
 
     function populateBillDropdown(form) {
       const ps = form.querySelector('[name="patient_id"]');
@@ -523,7 +526,7 @@
       },
       buildRow: (d) => [
         esc(d.invoice_number),
-        esc(findName(typeof PATIENTS !== 'undefined' ? PATIENTS : [], d.patient_id)),
+        esc(findName(Array.isArray(PATIENTS) ? PATIENTS : [], d.patient_id)),
         '₱' + Number(d.amount || 0).toFixed(2),
         '₱' + Number(d.discount || 0).toFixed(2),
         '₱' + Number(d.tax || 0).toFixed(2),

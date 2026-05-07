@@ -28,16 +28,16 @@
             $ac = $actionColors[$l['action']] ?? 'secondary';
           ?>
           <tr>
-            <td style="white-space:nowrap; font-size:.8rem;"><?php echo date('M d, Y h:i A', strtotime($l['created_at'])); ?></td>
-            <td style="font-size:.85rem;"><?php echo htmlspecialchars($l['user_email']); ?></td>
+            <td class="ss-td-date"><?php echo date('M d, Y h:i A', strtotime($l['created_at'])); ?></td>
+            <td class="ss-td-sm"><?php echo htmlspecialchars($l['user_email']); ?></td>
             <td><span class="badge bg-secondary"><?php echo htmlspecialchars($l['user_role']); ?></span></td>
             <td><span class="badge bg-<?php echo $ac; ?>"><?php echo htmlspecialchars($l['action']); ?></span></td>
-            <td style="font-size:.85rem;"><?php echo htmlspecialchars($l['resource']); ?></td>
-            <td style="font-size:.85rem; color:#64748b;"><?php echo $l['resource_id'] ?? '—'; ?></td>
-            <td style="font-size:.82rem; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <td class="ss-td-sm"><?php echo htmlspecialchars($l['resource']); ?></td>
+            <td class="ss-td-muted"><?php echo $l['resource_id'] ?? '—'; ?></td>
+            <td class="ss-td-detail">
               <?php echo htmlspecialchars($l['detail'] ?? '—'); ?>
             </td>
-            <td style="font-size:.78rem; color:#94a3b8;"><?php echo htmlspecialchars($l['ip_address'] ?? '—'); ?></td>
+            <td class="ss-td-ip"><?php echo htmlspecialchars($l['ip_address'] ?? '—'); ?></td>
           </tr>
           <?php endforeach; ?>
         </tbody>

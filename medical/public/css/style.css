@@ -164,6 +164,33 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 .dt-header .dataTables_length { margin: 0; }
 .dt-header .dataTables_filter { margin: 0; }
 
+/* DataTables empty-state — replaces the raw "No data available in table" text */
+.dataTables_empty {
+  padding: 2.5rem 1rem !important;
+  color: var(--ss-text-3) !important;
+  font-size: .875rem !important;
+  text-align: center !important;
+}
+.dataTables_empty::before {
+  content: '\f111';        /* placeholder — overridden per-table via data attr if needed */
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  display: block;
+  font-size: 2rem;
+  margin-bottom: .65rem;
+  opacity: .3;
+}
+
+/* SweetAlert2 popup detail block (appointments calendar click) */
+.ss-swal-detail {
+  text-align: left;
+  font-size: .9rem;
+}
+.ss-swal-detail p { margin-bottom: .4rem; }
+
+/* Patient profile view label width */
+.ss-profile-label { width: 40%; }
+
 /* ════════════════════════════════════════════
    X CLOSE BUTTON
 ════════════════════════════════════════════ */
@@ -245,7 +272,7 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
 
 /* Mark-all-read button in drawer header */
 .ss-drawer-header .btn-outline-light {
-  font-size: .72rem;
+  font-size: .75rem;               /* was .72rem inline — unified to .75rem */
   padding: .2rem .6rem;
   min-height: unset;
   border-color: rgba(255,255,255,.35);
@@ -256,6 +283,37 @@ main { flex: 1; padding-top: 1.5rem; padding-bottom: 3rem; }
   background: rgba(255,255,255,.15);
   color: #fff;
   border-color: rgba(255,255,255,.6);
+}
+
+/* ── Navbar utilities ── */
+/* Vertical separator bar between nav groups */
+.ss-nav-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.15);
+}
+/* Today's appointments badge (small pill on bell icon) */
+.ss-appt-badge { font-size: .65rem; }
+
+/* ── Audit log table cells ── */
+.ss-td-date   { white-space: nowrap; font-size: .8rem; }
+.ss-td-sm     { font-size: .85rem; }
+.ss-td-muted  { font-size: .85rem; color: var(--ss-text-3); }
+.ss-td-detail { font-size: .82rem; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-td-ip     { font-size: .78rem; color: var(--ss-text-3); }
+
+/* ── Reports page ── */
+/* "Generated:" timestamp label in page header */
+.ss-report-meta { font-size: .8rem; }
+/* Stat value slightly smaller than dashboard (1.6rem vs 1.8rem) */
+.ss-stat-value-md { font-size: 1.6rem; font-weight: 700; color: var(--ss-text); line-height: 1.1; letter-spacing: -.03em; }
+
+/* ── Calendar wrapper (appointments page) ── */
+.ss-calendar-wrap {
+  background: var(--ss-surface);
+  padding: 1rem;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--ss-border);
 }
 
 /* Scrollable body */

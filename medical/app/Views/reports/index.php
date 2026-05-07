@@ -3,7 +3,7 @@
     <h1><i class="fas fa-chart-bar"></i>Reports &amp; Analytics</h1>
     <div class="page-subtitle">System-wide statistics and trend analysis</div>
   </div>
-  <div class="text-muted" style="font-size:.8rem;">
+  <div class="text-muted ss-report-meta">
     <i class="fas fa-clock me-1"></i>Generated: <?php echo date('M d, Y h:i A'); ?>
   </div>
 </div>
@@ -33,7 +33,7 @@
           <i class="fas <?php echo $c['icon']; ?>"></i>
         </div>
       </div>
-      <div class="stat-value" style="font-size:1.6rem;"><?php echo $c['val']; ?></div>
+      <div class="ss-stat-value-md"><?php echo $c['val']; ?></div>
     </div>
   </div>
   <?php endforeach; ?>

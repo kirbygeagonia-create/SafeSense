@@ -217,7 +217,7 @@ document.querySelectorAll('.simulate-btn').forEach(btn => {
     const label = level.toUpperCase() + ' — ' + event;
     this.disabled = true;
     this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
-    ajaxPost(window.BASE_URL + '/api/alert/simulate', { level, event })
+    safeAjaxPost(window.BASE_URL + '/api/alert/simulate', { level, event })
       .then(d => {
         if (d.success) {
           // Show brief success state then reload to show new alert

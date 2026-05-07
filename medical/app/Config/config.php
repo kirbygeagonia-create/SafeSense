@@ -2,7 +2,19 @@
 
 // ── App ──────────────────────────────────────
 define('APP_NAME', 'Tupi Hospital Management');
-define('APP_URL',  'http://localhost/SafeSense/medical');
+
+// Dynamically derive APP_URL from the server environment.
+// Falls back to hardcoded value only when running CLI (e.g., migrations).
+if (PHP_SAPI === 'cli') {
+    define('APP_URL', 'http://localhost/SafeSense/medical');
+} else {
+    $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    // scriptName = /SafeSense/medical/public/index.php → strip /public/index.php → base
+    $script   = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = rtrim(dirname(dirname($script)), '/');  // go up two levels
+    define('APP_URL', $scheme . '://' . $host . $basePath);
+}
 
 // Debug mode — reads from .env APP_DEBUG value; defaults to false in production
 define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
@@ -22,7 +34,7 @@ define('ASSETS_URL',  APP_URL . '/public');
 // ── Date/Time ────────────────────────────────
 define('DATE_FORMAT', 'Y-m-d');
 define('TIME_FORMAT', 'H:i:s');
-define('DEFAULT_TIMEZONE', 'Asia/Manila');
+define('DEFAULT_TIMEZONE', 'Pacific/Pago_Pago');
 date_default_timezone_set(DEFAULT_TIMEZONE);
 
 // ── Session ──────────────────────────────────

@@ -4,8 +4,8 @@ $allPatients = isset($allPatients) ? $allPatients : [];
 $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 ?>
 <script>
-  const PATIENTS = <?php echo json_encode($allPatients); ?>;
-  const DOCTORS  = <?php echo json_encode($allDoctors); ?>;
+  const PATIENTS = <?php echo json_encode($allPatients ?? []); ?>;
+  const DOCTORS  = <?php echo json_encode($allDoctors  ?? []); ?>;
 </script>
 
 <!-- Task 1 — Page header -->
@@ -88,11 +88,11 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
 
 <!-- Calendar view -->
 <div id="calendarView" style="display:none;">
-  <div id="ssCalendar" style="background:#fff; padding:1rem; border-radius:var(--r-lg); border:1px solid var(--ss-border);"></div>
+  <div id="ssCalendar" class="ss-calendar-wrap"></div>
 </div>
 
 <!-- Appointment Modal -->
-<div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true" style="display:none;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -173,7 +173,7 @@ $allDoctors  = isset($allDoctors)  ? $allDoctors  : [];
         const p = info.event.extendedProps;
         Swal.fire({
           title: info.event.title,
-          html: `<div style="text-align:left;font-size:.9rem;">
+          html: `<div class="ss-swal-detail">
             <p><strong>Status:</strong> ${p.status}</p>
             <p><strong>Reason:</strong> ${p.reason || '—'}</p>
             <p><strong>Date:</strong> ${info.event.startStr.slice(0,10)}</p>

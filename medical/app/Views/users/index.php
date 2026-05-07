@@ -4,9 +4,11 @@
         <h1><i class="fas fa-users-cog me-2"></i>Users</h1>
         <div class="page-subtitle">System user management and permissions</div>
     </div>
+    <?php if (($currentRole ?? '') === 'admin'): ?>
     <button type="button" class="btn btn-primary" id="addUserBtn">
         <i class="fas fa-plus me-1"></i>Add User
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive mb-3">
@@ -42,7 +44,7 @@
 </div>
 
 <!-- User Modal -->
-<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true" style="display:none;">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
