@@ -36,20 +36,28 @@ if (file_exists($envFile)) {
 require_once __DIR__ . '/../app/Config/config.php';
 require_once __DIR__ . '/../app/Config/database.php';
 
-// ENH-1: Global error handler (catch fatal errors and log them)
-if (defined('LOG_PATH')) {
-    register_shutdown_function(function() {
-        $error = error_get_last();
-        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR])) {
-            error_log(sprintf(
-                "[Fatal Error] %s:%d - %s",
-                $error['file'],
-                $error['line'],
-                $error['message']
-            ));
-        }
-    });
-}
+// ENH-1: Global error and exception handlers — show 500 page, log to error_log
+set_error_handler(function ($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) return false;
+    error_log(sprintf('[SafeSense Error %d] %s in %s:%d', $severity, $message, $file, $line));
+    if (defined('APP_DEBUG') && APP_DEBUG) return false; // show native errors in dev
+    if (!headers_sent()) {
+        http_response_code(500);
+        $errorFile = __DIR__ . '/../app/Views/errors/500.php';
+        if (file_exists($errorFile)) include $errorFile;
+    }
+    exit(1);
+});
+
+set_exception_handler(function (Throwable $e) {
+    error_log(sprintf('[SafeSense Exception] %s in %s:%d', $e->getMessage(), $e->getFile(), $e->getLine()));
+    if (!headers_sent()) {
+        http_response_code(500);
+        $errorFile = __DIR__ . '/../app/Views/errors/500.php';
+        if (file_exists($errorFile)) include $errorFile;
+    }
+    exit(1);
+});
 
 // Core framework files
 require_once __DIR__ . '/../app/Core/Router.php';

@@ -12,20 +12,28 @@ class AuthController extends BaseController {
     }
 
     public function authenticate() {
-        if (!$this->isPostRequest()) { 
-            $this->redirect('/login'); 
-            return; 
+        if (!$this->isPostRequest()) {
+            $this->redirect('/login');
+            return;
         }
 
-        // Validate CSRF token
         $this->validateCsrf();
 
-        // FIX M2: Brute-force protection
-        $ip   = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $key  = 'login_attempts_' . md5($ip);
-        $_SESSION[$key] = ($_SESSION[$key] ?? 0) + 1;
-        if ($_SESSION[$key] > 5) {
-            $_SESSION['flash_error'] = 'Too many login attempts. Please try again in 15 minutes.';
+        // Brute-force protection — keyed by IP with a 15-minute sliding window
+        $ip  = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $key = 'login_attempts_' . md5($ip);
+        $now = time();
+
+        $attempts = $_SESSION[$key] ?? ['count' => 0, 'first_attempt' => $now];
+
+        // Reset window after 15 minutes
+        if (($now - $attempts['first_attempt']) > 900) {
+            $attempts = ['count' => 0, 'first_attempt' => $now];
+        }
+
+        if ($attempts['count'] >= 5) {
+            $wait = 900 - ($now - $attempts['first_attempt']);
+            $_SESSION['flash_error'] = 'Too many failed attempts. Try again in ' . ceil($wait / 60) . ' minute(s).';
             $this->redirect('/login');
             return;
         }
@@ -34,6 +42,8 @@ class AuthController extends BaseController {
         $password = $this->getPostData('password') ?? '';
 
         if (empty($email) || empty($password)) {
+            $attempts['count']++;
+            $_SESSION[$key] = $attempts;
             $_SESSION['flash_error'] = 'Email and password are required.';
             $this->redirect('/login');
             return;
@@ -42,28 +52,30 @@ class AuthController extends BaseController {
         $database = new Database();
         $db       = $database->getConnection();
 
-        // Query users table
         $user = null;
         try {
             $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
             $stmt->execute([':email' => $email]);
             $row  = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && password_verify($password, $row['password'])) {
-                $user = ['email' => $row['email'], 'role' => $row['role'], 'name' => $row['name'] ?? 'Staff'];
+                $user = ['id' => $row['id'], 'email' => $row['email'], 'role' => $row['role'], 'name' => $row['name'] ?? 'Staff'];
             }
         } catch (Exception $e) {
-            // Users table may not exist yet — login will fail gracefully
+            // DB not ready — fail gracefully
         }
 
-                if ($user) {
-            // FIX M2: Reset failed attempts on success
+        if ($user) {
+            // Success — reset attempt counter
             unset($_SESSION[$key]);
-            session_regenerate_id(true);          // Prevent session fixation on login
+            session_regenerate_id(true);
             $_SESSION['user']       = $user;
             $_SESSION['login_time'] = time();
-            $_SESSION['flash_success'] = 'Welcome back, ' . $user['name'] . '!';
+            $_SESSION['flash_success'] = 'Welcome back, ' . htmlspecialchars($user['name']) . '!';
             $this->redirect('/dashboard');
         } else {
+            // Failure — increment counter
+            $attempts['count']++;
+            $_SESSION[$key] = $attempts;
             $_SESSION['flash_error'] = 'Invalid email or password.';
             $this->redirect('/login');
         }
@@ -72,8 +84,10 @@ class AuthController extends BaseController {
     public function logout() {
         $this->validateCsrf();
 
+        // Store flash before clearing the session
         $_SESSION = [];
 
+        // Expire the session cookie
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
@@ -81,9 +95,11 @@ class AuthController extends BaseController {
         }
 
         session_destroy();
-        session_start();
 
+        // Start a fresh session ONLY to carry the flash message to the login page
+        session_start();
         $_SESSION['flash_success'] = 'You have been logged out successfully.';
+
         $this->redirect('/login');
     }
 

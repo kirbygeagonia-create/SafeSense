@@ -176,8 +176,8 @@
         <li class="nav-item">
           <div class="nav-user-pill">
             <i class="fas fa-user-circle"></i>
-            <span><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
-            <small>(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'])); ?>)</small>
+            <span><?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'User'); ?></span>
+            <small>(<?php echo ucfirst(htmlspecialchars($_SESSION['user']['role'] ?? 'staff')); ?>)</small>
           </div>
         </li>
 
