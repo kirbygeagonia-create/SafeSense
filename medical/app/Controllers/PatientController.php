@@ -171,6 +171,7 @@ class PatientController extends BaseController
                             'gender'        => $this->patientModel->gender
                         ]
                     ]);
+                    return;
                 }
                 $this->render('patients/edit', [
                     'title'   => 'Edit Patient',

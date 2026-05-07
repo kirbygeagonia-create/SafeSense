@@ -113,6 +113,7 @@ class DoctorController extends BaseController
                         'license_number' => $this->doctorModel->license_number
                     ]
                 ]);
+                return;
             }
             $this->render('doctors/edit', ['title' => 'Edit Doctor', 'doctor' => $this->doctorModel]);
         } else {

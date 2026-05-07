@@ -154,6 +154,7 @@ class BillingController extends BaseController {
                     'notes'               => $this->billingModel->notes
                 ]
             ]);
+            return;
         }
 
         $this->render('billing/edit', [

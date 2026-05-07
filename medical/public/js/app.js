@@ -324,6 +324,7 @@
       esc(d.phone),
       esc(d.date_of_birth),
       esc(d.gender),
+      `<a href="${window.BASE_URL}/patients/view?id=${d.id}" class="btn btn-sm btn-outline-info me-1" title="View Profile"><i class="fas fa-id-card"></i></a>` +
       `<button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="${d.id}"><i class="fas fa-edit"></i></button>` +
       `<button class="btn btn-sm btn-outline-danger btn-delete" data-id="${d.id}"><i class="fas fa-trash"></i></button>`
     ]

@@ -134,6 +134,7 @@ class EmrController extends BaseController {
                     'weight'          => $this->emrModel->weight
                 ]
             ]);
+            return;
         }
 
         $this->render('emr/edit', [

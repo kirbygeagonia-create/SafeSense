@@ -137,6 +137,7 @@ class UserController extends BaseController {
                 'success' => true,
                 'data'    => $user
             ]);
+            return;
         }
         $this->redirect('/users');
     }

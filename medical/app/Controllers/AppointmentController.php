@@ -196,6 +196,7 @@ class AppointmentController extends BaseController
                         'reason'           => $this->appointmentModel->reason
                     ]
                 ]);
+                return;
             }
             $database = new Database();
             $db = $database->getConnection();
