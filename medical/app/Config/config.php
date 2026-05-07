@@ -4,6 +4,10 @@
 define('APP_NAME', 'Tupi Hospital Management');
 define('APP_URL',  'http://localhost/SafeSense/medical');
 
+// Debug mode — reads from .env APP_DEBUG value; defaults to false in production
+define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
+define('APP_ENV',   $_ENV['APP_ENV'] ?? 'production');
+
 // ── Database ─────────────────────────────────
 define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
 define('DB_NAME', $_ENV['DB_NAME'] ?? 'hospital_db');

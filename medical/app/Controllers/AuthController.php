@@ -149,9 +149,9 @@ class AuthController extends BaseController {
                 $unreadAlerts = $alertModel->countUnread();
 
                 // ENH-3: Alert stats by level
-                $stmt = $db->query("SELECT level, COUNT(*) AS cnt FROM safesense_alerts WHERE is_read = 0 GROUP BY level");
+                $stmt = $db->query("SELECT alert_level, COUNT(*) AS cnt FROM safesense_alerts WHERE is_read = 0 GROUP BY alert_level");
                 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-                    $alertStats[$r['level']] = (int)$r['cnt'];
+                    $alertStats[$r['alert_level']] = (int)$r['cnt'];
                 }
                 $alertStats['total_unread'] = $unreadAlerts;
             }

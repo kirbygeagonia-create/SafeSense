@@ -109,7 +109,7 @@
             <td>#<?php echo $b['id']; ?></td>
             <td><?php echo htmlspecialchars($b['patient_name']); ?></td>
             <td>₱<?php echo number_format($b['total_amount'], 2); ?></td>
-            <td><span class="badge bg-<?php echo $b['payment_status']==='paid'?'success':'warning';"><?php echo $b['payment_status']; ?></span></td>
+            <td><span class="badge bg-<?php echo $b['payment_status']==='paid'?'success':'warning'; ?>"><?php echo htmlspecialchars($b['payment_status']); ?></span></td>
             <td><?php echo date('M d, Y', strtotime($b['created_at'])); ?></td>
           </tr>
           <?php endforeach; ?>
