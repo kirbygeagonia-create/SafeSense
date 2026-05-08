@@ -72,6 +72,8 @@ class App
         $this->router->post('/api/alerts/read', 'AlertController@markRead');
         $this->router->post('/api/alerts/dismiss', 'AlertController@dismiss');
         $this->router->post('/api/alert/simulate', 'AlertController@simulate');
+        $this->router->post('/api/alert/image', 'AlertController@uploadImage');
+        $this->router->post('/api/heartbeat', 'AlertController@heartbeat');
 
         // Dashboard analytics API
         $this->router->get('/api/dashboard/stats', 'DashboardController@stats');

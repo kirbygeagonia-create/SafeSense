@@ -254,6 +254,200 @@ class AlertController extends BaseController {
     }
 
     // ---------------------------------------------------------------
+    // CAMERA IMAGE UPLOAD  —  POST /api/alert/image
+    // ---------------------------------------------------------------
+
+    /**
+     * Called by the ESP32-CAM immediately after sending a JSON alert.
+     * Receives a JPEG image captured by the onboard camera during
+     * DANGER or CRITICAL events (floods, accidents).
+     *
+     * The image is stored on disk and linked to the most recent alert
+     * from this device, providing visual evidence for responders.
+     *
+     * POST body: multipart/form-data with fields:
+     *   api_key      — shared secret
+     *   device_id    — e.g., "SAFESENSE-001"
+     *   alert_level  — danger | critical
+     *   event_type   — flood | accident | rain
+     *   latitude     — float
+     *   longitude    — float
+     *   image        — JPEG file (typically 30–80 KB at SVGA)
+     */
+    public function uploadImage() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'error' => 'Method not allowed'], 405);
+            return;
+        }
+
+        // Validate API key (from POST field, since this is multipart/form-data)
+        $expectedKey = defined('SAFESENSE_API_KEY') ? SAFESENSE_API_KEY : 'SAFESENSE_SECRET_KEY';
+        $apiKey = $_POST['api_key'] ?? '';
+        if (empty($apiKey) || $apiKey !== $expectedKey) {
+            $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            return;
+        }
+
+        // Validate image file was uploaded
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            $uploadError = $_FILES['image']['error'] ?? 'No file';
+            $this->jsonResponse(['success' => false, 'error' => 'Image upload failed. Error: ' . $uploadError], 400);
+            return;
+        }
+
+        // Validate MIME type — only accept JPEG images
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($_FILES['image']['tmp_name']);
+        if ($mimeType !== 'image/jpeg') {
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid image type. Expected JPEG, got: ' . $mimeType], 400);
+            return;
+        }
+
+        // Validate file size (max 500KB — ESP32-CAM SVGA JPEG is typically 30-80KB)
+        $maxSize = 500 * 1024; // 500 KB
+        if ($_FILES['image']['size'] > $maxSize) {
+            $this->jsonResponse(['success' => false, 'error' => 'Image too large. Max 500KB.'], 400);
+            return;
+        }
+
+        // Create storage directory
+        $imageDir = APP_PATH . '/../storage/alert_images';
+        if (!is_dir($imageDir)) {
+            @mkdir($imageDir, 0755, true);
+        }
+
+        // Generate unique filename with timestamp and device ID
+        $deviceId   = preg_replace('/[^a-zA-Z0-9_-]/', '_', $_POST['device_id'] ?? 'unknown');
+        $timestamp  = date('Y-m-d_H-i-s');
+        $filename   = "safesense_{$deviceId}_{$timestamp}.jpg";
+        $filepath   = $imageDir . '/' . $filename;
+
+        // Move uploaded file to storage
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $filepath)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Failed to save image.'], 500);
+            return;
+        }
+
+        // Try to associate the image with the most recent alert from this device
+        $database = new Database();
+        $db       = $database->getConnection();
+
+        try {
+            // Find the most recent alert from this device (within the last 60 seconds)
+            $stmt = $db->prepare("
+                SELECT id FROM safesense_alerts
+                WHERE device_id = :device_id
+                AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
+                ORDER BY id DESC LIMIT 1
+            ");
+            $stmt->execute([':device_id' => $this->sanitize($_POST['device_id'] ?? 'SAFESENSE-001')]);
+            $alert = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($alert) {
+                // Check if image_path column exists; if not, store in a metadata file
+                try {
+                    $updateStmt = $db->prepare("UPDATE safesense_alerts SET image_path = :path WHERE id = :id");
+                    $updateStmt->execute([':path' => 'storage/alert_images/' . $filename, ':id' => $alert['id']]);
+                } catch (\PDOException $e) {
+                    // Column doesn't exist yet — store reference in a sidecar JSON file
+                    $metaFile = $imageDir . '/' . pathinfo($filename, PATHINFO_FILENAME) . '.json';
+                    file_put_contents($metaFile, json_encode([
+                        'alert_id'    => $alert['id'],
+                        'device_id'   => $_POST['device_id'] ?? 'unknown',
+                        'alert_level' => $_POST['alert_level'] ?? 'unknown',
+                        'event_type'  => $_POST['event_type'] ?? 'unknown',
+                        'latitude'    => $_POST['latitude'] ?? null,
+                        'longitude'   => $_POST['longitude'] ?? null,
+                        'filename'    => $filename,
+                        'captured_at' => date('Y-m-d H:i:s'),
+                    ], JSON_PRETTY_PRINT));
+                }
+            }
+        } catch (\Exception $e) {
+            // Non-critical — image is saved even if DB linkage fails
+        }
+
+        $this->jsonResponse([
+            'success'  => true,
+            'message'  => 'Image received and stored.',
+            'filename' => $filename,
+        ], 201);
+    }
+
+    // ---------------------------------------------------------------
+    // DEVICE HEARTBEAT  —  POST /api/heartbeat
+    // ---------------------------------------------------------------
+
+    /**
+     * Called periodically by the ESP32-CAM (every 5 minutes) to report
+     * that the field device is still online and functioning.
+     *
+     * POST body (JSON):
+     * {
+     *   "api_key":      "...",
+     *   "device_id":    "SAFESENSE-001",
+     *   "station_type": "hospital",
+     *   "status":       "online",            // online | arduino_disconnected
+     *   "wifi_rssi":    -45,                 // WiFi signal strength (dBm)
+     *   "uptime_ms":    300000,              // Device uptime in ms
+     *   "free_heap":    120000               // Free memory in bytes
+     * }
+     */
+    public function heartbeat() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'error' => 'Method not allowed'], 405);
+            return;
+        }
+
+        $raw  = file_get_contents('php://input');
+        $data = json_decode($raw, true);
+        if (!$data) {
+            $data = $_POST;
+        }
+
+        // Validate API key
+        $expectedKey = defined('SAFESENSE_API_KEY') ? SAFESENSE_API_KEY : 'SAFESENSE_SECRET_KEY';
+        if (empty($data['api_key']) || $data['api_key'] !== $expectedKey) {
+            $this->jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+            return;
+        }
+
+        $deviceId    = $this->sanitize($data['device_id']    ?? 'SAFESENSE-001');
+        $stationType = $this->sanitize($data['station_type'] ?? 'hospital');
+        $status      = $this->sanitize($data['status']       ?? 'online');
+        $wifiRssi    = isset($data['wifi_rssi'])  ? (int)$data['wifi_rssi']  : null;
+        $uptimeMs    = isset($data['uptime_ms'])  ? (int)$data['uptime_ms']  : null;
+        $freeHeap    = isset($data['free_heap'])  ? (int)$data['free_heap']  : null;
+
+        // Store the heartbeat in a simple file-based cache
+        // (avoids adding a new DB table just for heartbeats)
+        $heartbeatDir = APP_PATH . '/../storage/heartbeats';
+        if (!is_dir($heartbeatDir)) {
+            @mkdir($heartbeatDir, 0755, true);
+        }
+
+        $heartbeatData = [
+            'device_id'    => $deviceId,
+            'station_type' => $stationType,
+            'status'       => $status,
+            'wifi_rssi'    => $wifiRssi,
+            'uptime_ms'    => $uptimeMs,
+            'free_heap'    => $freeHeap,
+            'last_seen'    => date('Y-m-d H:i:s'),
+            'ip_address'   => $_SERVER['REMOTE_ADDR'] ?? null,
+        ];
+
+        $filename = $heartbeatDir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $deviceId) . '.json';
+        file_put_contents($filename, json_encode($heartbeatData, JSON_PRETTY_PRINT));
+
+        $this->jsonResponse([
+            'success'     => true,
+            'message'     => 'Heartbeat received.',
+            'server_time' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    // ---------------------------------------------------------------
     // HELPERS
     // ---------------------------------------------------------------
 

@@ -96,7 +96,10 @@ The API key in the request must match `SAFESENSE_API_KEY` defined in `app/Config
 ```
 SafeSense/
 ├── arduino/
-│   └── SafeSense_IoT.ino              ← Arduino sketch for WiFi Shield alert sending
+│   ├── SafeSense_Arduino.ino          ← Arduino Uno sketch (sensors, LEDs, GSM, Serial bridge)
+│   ├── SafeSense_ESP32CAM.ino         ← ESP32-CAM sketch (WiFi HTTP POST, heartbeat)
+│   ├── SafeSense_ESP32_Standalone.ino ← ESP32 all-in-one alternative (single board)
+│   └── SafeSense_IoT.ino             ← ⚠️ DEPRECATED — original single-board sketch
 │
 └── medical/                           ← This PHP web application
     ├── README.md                      ← This file
@@ -214,18 +217,22 @@ Then open `http://localhost/SafeSense/medical/public` in your browser.
 | Email | admin@example.com |
 | Password | password |
 
-### Step 5 — Connect the Arduino
+### Step 5 — Connect the Arduino (Dual-MCU Setup)
 
 1. Find your computer's local IP address (`ipconfig` on Windows, `ifconfig` on Mac/Linux)
-2. Open `arduino/SafeSense_IoT.ino` and set:
+2. Open `arduino/SafeSense_ESP32CAM.ino` and set:
    ```cpp
    const char* WIFI_SSID     = "YourWiFiName";
    const char* WIFI_PASSWORD = "YourWiFiPassword";
-   const char* SERVER_HOST   = "http://192.168.1.100"; // your PC's LAN IP (XAMPP on port 80)
-   const char* API_KEY       = "SAFESENSE_SECRET_KEY";
+   const char* SERVER_URL    = "http://192.168.1.100/SafeSense/medical/public";
+   const char* API_KEY       = "your_api_key_from_env_file";
    ```
-3. Upload to your Arduino board via Arduino IDE
-4. Open Serial Monitor at 115200 baud to see connection status
+3. Open `arduino/SafeSense_Arduino.ino` and configure SMS phone numbers
+4. Upload `SafeSense_Arduino.ino` to Arduino Uno (disconnect ESP32 TX/RX wires first)
+5. Upload `SafeSense_ESP32CAM.ino` to ESP32-CAM via FTDI adapter (GPIO0→GND for flash mode)
+6. Reconnect Serial wires and power on — green LED indicates system ready
+
+> 📖 **Detailed instructions:** See [SafeSense_Hardware_Guide.md](../SafeSense_Hardware_Guide.md) for complete wiring, upload steps, and troubleshooting
 
 ---
 
@@ -239,9 +246,11 @@ Then open `http://localhost/SafeSense/medical/public` in your browser.
 | GET | `/appointments` | Appointment list |
 | GET | `/alerts` | Full SafeSense alert log |
 | **POST** | **`/api/alert`** | **Arduino posts sensor data here** |
+| **POST** | **`/api/heartbeat`** | **Arduino device keep-alive ping** |
 | GET | `/api/alerts/poll` | JS polls this every 5s for new alerts |
 | POST | `/api/alerts/read` | Mark alert(s) as read |
 | POST | `/api/alerts/dismiss` | Dismiss an alert |
+| POST | `/api/alert/simulate` | Admin-only test alert injection |
 | GET | `/login` | Login page |
 | POST | `/login/authenticate` | Process login |
 | POST | `/logout` | Logout |

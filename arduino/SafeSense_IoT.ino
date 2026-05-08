@@ -1,5 +1,28 @@
 /*
  * ============================================================
+ *  ⚠️  DEPRECATED — DO NOT USE THIS FILE FOR NEW DEPLOYMENTS
+ * ============================================================
+ *
+ *  This file is the ORIGINAL single-board SafeSense sketch.
+ *  It was written for an ESP8266/NodeMCU but does NOT match
+ *  the actual SafeSense hardware, which uses a DUAL-MCU
+ *  architecture (Arduino Uno + ESP32-CAM).
+ *
+ *  ── USE THESE FILES INSTEAD ──
+ *
+ *  For the DUAL-MCU system (Arduino Uno + ESP32-CAM):
+ *    → SafeSense_Arduino.ino   (upload to Arduino Uno)
+ *    → SafeSense_ESP32CAM.ino  (upload to ESP32-CAM)
+ *
+ *  For the SIMPLIFIED single-board ESP32 design:
+ *    → SafeSense_ESP32_Standalone.ino  (upload to ESP32 DevKit)
+ *
+ *  This file is kept for REFERENCE ONLY.
+ *  See SafeSense_Hardware_Guide.md for complete wiring and
+ *  setup instructions.
+ *
+ * ============================================================
+ *  ORIGINAL DESCRIPTION (outdated):
  *  SafeSense IoT — Arduino WiFi Alert Sender
  *  Board  : Arduino Uno/Mega + ESP8266 WiFi Shield
  *           (or ESP32 / NodeMCU — see notes)
