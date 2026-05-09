@@ -8,7 +8,9 @@ define('APP_NAME', 'Tupi Hospital Management');
 if (PHP_SAPI === 'cli') {
     define('APP_URL', 'http://localhost/SafeSense/medical');
 } else {
-    $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+               (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $scheme   = $isHttps ? 'https' : 'http';
     $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
     // scriptName = /SafeSense/medical/public/index.php → strip /public/index.php → base
     $script   = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
@@ -16,21 +18,37 @@ if (PHP_SAPI === 'cli') {
     define('APP_URL', $scheme . '://' . $host . $basePath);
 }
 
+// Fallback helper for environment variables
+if (!function_exists('env')) {
+    function env($key, $default = null) {
+        if (isset($_ENV[$key])) return $_ENV[$key];
+        $val = getenv($key);
+        if ($val !== false) return $val;
+        return $default;
+    }
+}
+
 // Debug mode — reads from .env APP_DEBUG value; defaults to false in production
-define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
-define('APP_ENV',   $_ENV['APP_ENV'] ?? 'production');
+define('APP_DEBUG', filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN));
+define('APP_ENV',   env('APP_ENV', 'production'));
 
 // ── Database ─────────────────────────────────
-define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
-define('DB_PORT', $_ENV['DB_PORT'] ?? 3306);
-define('DB_NAME', $_ENV['DB_NAME'] ?? 'hospital_db');
-define('DB_USER', $_ENV['DB_USER'] ?? 'root');
-define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_PORT', env('DB_PORT', 3306));
+define('DB_NAME', env('DB_NAME', 'hospital_db'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASS', env('DB_PASS', ''));
 
 // ── Paths ────────────────────────────────────
 define('APP_PATH',    __DIR__ . '/../');
 define('PUBLIC_PATH', __DIR__ . '/../../public');
-define('ASSETS_URL',  APP_URL . '/public');
+
+if (PHP_SAPI === 'cli' || str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) !== '/index.php') {
+    define('ASSETS_URL',  APP_URL . '/public');
+} else {
+    // When served from public folder (Render), assets are at root
+    define('ASSETS_URL',  APP_URL);
+}
 
 // ── Date/Time ────────────────────────────────
 define('DATE_FORMAT', 'Y-m-d');
@@ -72,7 +90,7 @@ define('TOKEN_EXPIRY',        3600);
 // ── SafeSense IoT Integration ─────────────────
 // This key must match the api_key sent by your Arduino WiFi Shield.
 // Change this to a strong random string in production!
-define('SAFESENSE_API_KEY', $_ENV['SAFESENSE_API_KEY'] ?? '');
+define('SAFESENSE_API_KEY', env('SAFESENSE_API_KEY', ''));
 
 // Alert level thresholds (mirrors Arduino thresholds)
 define('SS_WATER_WARNING',  20.0);
