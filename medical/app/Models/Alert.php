@@ -58,7 +58,6 @@ class Alert {
     /** Get all alerts, newest first */
     public function getAll($limit = 50) {
         $query = "SELECT * FROM {$this->table}
-                  WHERE is_dismissed = 0
                   ORDER BY created_at DESC
                   LIMIT :limit";
         $stmt = $this->conn->prepare($query);

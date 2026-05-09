@@ -65,9 +65,10 @@
       $labelText  = strtoupper($level);
       $dt         = new DateTime($a['created_at']);
       $unreadClass = (!$a['is_read']) ? 'ss-alert-card-unread' : '';
+      $opacityClass = $a['is_dismissed'] ? 'opacity-50' : '';
     ?>
     <div class="col-12 alert-card-wrap" data-level="<?php echo $level; ?>">
-      <div class="card ss-alert-card <?php echo $levelClass; ?> <?php echo $unreadClass; ?> border-start border-4">
+      <div class="card ss-alert-card <?php echo $levelClass; ?> <?php echo $unreadClass; ?> <?php echo $opacityClass; ?> border-start border-4">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div class="d-flex gap-3 align-items-start flex-grow-1">
@@ -80,7 +81,9 @@
                     <i class="fas <?php echo $icon; ?>"></i><?php echo $labelText; ?>
                   </span>
                   <span class="badge bg-secondary"><i class="fas fa-tag"></i> <?php echo strtoupper(htmlspecialchars($a['event_type'])); ?></span>
-                  <?php if (!$a['is_read']): ?>
+                  <?php if ($a['is_dismissed']): ?>
+                    <span class="badge bg-dark"><i class="fas fa-check"></i> DISMISSED</span>
+                  <?php elseif (!$a['is_read']): ?>
                     <span class="ss-new-badge">NEW</span>
                   <?php endif; ?>
                 </div>
@@ -106,9 +109,11 @@
                   <i class="fas fa-map-marked-alt"></i>
                 </a>
               <?php endif; ?>
+              <?php if (!$a['is_dismissed']): ?>
               <button class="btn btn-sm btn-outline-secondary dismiss-btn" data-id="<?php echo $a['id']; ?>" title="Dismiss">
                 <i class="fas fa-times"></i>
               </button>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -183,12 +188,12 @@ document.querySelectorAll('.dismiss-btn').forEach(btn => {
   btn.addEventListener('click', function () {
     const id   = this.dataset.id;
     const card = this.closest('.alert-card-wrap');
+    const innerCard = card.querySelector('.ss-alert-card');
     safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id })
       .then(() => {
-        card.style.transition = 'opacity .25s ease, transform .25s ease';
-        card.style.opacity    = '0';
-        card.style.transform  = 'translateX(24px)';
-        setTimeout(() => card.remove(), 260);
+        innerCard.style.transition = 'opacity .5s ease';
+        innerCard.classList.add('opacity-50');
+        this.remove(); // Just remove the dismiss button, keep the log entry
       });
   });
 });
