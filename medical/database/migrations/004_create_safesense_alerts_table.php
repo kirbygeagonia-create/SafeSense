@@ -17,6 +17,7 @@ if (file_exists($envFile)) {
     }
 }
 $host     = $_ENV['DB_HOST']  ?? 'localhost';
+$port     = $_ENV['DB_PORT']  ?? 3306;
 $db_name  = $_ENV['DB_NAME']  ?? 'hospital_db';
 $username = $_ENV['DB_USER']  ?? 'root';
 $password = $_ENV['DB_PASS']  ?? '';

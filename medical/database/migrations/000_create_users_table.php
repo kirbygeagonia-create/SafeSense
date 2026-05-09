@@ -10,12 +10,13 @@ if (file_exists($envFile)) {
     }
 }
 $host     = $_ENV['DB_HOST']  ?? 'localhost';
+$port     = $_ENV['DB_PORT']  ?? 3306;
 $db_name  = $_ENV['DB_NAME']  ?? 'hospital_db';
 $username = $_ENV['DB_USER']  ?? 'root';
 $password = $_ENV['DB_PASS']  ?? '';
 
 try {
-    $pdo = new PDO("mysql:host=$host", $username, $password);
+    $pdo = new PDO("mysql:host=$host;port=$port", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec("CREATE DATABASE IF NOT EXISTS $db_name");
     $pdo->exec("USE $db_name");
