@@ -515,7 +515,19 @@
   $('ssModalAckBtn').addEventListener('click',()=>{ markRead(modal.dataset.id); closeModal(); });
 
   /* ── API helpers ── */
-  function markRead(id){ post(window.BASE_URL + '/api/alerts/read','id='+id).then(d=>setBadge(d.unread_count||0)); }
+  function markRead(id){ 
+    post(window.BASE_URL + '/api/alerts/read','id='+id).then(d => {
+      setBadge(d.unread_count||0);
+      // Sync with main alert grid if it exists
+      const gridCard = document.querySelector(`.alert-card-wrap .dismiss-btn[data-id="${id}"]`)?.closest('.alert-card-wrap');
+      if (gridCard) {
+        const newBadge = gridCard.querySelector('.ss-new-badge');
+        if (newBadge) newBadge.remove();
+        const innerCard = gridCard.querySelector('.ss-alert-card');
+        if (innerCard) innerCard.classList.remove('ss-alert-card-unread');
+      }
+    }); 
+  }
 
   // Today's appointments count badge (TASK-3D)
   fetch(window.BASE_URL + '/api/appointments/today', {
@@ -529,7 +541,37 @@
     }
   })
   .catch(() => {});
-  function dismissItem(id,el){ post(window.BASE_URL + '/api/alerts/dismiss','id='+id); if(el){ el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); } }
+  function dismissItem(id,el){ 
+    post(window.BASE_URL + '/api/alerts/dismiss','id='+id); 
+    if(el){ el.style.opacity='0'; el.style.transform='translateX(40px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); } 
+    // Sync with main alert grid if it exists
+    const gridBtn = document.querySelector(`.alert-card-wrap .dismiss-btn[data-id="${id}"]`);
+    if (gridBtn) {
+      const gridCard = gridBtn.closest('.alert-card-wrap');
+      const innerCard = gridCard.querySelector('.ss-alert-card');
+      if (innerCard) {
+        innerCard.style.transition = 'opacity .5s ease';
+        innerCard.classList.add('opacity-50');
+        innerCard.style.animation = 'none';
+        
+        // Change NEW badge to DISMISSED badge if it exists
+        const badgeContainer = innerCard.querySelector('.ss-badge-level')?.parentElement;
+        if (badgeContainer) {
+          const newBadge = badgeContainer.querySelector('.ss-new-badge');
+          if (newBadge) newBadge.remove();
+          
+          if (!badgeContainer.querySelector('.bg-dark')) {
+            const dismissedBadge = document.createElement('span');
+            dismissedBadge.className = 'badge bg-dark';
+            dismissedBadge.innerHTML = '<i class="fas fa-check"></i> DISMISSED';
+            badgeContainer.appendChild(dismissedBadge);
+          }
+        }
+      }
+      gridBtn.remove();
+    }
+  }
+  window.dismissItem = dismissItem;
   function post(url,body){
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
     return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':csrfToken},body}).then(r=>r.json());

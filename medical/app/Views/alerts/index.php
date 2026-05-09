@@ -186,15 +186,8 @@ function safeAjaxPost(url, data) {
 
 document.querySelectorAll('.dismiss-btn').forEach(btn => {
   btn.addEventListener('click', function () {
-    const id   = this.dataset.id;
-    const card = this.closest('.alert-card-wrap');
-    const innerCard = card.querySelector('.ss-alert-card');
-    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id })
-      .then(() => {
-        innerCard.style.transition = 'opacity .5s ease';
-        innerCard.classList.add('opacity-50');
-        this.remove(); // Just remove the dismiss button, keep the log entry
-      });
+    const id = this.dataset.id;
+    if (typeof window.dismissItem === 'function') window.dismissItem(id);
   });
 });
 
@@ -314,14 +307,7 @@ window.ssInjectAlert = function(a) {
   // Attach dismiss listener to the new button
   div.querySelector('.dismiss-btn').addEventListener('click', function() {
     const id = this.dataset.id;
-    const innerCard = div.querySelector('.ss-alert-card');
-    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id })
-      .then(() => {
-        innerCard.style.transition = 'opacity .5s ease';
-        innerCard.classList.add('opacity-50');
-        innerCard.style.animation = 'none'; // Stop pulse
-        this.remove();
-      });
+    if (typeof window.dismissItem === 'function') window.dismissItem(id);
   });
 
   // Prepend to grid with a nice fade-in effect
