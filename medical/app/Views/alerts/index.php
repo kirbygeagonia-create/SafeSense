@@ -220,10 +220,14 @@ document.querySelectorAll('.simulate-btn').forEach(btn => {
     safeAjaxPost(window.BASE_URL + '/api/alert/simulate', { level, event })
       .then(d => {
         if (d.success) {
-          // Show brief success state then reload to show new alert
+          // Show brief success state (do not reload, so the modal and siren can play uninterrupted)
           this.innerHTML = '<i class="fas fa-check me-1"></i>Sent!';
           this.classList.replace('btn-outline-danger', 'btn-outline-success');
-          setTimeout(() => window.location.reload(), 1800);
+          setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-flask me-1"></i>' + label;
+            this.classList.replace('btn-outline-success', 'btn-outline-danger');
+            this.disabled = false;
+          }, 3000);
         } else {
           alert('Simulation failed: ' + (d.error || 'Unknown error'));
           this.disabled = false;
