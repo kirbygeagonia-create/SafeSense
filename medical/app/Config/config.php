@@ -53,7 +53,7 @@ if (PHP_SAPI === 'cli' || str_replace('\\', '/', $_SERVER['SCRIPT_NAME']) !== '/
 // ── Date/Time ────────────────────────────────
 define('DATE_FORMAT', 'Y-m-d');
 define('TIME_FORMAT', 'H:i:s');
-define('DEFAULT_TIMEZONE', 'Pacific/Pago_Pago');
+define('DEFAULT_TIMEZONE', 'Asia/Manila');
 date_default_timezone_set(DEFAULT_TIMEZONE);
 
 // ── Session ──────────────────────────────────
