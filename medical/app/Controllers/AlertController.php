@@ -472,5 +472,3 @@ class AlertController extends BaseController {
         }
     }
 }
-?>
-

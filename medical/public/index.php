@@ -81,5 +81,3 @@ foreach ($models as $model) {
 // Run app
 $app = new App();
 $app->run();
-?>
-
