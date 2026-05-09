@@ -15,7 +15,8 @@
  *  Sensors:
  *    Vibration Sensor  → GPIO12 (digital input)
  *    Rain Sensor (DO)  → GPIO13 (digital input, LOW = rain)
- *    Water Level       → GPIO14 (analog input via ADC)
+ *    Water Level       → GPIO34 (analog input — ADC1, WiFi-safe)
+ *                        NOT GPIO14: ADC2 is disabled by WiFi (BUG-S1 fix)
  *
  *  Outputs:
  *    LED 1 (Green)     → GPIO2  (via 220Ω resistor)
@@ -117,7 +118,9 @@ const unsigned long RETRY_DELAY_BASE        = 2000;
 // Sensors
 const int PIN_VIBRATION     = 12;  // Digital
 const int PIN_RAIN_DIGITAL  = 13;  // Digital (LOW = rain)
-const int PIN_WATER_LEVEL   = 14;  // Analog (ADC2_CH6)
+// FIX BUG-S1: GPIO14 = ADC2, disabled by WiFi. Use GPIO34 (ADC1, WiFi-safe).
+// HARDWARE: rewire sensor signal wire from pin 14 to pin 34.
+const int PIN_WATER_LEVEL   = 34;  // Analog (ADC1_CH6 — WiFi-safe)
 
 // LEDs
 const int PIN_LED_GREEN     = 2;   // Safe / Power
@@ -139,7 +142,8 @@ HardwareSerial gsmSerial(2);  // UART2
 // Timing
 unsigned long lastSensorRead    = 0;
 unsigned long lastAlertTime     = 0;
-unsigned long lastSmsTime       = 0;
+// FIX BUG-NEW-1: same first-SMS skip fix as SafeSense_Arduino.ino.
+unsigned long lastSmsTime       = (unsigned long)(0UL - SMS_COOLDOWN_MS);
 unsigned long lastHeartbeat     = 0;
 unsigned long lastWiFiAttempt   = 0;
 unsigned long lastLedToggle     = 0;
@@ -303,6 +307,12 @@ void readSensors() {
     } else {
       vibrationCount = 1;
       vibrationFirstTime = now;
+    }
+  } else {
+    // FIX BUG-S2: same stale counter fix as BUG-A2.
+    unsigned long now = millis();
+    if (vibrationCount > 0 && timeSince(now, vibrationFirstTime) > VIBRATION_WINDOW) {
+      vibrationCount = 0;
     }
   }
 }
@@ -488,8 +498,10 @@ bool sendAlert(String level, String eventType, String rainStatus,
 
   String url = String(SERVER_URL) + String(ALERT_ENDPOINT);
 
+  // FIX BUG-S5: same WiFiClient fix as BUG-E1.
+  WiFiClient wifiClient;
   HTTPClient http;
-  http.begin(url);
+  http.begin(wifiClient, url);
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(10000);
 
@@ -541,8 +553,10 @@ void sendHeartbeat() {
 
   String url = String(SERVER_URL) + String(HEARTBEAT_ENDPOINT);
 
+  // FIX BUG-S6: same WiFiClient fix as BUG-E2.
+  WiFiClient wifiClient;
   HTTPClient http;
-  http.begin(url);
+  http.begin(wifiClient, url);
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(5000);
 
@@ -618,7 +632,8 @@ void sendSMS(String message) {
     delay(1000);
 
     String prompt = gsmReadResponse();
-    if (prompt.indexOf(">") >= 0 || prompt.length() == 0) {
+    // FIX BUG-S3: same GSM corruption fix as BUG-A3.
+    if (prompt.indexOf(">") >= 0) {
       gsmSerial.print(smsBody);
       gsmSerial.write(26);  // Ctrl+Z
       delay(5000);
@@ -634,11 +649,21 @@ void sendSMS(String message) {
 }
 
 String gsmReadResponse() {
+  // FIX BUG-S4: esp_task_wdt_reset() added — early exit prevents WDT trip.
   String response = "";
   unsigned long start = millis();
   while (timeSince(millis(), start) < 3000) {
+    esp_task_wdt_reset();
     if (gsmSerial.available()) {
       response += (char)gsmSerial.read();
+      if (response.indexOf("OK") >= 0    ||
+          response.indexOf("ERROR") >= 0 ||
+          response.indexOf(">") >= 0     ||
+          response.indexOf("+CMGS:") >= 0) {
+        delay(50);
+        while (gsmSerial.available()) response += (char)gsmSerial.read();
+        break;
+      }
     }
   }
   return response;

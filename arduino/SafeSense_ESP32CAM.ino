@@ -523,8 +523,10 @@ bool sendAlert(String level, String eventType, String rainStatus,
 
   String url = String(SERVER_URL) + String(ALERT_ENDPOINT);
 
+  // FIX BUG-E1: http.begin(url) removed in ESP32 Core 2.x — silent fail.
+  WiFiClient wifiClient;
   HTTPClient http;
-  http.begin(url);
+  http.begin(wifiClient, url);
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(10000);
 
@@ -674,8 +676,10 @@ void sendHeartbeat() {
 
   String url = String(SERVER_URL) + String(HEARTBEAT_ENDPOINT);
 
+  // FIX BUG-E2: same WiFiClient fix as BUG-E1.
+  WiFiClient wifiClient;
   HTTPClient http;
-  http.begin(url);
+  http.begin(wifiClient, url);
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(5000);
 

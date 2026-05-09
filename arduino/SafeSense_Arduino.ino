@@ -135,7 +135,9 @@ SoftwareSerial gsmSerial(PIN_GSM_RX, PIN_GSM_TX);
 // Timing (all use millis() — overflow-safe comparisons)
 unsigned long lastSensorRead   = 0;
 unsigned long lastAlertTime    = 0;
-unsigned long lastSmsTime      = 0;
+// FIX BUG-NEW-1: unsigned underflow makes cooldown appear already expired
+// at boot so the very first SMS is never skipped.
+unsigned long lastSmsTime      = (unsigned long)(0UL - SMS_COOLDOWN_MS);
 unsigned long lastEsp32Send    = 0;
 unsigned long lastHeartbeat    = 0;
 unsigned long lastLedToggle    = 0;
@@ -301,9 +303,13 @@ void readSensors() {
       vibrationCount = 1;
       vibrationFirstTime = now;
     }
+  } else {
+    // FIX BUG-A2: reset counter when window expires with no vibration.
+    unsigned long now = millis();
+    if (vibrationCount > 0 && timeSince(now, vibrationFirstTime) > VIBRATION_WINDOW) {
+      vibrationCount = 0;
+    }
   }
-  // Don't reset vibrationCount to 0 here — let it persist
-  // until either confirmed or window expires on next vibration
 }
 
 
@@ -598,7 +604,8 @@ void sendSMS(String message) {
 
     // Wait for '>' prompt
     String prompt = gsmReadResponse();
-    if (prompt.indexOf(">") >= 0 || prompt.length() == 0) {
+    // FIX BUG-A3: only send body when > prompt is confirmed.
+    if (prompt.indexOf(">") >= 0) {
       gsmSerial.print(smsBody);
       gsmSerial.write(26);  // Ctrl+Z to send
       delay(5000);          // Wait for SMS to be sent
@@ -615,12 +622,22 @@ void sendSMS(String message) {
 }
 
 String gsmReadResponse() {
+  // FIX BUG-A1: wdt_reset() added — early exit stops spinning the full 3 s.
   String response = "";
   unsigned long start = millis();
   while (timeSince(millis(), start) < 3000) {
+    wdt_reset();
     if (gsmSerial.available()) {
       char c = gsmSerial.read();
       response += c;
+      if (response.indexOf("OK") >= 0    ||
+          response.indexOf("ERROR") >= 0 ||
+          response.indexOf(">") >= 0     ||
+          response.indexOf("+CMGS:") >= 0) {
+        delay(50);
+        while (gsmSerial.available()) response += (char)gsmSerial.read();
+        break;
+      }
     }
   }
   return response;
