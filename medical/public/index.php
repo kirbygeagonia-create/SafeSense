@@ -3,6 +3,11 @@
  * SafeSense Hospital Management System — Entry Point
  */
 
+// Temporarily enable error display to debug Render blank page issue
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 // FIX M3: Harden session cookies before starting session
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
