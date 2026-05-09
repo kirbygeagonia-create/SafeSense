@@ -455,6 +455,9 @@
         if (a.alert_level === 'critical' || a.alert_level === 'danger') {
           showModal(a);
         }
+        if (typeof window.ssInjectAlert === 'function') {
+          window.ssInjectAlert(a);
+        }
       });
     }).catch(e => { console.error('Poll error:', e); });
   }

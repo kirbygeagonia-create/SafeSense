@@ -245,4 +245,95 @@ document.querySelectorAll('.simulate-btn').forEach(btn => {
       });
   });
 });
+
+window.ssInjectAlert = function(a) {
+  // If the empty state is visible, remove it and create the grid
+  let grid = document.getElementById('alertsGrid');
+  if (!grid) {
+    const emptyState = document.querySelector('.text-center.py-5');
+    if (emptyState) emptyState.remove();
+    grid = document.createElement('div');
+    grid.id = 'alertsGrid';
+    grid.className = 'row g-3';
+    document.querySelector('.ss-filter-pill').parentElement.after(grid);
+  }
+
+  const levelClass = 'ss-level-' + a.alert_level;
+  const icon = a.alert_level === 'critical' ? 'fa-skull-crossbones' : (a.alert_level === 'danger' ? 'fa-exclamation-triangle' : 'fa-cloud-rain');
+  const labelText = a.alert_level.toUpperCase();
+  const dt = new Date(a.created_at);
+  const timeStr = dt.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+  const dateStr = dt.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+  
+  const div = document.createElement('div');
+  div.className = 'col-12 alert-card-wrap';
+  div.dataset.level = a.alert_level;
+  
+  div.innerHTML = `
+    <div class="card ss-alert-card ${levelClass} ss-alert-card-unread border-start border-4" style="animation: pulse-border 2s infinite">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="d-flex gap-3 align-items-start flex-grow-1">
+            <div class="ss-alert-icon ${levelClass}">
+              <i class="fas ${icon}"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="ss-badge-level ${levelClass}">
+                  <i class="fas ${icon}"></i>${labelText}
+                </span>
+                <span class="badge bg-secondary"><i class="fas fa-tag"></i> ${a.event_type.toUpperCase()}</span>
+                <span class="ss-new-badge">NEW</span>
+              </div>
+              <p class="mb-2 fw-semibold">${a.message}</p>
+              <div class="d-flex flex-wrap gap-3 text-muted ss-alert-meta-row">
+                <span><i class="fas fa-map-marker-alt me-1 text-danger"></i>${a.location_name || '—'}</span>
+                <span><i class="fas fa-clock me-1"></i>${timeStr}</span>
+                <span><i class="fas fa-calendar-alt me-1"></i>${dateStr}</span>
+                ${a.water_level ? '<span><i class="fas fa-tint me-1 text-primary"></i>' + a.water_level + ' cm</span>' : ''}
+                ${a.vibration ? '<span><i class="fas fa-wave-square me-1 text-warning"></i>Vibration detected</span>' : ''}
+                <span><i class="fas fa-microchip me-1"></i>${a.device_id}</span>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex flex-row gap-2 ms-3 align-items-center">
+            ${a.latitude && a.longitude ? `
+              <a href="https://www.google.com/maps?q=${a.latitude},${a.longitude}" target="_blank" class="btn btn-sm btn-outline-primary" title="View on map">
+                <i class="fas fa-map-marked-alt"></i>
+              </a>
+            ` : ''}
+            <button class="btn btn-sm btn-outline-secondary dismiss-btn" data-id="${a.id}" title="Dismiss">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Attach dismiss listener to the new button
+  div.querySelector('.dismiss-btn').addEventListener('click', function() {
+    const id = this.dataset.id;
+    const innerCard = div.querySelector('.ss-alert-card');
+    safeAjaxPost(window.BASE_URL + '/api/alerts/dismiss', { id })
+      .then(() => {
+        innerCard.style.transition = 'opacity .5s ease';
+        innerCard.classList.add('opacity-50');
+        innerCard.style.animation = 'none'; // Stop pulse
+        this.remove();
+      });
+  });
+
+  // Prepend to grid with a nice fade-in effect
+  div.style.opacity = '0';
+  div.style.transform = 'translateY(-10px)';
+  grid.insertBefore(div, grid.firstChild);
+  
+  // Trigger reflow
+  void div.offsetWidth;
+  div.style.transition = 'all 0.5s ease-out';
+  div.style.opacity = '1';
+  div.style.transform = 'translateY(0)';
+};
+
 </script>
