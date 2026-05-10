@@ -1,0 +1,521 @@
+SafeSense IoT System
+Complete Render Deployment Guide
+From Zero to Live -- Every Step Explained
+May 2026  |  PHP 8.x  |  MySQL (Aiven)  |  Render Web Service
+What you will have when this guide is done
+[OK] SafeSense live on a public HTTPS URL (e.g. https://safesense.onrender.com)
+[OK] MySQL database on Aiven free tier with all 9 tables created and admin user seeded
+[OK] Arduino devices posting alerts to your live URL
+[OK] All environment secrets stored safely -- nothing hardcoded in the repo
+
+INFO: Prerequisites: A GitHub account (you already have one), a free Render account, a free Aiven account. No credit card required for any of them. Estimated time: 30-45 minutes.
+
+
+Part 1 -- Understand the Deployment Architecture
+Before clicking anything, understand what we are building and why. Render is a cloud hosting platform. It can run PHP apps, but it does not include a database -- we use a separate MySQL provider called Aiven for that. Here is how everything connects:
+
+Component
+Service
+What it does
+PHP Web App
+Render (Web Service)
+Runs SafeSense -- serves the dashboard, handles all HTTP routes
+MySQL Database
+Aiven (free tier)
+Stores patients, alerts, users, appointments, all data
+File Storage
+Render disk (ephemeral)
+Heartbeat JSON and camera images -- see note below
+Arduino devices
+Your hardware
+POST to https://your-app.onrender.com/api/alert
+
+WARNING: Important: Render's free tier uses ephemeral storage -- files written to disk disappear on every redeploy or restart. This affects heartbeat JSON files and ESP32-CAM images stored under storage/. They will work fine between deploys. For permanent image storage you would eventually add a service like Cloudinary. For now the free tier is fully functional.
+
+Part 2 -- Prepare Your GitHub Repository
+Render deploys directly from GitHub. A few files need to be added or checked before you connect Render to your repo.
+
+2.1  Verify .gitignore is correct
+Open medical/.gitignore in your repo. It must contain at minimum these lines. If any are missing, add them now and commit.
+
+# Secrets -- NEVER commit
+.env
+
+# Composer dependencies -- Render installs these itself
+vendor/
+composer.phar
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+OK: Your .gitignore already has all of these. This is just a reminder to never commit .env or vendor/.
+
+2.2  Add a render.yaml file to the repo root
+This file tells Render exactly how to build and run your app. Create a new file called render.yaml at the very root of your repository (same level as the medical/ folder, not inside it). Paste exactly this content:
+
+services:
+  - type: web
+    name: safesense
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: SAFESENSE_API_KEY
+        sync: false
+
+INFO: The sync: false lines mean Render will ask you to fill in the actual secret values through its dashboard UI -- they will never be stored in the repo.
+
+2.3  Add a Dockerfile to the repo root
+Render needs a Dockerfile to know how to build the PHP environment. Create a new file called Dockerfile at the repo root (same level as render.yaml). Paste exactly this content:
+
+FROM php:8.2-apache
+
+# Install PHP extensions SafeSense needs
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Enable Apache mod_rewrite (needed for SafeSense URL routing)
+RUN a2enmod rewrite
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy the entire repo into the container
+WORKDIR /var/www/html
+COPY . .
+
+# Install PHP dependencies
+RUN cd medical && composer install --no-dev --optimize-autoloader --no-interaction
+
+# Create writable storage directories
+RUN mkdir -p medical/storage/alert_images medical/storage/heartbeats \
+    && chmod -R 755 medical/storage
+
+# Point Apache document root at medical/public/
+RUN sed -i 's|/var/www/html|/var/www/html/medical/public|g' \
+    /etc/apache2/sites-available/000-default.conf
+
+# Allow .htaccess overrides (needed for SafeSense URL rewriting)
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' \
+    /etc/apache2/apache2.conf
+
+EXPOSE 80
+CMD ["apache2-foreground"]
+
+INFO: This Dockerfile installs PHP 8.2, enables the PDO MySQL extension, installs Composer dependencies, creates the storage directories SafeSense needs, and points Apache at medical/public/ -- the correct entry point.
+
+2.4  Environment variables note
+Do NOT create an actual .env file in the repo -- that would expose your secrets. The Dockerfile reads environment variables that Render injects at runtime. Your config.php and index.php already handle this correctly using $_ENV, so no change is needed there.
+
+2.5  Commit and push everything
+Now commit the two new files (render.yaml and Dockerfile) to your main branch:
+
+git add render.yaml Dockerfile
+git commit -m "Add Render deployment config (render.yaml + Dockerfile)"
+git push origin main
+
+CRITICAL: CRITICAL: Do not commit or push .env. Only push render.yaml and Dockerfile.
+
+
+Part 3 -- Set Up the MySQL Database on Aiven
+Render does not include a database. We use Aiven's free MySQL tier. The free plan gives you 1 database with enough storage for SafeSense.
+
+3.1  Create an Aiven account
+Go to https://aiven.io and click Get Started Free.
+Sign up with your GitHub account or email. No credit card required.
+After signing in you will land on the Aiven Console.
+
+3.2  Create a MySQL service
+Click Create Service.
+Choose MySQL from the service list.
+Choose Free plan (Hobbyist -- $0/month).
+Choose a cloud region. Asia Pacific (Singapore) is a good choice for Mindanao.
+Give it a name, for example safesense-db.
+Click Create Service. Wait 2-3 minutes for it to provision.
+
+3.3  Get your connection credentials
+Once the service status shows Running, click on it to open the service overview. You need five values -- write them down or keep this tab open:
+
+What you need
+Where to find it
+Notes
+DB_HOST
+Connection Info > Host
+Something like mysql-safesense-xxxxx.aivencloud.com
+DB_PORT
+Connection Info > Port
+Usually a 5-digit number like 22776 -- NOT 3306
+DB_NAME
+Databases tab
+Default is defaultdb -- you can rename it
+DB_USER
+Connection Info > User
+Usually avnadmin
+DB_PASS
+Connection Info > Password > Show
+Copy carefully -- you cannot recover it later
+
+WARNING: Aiven uses SSL by default. SafeSense's PDO connection works fine for basic connectivity. If you get SSL errors after deployment, see the troubleshooting section.
+
+3.4  Create the database and run migrations
+Aiven creates a database called defaultdb. You can either use that name, or create a new one called hospital_db:
+
+In the Aiven Console, click your MySQL service.
+Click the Databases tab on the left.
+Click Add Database and type hospital_db. Click Add.
+
+INFO: If you prefer to use defaultdb as your DB_NAME that is fine too. Just make sure whatever name you use matches what you enter in Render's environment variables.
+
+Now run the SafeSense migrations to create all tables. You have two options:
+
+Option A -- Run migrations from your local machine (easiest)
+Create a temporary .env file inside medical/ with your Aiven credentials. Never commit this file.
+
+# medical/.env  (temporary -- delete after migrations run)
+APP_ENV=production
+APP_DEBUG=false
+DB_HOST=your-host.aivencloud.com
+DB_PORT=22776
+DB_NAME=hospital_db
+DB_USER=avnadmin
+DB_PASS=your-actual-password
+SAFESENSE_API_KEY=change-this-to-a-long-random-string
+
+Then run the migration runner:
+
+cd medical
+composer install
+php database/migrate.php
+
+You should see output like:
+
+Starting migrations...
+--------------------------------------------------
+Running 000_create_users_table.php...    OK
+Running 001_create_patients_table.php... OK
+... (7 more tables)
+Running 009_seed_admin_user.php...       OK
+--------------------------------------------------
+Migration complete.
+
+CRITICAL: CRITICAL: After migrations complete, delete the medical/.env file before committing anything. It is in .gitignore so it will not be committed, but good hygiene to delete it anyway.
+
+Option B -- Run migrations from Aiven's query editor
+If you do not have PHP locally, use Aiven's built-in query editor. In the Aiven Console, open your MySQL service, click Query Editor, and run the CREATE TABLE statements from each migration file manually. Copy the SQL from each file in order (000 through 009). Then insert the admin user:
+
+-- Replace the hash below with a bcrypt hash of your chosen password
+-- Generate one at https://bcrypt-generator.com (12 rounds)
+INSERT IGNORE INTO users (name, email, password, role, created_at)
+VALUES ('Administrator', 'admin@example.com', 'YOUR_BCRYPT_HASH', 'admin', NOW());
+
+
+Part 4 -- Deploy SafeSense on Render
+
+4.1  Create a Render account
+Go to https://render.com and click Get Started for Free.
+Sign up with your GitHub account. Render needs GitHub access to pull your code.
+Authorize Render to access your GitHub repositories when prompted.
+
+4.2  Create a new Web Service
+From the Render dashboard, click New and choose Web Service.
+Click Connect a repository.
+Find kirbygeagonia-create/SafeSense in the list and click Connect.
+Render will detect your render.yaml automatically. Click Use render.yaml if prompted.
+
+4.3  Configure the service settings
+Fill in these fields on the configuration screen:
+
+Field
+Value to enter
+Why
+Name
+safesense
+This becomes your URL: safesense.onrender.com
+Region
+Singapore (Southeast Asia)
+Closest to the Philippines
+Branch
+main
+Your main branch
+Runtime
+Docker
+Uses your Dockerfile
+Plan
+Free
+$0/month -- fully functional
+
+4.4  Add environment variables
+This is the most important step. Scroll down to the Environment Variables section and add these one by one. Click Add Environment Variable for each row:
+
+Key
+Value
+Notes
+APP_ENV
+production
+
+APP_DEBUG
+false
+Never true in production
+DB_HOST
+your-host.aivencloud.com
+From Aiven step 3.3
+DB_PORT
+22776
+Your actual Aiven port
+DB_NAME
+hospital_db
+Or defaultdb if you kept it
+DB_USER
+avnadmin
+From Aiven step 3.3
+DB_PASS
+your-aiven-password
+Mark as Secret
+SAFESENSE_API_KEY
+a-long-random-string-you-invent
+Mark as Secret
+
+WARNING: For DB_PASS and SAFESENSE_API_KEY, tick the Secret checkbox in Render. This encrypts the value and hides it from logs. Make SAFESENSE_API_KEY at least 32 random characters. Generate one at https://generate-secret.vercel.app/32
+
+4.5  Deploy
+Scroll to the bottom and click Create Web Service.
+Render will start building your Docker image. This takes 3-8 minutes the first time.
+Watch the build logs. You should see composer install running, then Starting Apache.
+When the status changes from Deploying to Live, your app is online.
+Click the URL at the top of the Render dashboard (e.g. https://safesense.onrender.com).
+
+INFO: The free tier spins down after 15 minutes of inactivity. The first request after a sleep takes 30-60 seconds to wake up. This is normal. Paid plans stay always-on.
+
+4.6  Verify the deployment
+After the service is Live, check each of these:
+
+Open https://your-app.onrender.com/login -- you should see the SafeSense login page.
+Log in with admin@example.com and the seeded admin password.
+Immediately go to Users and change the admin password to something strong.
+Navigate to Patients, Doctors, Appointments, EMR, Billing -- all should load without errors.
+Navigate to Alerts -- the alert log should load (empty is fine).
+
+
+Part 5 -- Connect Your Arduino Devices to the Live Server
+Now that the server is live, update your Arduino sketches to point at the real URL instead of a local IP.
+
+5.1  Update SERVER_URL in SafeSense_Arduino.ino
+Open arduino/SafeSense_Arduino.ino. Find the server URL constant near the top of the file and update it:
+
+// OLD (local development):
+const String SERVER_URL = "http://192.168.1.100/SafeSense/medical";
+
+// NEW (Render live URL):
+const String SERVER_URL = "https://safesense.onrender.com";
+// Replace safesense with whatever name you chose on Render
+
+5.2  Update API_KEY in all sketches
+The SAFESENSE_API_KEY you set in Render's environment variables must exactly match what the Arduino sends. Find the API key constant in each sketch and set it to the same value:
+
+// In SafeSense_Arduino.ino AND SafeSense_ESP32_Standalone.ino:
+const String API_KEY = "your-long-random-string-from-render";
+
+// In SafeSense_ESP32CAM.ino:
+const char* API_KEY = "your-long-random-string-from-render";
+
+CRITICAL: CRITICAL: The API key must be identical in all three places: Render environment variable, SafeSense_Arduino.ino, and SafeSense_ESP32_Standalone.ino (or ESP32CAM). One character difference and the server will reject all alerts.
+
+5.3  Update SERVER_URL in SafeSense_ESP32CAM.ino
+// In SafeSense_ESP32CAM.ino -- find and update:
+const char* SERVER_URL = "https://safesense.onrender.com";
+
+5.4  Update SERVER_URL in SafeSense_ESP32_Standalone.ino
+// In SafeSense_ESP32_Standalone.ino -- find and update:
+const String SERVER_URL = "https://safesense.onrender.com";
+
+5.5  Re-flash all devices
+After updating the URL and API key, re-upload each sketch to the appropriate board:
+
+Upload SafeSense_Arduino.ino to the Arduino Uno.
+Upload SafeSense_ESP32CAM.ino to the AI-Thinker ESP32-CAM.
+Upload SafeSense_ESP32_Standalone.ino to the ESP32 DevKit (if using standalone build).
+
+5.6  Test the IoT connection
+After reflashing, open the Arduino IDE Serial Monitor (115200 baud). You should see:
+
+[WiFi] Connecting to network...
+[WiFi] Connected. IP: 192.168.x.x
+[HTTP] POST https://safesense.onrender.com/api/alert -> 201
+[Heartbeat] -> 200
+
+WARNING: If you see HTTP 401, the API key does not match between the Arduino and Render. If you see 0 or -1, the device cannot reach the internet -- check WiFi credentials. If you see 500, check Render logs for a PHP error.
+
+Go to your SafeSense dashboard at the Render URL. Navigate to Alerts. You should see the test alert the device just sent. The alert modal should pop up automatically.
+
+
+Part 6 -- Auto-Deploy Setup (Already Enabled by Default)
+Render automatically redeploys your app every time you push to your main branch. You do not need to configure anything extra. The workflow is:
+
+Make a code change locally.
+Run: git add . && git commit -m 'Your message' && git push origin main
+Render detects the push and starts a new build automatically.
+The new version goes live in 3-5 minutes with zero downtime.
+
+INFO: Your current deployment keeps serving traffic until the new build is fully healthy. Render only switches over once the new container passes its health check.
+
+Part 7 -- Custom Domain (Optional)
+If you want to use a custom domain like safesense.yourhospital.ph instead of safesense.onrender.com:
+
+Buy a domain from any registrar (Namecheap, GoDaddy, Hostinger, etc.).
+In the Render dashboard, click your service > Settings > Custom Domains.
+Click Add Custom Domain and type your domain name.
+Render gives you a CNAME record value. Go to your domain registrar's DNS settings.
+Add a CNAME record: name = www (or @), value = the CNAME Render gave you.
+Wait 10-30 minutes for DNS to propagate.
+Render automatically provisions a free SSL certificate via Let's Encrypt.
+
+OK: Render's free tier supports custom domains with free HTTPS. You do not need to pay for an SSL certificate.
+
+
+Part 8 -- Troubleshooting
+
+App shows a blank page or 500 error
+Go to the Render dashboard > your service > Logs. The PHP error will be there. Common causes:
+
+DB_HOST is wrong -- double-check the Aiven hostname including .aivencloud.com at the end.
+DB_PORT is wrong -- Aiven does NOT use 3306. Use the port shown in Aiven Connection Info.
+DB_PASS has a special character that got mangled -- try wrapping it in quotes in Render.
+A migration did not run -- tables are missing. Re-run migrations (Section 3.4).
+
+Login page loads but login fails immediately
+The admin user was not seeded. Re-run only migration 009:
+
+php medical/database/migrations/009_seed_admin_user.php
+
+Or insert the user manually via Aiven's Query Editor with a bcrypt hash of your password.
+
+Arduino sends data but no alerts appear in the dashboard
+Check that SAFESENSE_API_KEY in the sketch matches exactly what is in Render environment variables.
+Check Serial Monitor -- what HTTP code does the device get? 401 = wrong key. 404 = wrong URL. 500 = server error.
+Confirm the SERVER_URL in the sketch ends without a trailing slash and uses https://.
+Check Render logs for the POST /api/alert request. If you see it arriving with 200 or 201, data is being received.
+
+Heartbeat works but images from ESP32-CAM are not saved
+Images go to storage/alert_images/ inside the container. Since Render free tier has ephemeral storage, images survive restarts within a session but are cleared on redeploy. This is expected. For permanent image storage, integrate Cloudinary (free tier) and update AlertController's uploadImage() method to upload to Cloudinary instead of the local filesystem.
+
+SSL / certificate errors from Arduino
+The ESP32 and Arduino with WiFi shield need to trust the server's SSL certificate. For the ESP32:
+
+// Add to your ESP32 sketch -- get the root CA from
+// https://safesense.onrender.com using a browser (view cert chain)
+const char* root_ca = "-----BEGIN CERTIFICATE-----\n"
+"... (paste the root CA here) ...\n"
+"-----END CERTIFICATE-----\n";
+
+// Then use WiFiClientSecure instead of WiFiClient:
+WiFiClientSecure wifiClient;
+wifiClient.setCACert(root_ca);
+HTTPClient http;
+http.begin(wifiClient, url);
+
+Alternatively, for testing only (not production), disable cert verification:
+
+WiFiClientSecure wifiClient;
+wifiClient.setInsecure();  // WARNING: disables cert verification -- testing only
+
+WARNING: setInsecure() is fine for a school or capstone project but should be replaced with the proper root CA in a production hospital deployment.
+
+Render build fails -- Docker error
+Check that Dockerfile is at the repo root (not inside medical/). Check that render.yaml is also at the repo root. Both files must be committed and pushed to main.
+
+App URL shows: No input file specified
+Apache is serving from the wrong directory. This means the Dockerfile sed command did not update the config correctly. Check that your Dockerfile has both sed commands -- one for 000-default.conf and one for apache2.conf.
+
+
+Part 9 -- Final Deployment Checklist
+Go through every item before calling the deployment done.
+
+Repository
+render.yaml is in the repo root and committed.
+Dockerfile is in the repo root and committed.
+.env is NOT committed and is in .gitignore.
+vendor/ is NOT committed and is in .gitignore.
+
+Database (Aiven)
+MySQL service is Running on Aiven.
+All 10 migration files ran successfully (000 through 009).
+safesense_alerts table exists with the correct columns.
+Admin user exists in users table.
+
+Render
+Web Service status shows Live (green).
+All environment variables are set: APP_ENV, APP_DEBUG, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS, SAFESENSE_API_KEY.
+DB_PASS and SAFESENSE_API_KEY are marked Secret.
+Build logs show no errors.
+
+Application
+Login page loads at https://your-app.onrender.com/login.
+Can log in with admin credentials.
+Admin password changed from default to something strong.
+Patients, Doctors, Appointments, EMR, Billing all load.
+Alerts page loads without errors.
+
+Arduino
+SERVER_URL in all sketches updated to Render HTTPS URL.
+API_KEY in all sketches matches SAFESENSE_API_KEY in Render.
+All devices reflashed with updated sketches.
+Serial Monitor shows HTTP 201 for /api/alert.
+Serial Monitor shows HTTP 200 for /api/heartbeat.
+Test alert visible in the SafeSense dashboard Alerts page.
+
+Part 10 -- Quick Reference
+
+Resource
+URL / Value
+Render Dashboard
+https://dashboard.render.com
+Aiven Console
+https://console.aiven.io
+Your Live App
+https://safesense.onrender.com (or your chosen name)
+Alert Endpoint
+POST https://safesense.onrender.com/api/alert
+Heartbeat Endpoint
+POST https://safesense.onrender.com/api/heartbeat
+Image Upload Endpoint
+POST https://safesense.onrender.com/api/alert/image
+Default Admin Login
+admin@example.com / ChangeMe123! (change immediately)
+Bcrypt Generator
+https://bcrypt-generator.com
+Secret Key Generator
+https://generate-secret.vercel.app/32
+
+File locations in repo
+File
+Purpose
+Dockerfile
+Docker build instructions -- PHP 8.2, Apache, Composer, mod_rewrite
+render.yaml
+Render service config -- tells Render how to deploy
+medical/.env
+Local dev secrets only -- NEVER committed
+medical/public/index.php
+App entry point -- Apache serves requests here
+medical/public/.htaccess
+URL rewriting -- routes all requests through index.php
+medical/database/migrate.php
+Migration runner: php database/migrate.php
+medical/app/Config/config.php
+Reads DB_* and SAFESENSE_API_KEY from $_ENV
+
+SafeSense IoT System  |  Render Deployment Guide  |  May 2026

@@ -19,25 +19,33 @@
  *
  *  Sensors:
  *    Water Level Sensor  → A0 (analog, resistive)
- *    Rain Sensor (DO)    → D3 (digital, LOW = rain)
- *    Vibration Sensor    → D2 (digital, HIGH = vibration)
+ *    Rain Sensor (DO)    → D2 (digital, LOW = rain)
+ *    Vibration Sensor    → D3 (digital, HIGH = vibration)
  *
- *  Outputs:
- *    LED 1 (Green/Safe)  → D10 (via 220Ω resistor)
- *    LED 2 (Yellow/Warn) → D11 (via 220Ω resistor)
- *    LED 3 (Red/Danger)  → D12 (via 220Ω resistor)
+ *  Outputs — Two-Lane LED Array (3 LEDs × 2 lanes = 6 LEDs total):
+ *    ── Lane 1 (Direction A — Northbound) ──
+ *    Lane 1 Green  → D4  (via 220Ω to GND) — Safe
+ *    Lane 1 Yellow → D5  (via 220Ω to GND) — Warning
+ *    Lane 1 Red    → D6  (via 220Ω to GND) — Danger / Critical
+ *    ── Lane 2 (Direction B — Southbound) ──
+ *    Lane 2 Green  → D7  (via 220Ω to GND) — Safe
+ *    Lane 2 Yellow → D8  (via 220Ω to GND) — Warning
+ *    Lane 2 Red    → D9  (via 220Ω to GND) — Danger / Critical
  *
- *  SIM900A GSM Module:
- *    SIM900A TX → D7 (Arduino SoftSerial RX)
- *    SIM900A RX → D8 (Arduino SoftSerial TX)
+ *  SIM900A GSM Module (moved to D10/D11 to free D7/D8 for Lane 2 LEDs):
+ *    SIM900A TX → D10 (Arduino SoftSerial RX)
+ *    SIM900A RX → D11 (Arduino SoftSerial TX)
  *    SIM900A VCC → 4V external regulator (LM2596)
  *    SIM900A GND → Common GND
  *
- *  ESP32-CAM Serial Bridge:
- *    Arduino TX (D1) → ESP32-CAM U0R (RX)
- *    Arduino RX (D0) → ESP32-CAM U0T (TX)
+ *  Buzzer (moved to D12 to free D9 for Lane 2 Red LED):
+ *    Buzzer     → D12 (via 100Ω to GND)
+ *
+ *  ESP32-S3 AI CAM Serial Bridge:
+ *    Arduino TX (D1) → ESP32-S3 GPIO44 (RX)
+ *    Arduino RX (D0) → ESP32-S3 GPIO43 (TX)
  *    (Uses Hardware Serial — avoid Serial.print debug
- *     when ESP32 is connected; use SoftSerial for debug)
+ *     when ESP32-S3 is connected; use SoftSerial for debug)
  *
  *  Power:
  *    Battery → LM2596 Buck Converter
@@ -88,7 +96,7 @@ const int  VIBRATION_CONFIRM_COUNT   = 3;
 const unsigned long VIBRATION_WINDOW = 10000;  // 10 seconds
 
 // ── Buzzer (optional) ────────────────────────────────────────
-// Set to true if you have a piezo buzzer connected to D9
+// Set to true if you have a piezo buzzer connected to D12
 // If you don't have a buzzer yet, set to false — no errors
 const bool BUZZER_ENABLED = false;   // Change to true when buzzer is wired
 
@@ -108,22 +116,31 @@ const unsigned long BUZZER_BEEP_INTERVAL  = 500;     // ms between beeps
 //  PIN DEFINITIONS
 // ══════════════════════════════════════════════════════════════
 
-// Sensors
+// Sensors (D2 = Rain, D3 = Vibration — matches wiring diagram)
 const int PIN_WATER_LEVEL   = A0;  // Analog — resistive water level sensor
-const int PIN_VIBRATION     = 2;   // Digital — vibration sensor OUT
-const int PIN_RAIN_DIGITAL  = 3;   // Digital — rain sensor DO (LOW = rain)
+const int PIN_RAIN_DIGITAL  = 2;   // Digital — rain sensor DO (D2, LOW = rain)
+const int PIN_VIBRATION     = 3;   // Digital — vibration sensor OUT (D3, HIGH = vibration)
 
-// LEDs (with 220Ω resistors to GND)
-const int PIN_LED_GREEN     = 10;  // Safe / Power indicator
-const int PIN_LED_YELLOW    = 11;  // Warning
-const int PIN_LED_RED       = 12;  // Danger / Critical
+// ── LEDs — Lane 1 (Direction A — e.g. Northbound) ────────────
+// Drivers approaching from Direction A see these three LEDs.
+// Wire: D4/D5/D6 ──[220Ω]──► LED anode, LED cathode ── GND
+const int PIN_LED_L1_GREEN  = 4;   // Lane 1 Safe  / Power indicator
+const int PIN_LED_L1_YELLOW = 5;   // Lane 1 Warning
+const int PIN_LED_L1_RED    = 6;   // Lane 1 Danger / Critical
 
-// Buzzer (optional)
-const int PIN_BUZZER        = 9;   // Piezo buzzer (via 100Ω resistor)
+// ── LEDs — Lane 2 (Direction B — e.g. Southbound) ────────────
+// Drivers approaching from Direction B see these three LEDs.
+// Wire: D7/D8/D9 ──[220Ω]──► LED anode, LED cathode ── GND
+const int PIN_LED_L2_GREEN  = 7;   // Lane 2 Safe  / Power indicator
+const int PIN_LED_L2_YELLOW = 8;   // Lane 2 Warning
+const int PIN_LED_L2_RED    = 9;   // Lane 2 Danger / Critical
 
-// SIM900A GSM (SoftwareSerial)
-const int PIN_GSM_RX        = 7;   // Arduino receives FROM SIM900A TX
-const int PIN_GSM_TX        = 8;   // Arduino sends TO SIM900A RX
+// Buzzer (optional) — moved to D12 to free D9 for Lane 2 Red LED
+const int PIN_BUZZER        = 12;  // Piezo buzzer (via 100Ω resistor)
+
+// SIM900A GSM (SoftwareSerial) — moved to D10/D11 to free D7/D8 for Lane 2 LEDs
+const int PIN_GSM_RX        = 10;  // Arduino receives FROM SIM900A TX
+const int PIN_GSM_TX        = 11;  // Arduino sends TO SIM900A RX
 
 
 // ══════════════════════════════════════════════════════════════
@@ -186,26 +203,36 @@ void setup() {
   gsmSerial.begin(9600);
 
   // Pin modes
-  pinMode(PIN_WATER_LEVEL,  INPUT);
-  pinMode(PIN_VIBRATION,    INPUT);
-  pinMode(PIN_RAIN_DIGITAL, INPUT);
-  pinMode(PIN_LED_GREEN,    OUTPUT);
-  pinMode(PIN_LED_YELLOW,   OUTPUT);
-  pinMode(PIN_LED_RED,      OUTPUT);
+  pinMode(PIN_WATER_LEVEL,    INPUT);
+  pinMode(PIN_RAIN_DIGITAL,   INPUT);
+  pinMode(PIN_VIBRATION,      INPUT);
+  // Lane 1 LEDs
+  pinMode(PIN_LED_L1_GREEN,   OUTPUT);
+  pinMode(PIN_LED_L1_YELLOW,  OUTPUT);
+  pinMode(PIN_LED_L1_RED,     OUTPUT);
+  // Lane 2 LEDs
+  pinMode(PIN_LED_L2_GREEN,   OUTPUT);
+  pinMode(PIN_LED_L2_YELLOW,  OUTPUT);
+  pinMode(PIN_LED_L2_RED,     OUTPUT);
   if (BUZZER_ENABLED) {
     pinMode(PIN_BUZZER, OUTPUT);
     // Short beep on boot to confirm buzzer works
     tone(PIN_BUZZER, 1000, 100);
   }
 
-  // Startup LED sequence (all on briefly, then green only)
-  digitalWrite(PIN_LED_GREEN,  HIGH);
-  digitalWrite(PIN_LED_YELLOW, HIGH);
-  digitalWrite(PIN_LED_RED,    HIGH);
+  // Startup LED sequence — all 6 LEDs on briefly, then both lane greens stay on
+  digitalWrite(PIN_LED_L1_GREEN,  HIGH);
+  digitalWrite(PIN_LED_L1_YELLOW, HIGH);
+  digitalWrite(PIN_LED_L1_RED,    HIGH);
+  digitalWrite(PIN_LED_L2_GREEN,  HIGH);
+  digitalWrite(PIN_LED_L2_YELLOW, HIGH);
+  digitalWrite(PIN_LED_L2_RED,    HIGH);
   delay(500);
-  digitalWrite(PIN_LED_YELLOW, LOW);
-  digitalWrite(PIN_LED_RED,    LOW);
-  // Green stays on = system powered
+  digitalWrite(PIN_LED_L1_YELLOW, LOW);
+  digitalWrite(PIN_LED_L1_RED,    LOW);
+  digitalWrite(PIN_LED_L2_YELLOW, LOW);
+  digitalWrite(PIN_LED_L2_RED,    LOW);
+  // Both lane green LEDs stay on = system powered, both lanes safe
 
   // Initialize GSM module
   initGSM();
@@ -348,36 +375,56 @@ void evaluateAlertLevel() {
 // ══════════════════════════════════════════════════════════════
 
 void updateLEDs(unsigned long now) {
+  // Both lanes always mirror the same alert level.
+  // Lane 1 = Direction A (Northbound), Lane 2 = Direction B (Southbound).
+  // One set of sensors drives both sets of LEDs — drivers from both
+  // directions receive the same warning simultaneously.
+
   switch (currentAlertLevel) {
-    case 0:  // SAFE — solid green
-      digitalWrite(PIN_LED_GREEN,  HIGH);
-      digitalWrite(PIN_LED_YELLOW, LOW);
-      digitalWrite(PIN_LED_RED,    LOW);
+
+    case 0:  // SAFE — both lanes solid green
+      digitalWrite(PIN_LED_L1_GREEN,  HIGH);
+      digitalWrite(PIN_LED_L1_YELLOW, LOW);
+      digitalWrite(PIN_LED_L1_RED,    LOW);
+      digitalWrite(PIN_LED_L2_GREEN,  HIGH);
+      digitalWrite(PIN_LED_L2_YELLOW, LOW);
+      digitalWrite(PIN_LED_L2_RED,    LOW);
       break;
 
-    case 1:  // WARNING — solid yellow, green off
-      digitalWrite(PIN_LED_GREEN,  LOW);
-      digitalWrite(PIN_LED_YELLOW, HIGH);
-      digitalWrite(PIN_LED_RED,    LOW);
+    case 1:  // WARNING — both lanes solid yellow, green off
+      digitalWrite(PIN_LED_L1_GREEN,  LOW);
+      digitalWrite(PIN_LED_L1_YELLOW, HIGH);
+      digitalWrite(PIN_LED_L1_RED,    LOW);
+      digitalWrite(PIN_LED_L2_GREEN,  LOW);
+      digitalWrite(PIN_LED_L2_YELLOW, HIGH);
+      digitalWrite(PIN_LED_L2_RED,    LOW);
       break;
 
-    case 2:  // DANGER — slow blink red, yellow solid
-      digitalWrite(PIN_LED_GREEN,  LOW);
-      digitalWrite(PIN_LED_YELLOW, HIGH);
+    case 2:  // DANGER — both lanes: yellow solid + red slow blink
+      digitalWrite(PIN_LED_L1_GREEN,  LOW);
+      digitalWrite(PIN_LED_L1_YELLOW, HIGH);
+      digitalWrite(PIN_LED_L2_GREEN,  LOW);
+      digitalWrite(PIN_LED_L2_YELLOW, HIGH);
       if (timeSince(now, lastLedToggle) >= LED_SLOW_BLINK_MS) {
         lastLedToggle = now;
         ledRedState = !ledRedState;
-        digitalWrite(PIN_LED_RED, ledRedState ? HIGH : LOW);
+        // Both lane reds blink in sync
+        digitalWrite(PIN_LED_L1_RED, ledRedState ? HIGH : LOW);
+        digitalWrite(PIN_LED_L2_RED, ledRedState ? HIGH : LOW);
       }
       break;
 
-    case 3:  // CRITICAL — fast blink red + yellow alternating
-      digitalWrite(PIN_LED_GREEN, LOW);
+    case 3:  // CRITICAL — both lanes: red + yellow fast alternating blink
+      digitalWrite(PIN_LED_L1_GREEN, LOW);
+      digitalWrite(PIN_LED_L2_GREEN, LOW);
       if (timeSince(now, lastLedToggle) >= LED_FAST_BLINK_MS) {
         lastLedToggle = now;
         ledRedState = !ledRedState;
-        digitalWrite(PIN_LED_RED,    ledRedState    ? HIGH : LOW);
-        digitalWrite(PIN_LED_YELLOW, (!ledRedState) ? HIGH : LOW);
+        // Both lanes blink red and yellow in opposite phase (alternating)
+        digitalWrite(PIN_LED_L1_RED,    ledRedState    ? HIGH : LOW);
+        digitalWrite(PIN_LED_L1_YELLOW, (!ledRedState) ? HIGH : LOW);
+        digitalWrite(PIN_LED_L2_RED,    ledRedState    ? HIGH : LOW);
+        digitalWrite(PIN_LED_L2_YELLOW, (!ledRedState) ? HIGH : LOW);
       }
       break;
   }

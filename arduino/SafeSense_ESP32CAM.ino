@@ -1,63 +1,68 @@
 /*
  * ============================================================
- *  SafeSense IoT — ESP32-CAM WiFi Alert Gateway + Camera
- *  Board  : AI-Thinker ESP32-CAM
+ *  SafeSense IoT — ESP32-S3 AI CAM WiFi Alert Gateway + Camera
+ *  Board  : ESP32-S3 AI CAM (NOT AI-Thinker ESP32-CAM)
  *
- *  This sketch runs on the ESP32-CAM module in the dual-MCU
- *  SafeSense architecture:
+ *  This sketch runs on the ESP32-S3 AI CAM module in the
+ *  dual-MCU SafeSense architecture:
  *
- *    Arduino Uno  ──Serial──►  ESP32-CAM
+ *    Arduino Uno  ──Serial──►  ESP32-S3 AI CAM
  *    (sensors,                  (WiFi HTTP,
  *     LEDs,                      JSON POST,
  *     GSM SMS)                   camera capture,
  *                                heartbeat)
  *
- *  The ESP32-CAM receives sensor data and alert commands
- *  from the Arduino Uno over Serial, connects to WiFi,
- *  POSTs JSON payloads to the SafeSense Hospital Management
- *  System web dashboard, AND captures camera images when
- *  alerts are triggered (flood/accident evidence photos).
+ *  The ESP32-S3 receives sensor data and alert commands
+ *  from the Arduino Uno over Serial (UART1 on GPIO43/44),
+ *  connects to WiFi, POSTs JSON payloads to the SafeSense
+ *  dashboard, AND captures camera images on alerts.
  *
  *  ── HARDWARE CONNECTIONS ──
  *
- *  Serial from Arduino Uno:
- *    ESP32-CAM U0R (GPIO3/RX) ← Arduino TX (D1)
- *    ESP32-CAM U0T (GPIO1/TX) → Arduino RX (D0)
+ *  Serial from Arduino Uno (UART1):
+ *    ESP32-S3 GPIO44 (RX) ← Arduino TX (D1)
+ *    ESP32-S3 GPIO43 (TX) → Arduino RX (D0)
+ *    GND ────────────────── GND (common ground required)
+ *    3.3V ───────────────── 3V3 (logic level reference)
  *
  *  Power:
- *    ESP32-CAM VCC → 5V from LM2596 buck converter
- *    ESP32-CAM GND → Common GND
+ *    ESP32-S3 VCC → 3.3V or 5V depending on board variant
+ *    ESP32-S3 GND → Common GND
  *
  *  Camera:
- *    OV2640 camera module (built into ESP32-CAM board)
- *    No additional wiring needed — camera is onboard
+ *    Camera module is built into the ESP32-S3 AI CAM board.
+ *    No additional wiring needed — camera is onboard.
  *
  *  Status LED:
- *    GPIO33 = onboard red LED (active LOW)
- *    GPIO4  = onboard flash LED (active HIGH, also camera flash)
+ *    GPIO2 = onboard LED (active HIGH on most ESP32-S3 AI CAM boards)
  *
  *  ── IMPORTANT NOTES ──
  *
- *  • GPIO4 (flash LED) is shared with the camera's SD card
- *    interface. If using SD card, the flash LED cannot be used.
- *    This sketch does NOT use SD card, so flash LED is available.
+ *  • ESP32-S3 uses UART1 (Serial1) on GPIO43/GPIO44 for
+ *    communication with Arduino. GPIO43 = TX, GPIO44 = RX.
+ *    This is different from the old AI-Thinker which used
+ *    GPIO1 (TX) and GPIO3 (RX) on UART0.
  *
- *  • The camera uses significant RAM (~120KB for SVGA JPEG).
- *    DynamicJsonDocument sizes are kept conservative.
+ *  • The camera pin definitions below are for the ESP32-S3
+ *    AI CAM board. Do NOT use AI-Thinker pin values here.
  *
- *  Required Libraries (all built-in with ESP32 board package):
+ *  • The camera uses significant RAM. DynamicJsonDocument
+ *    sizes are kept conservative.
+ *
+ *  Required Libraries:
  *    - ArduinoJson by Benoit Blanchon (v6.x or v7.x)
- *    - WiFi.h
- *    - HTTPClient.h
- *    - esp_camera.h
+ *    - WiFi.h       (built into ESP32-S3 Arduino Core)
+ *    - HTTPClient.h (built into ESP32-S3 Arduino Core)
+ *    - esp_camera.h (built into ESP32-S3 Arduino Core)
  *
  *  Board Setup in Arduino IDE:
  *    1. Add ESP32 board URL: https://dl.espressif.com/dl/package_esp32_index.json
- *    2. Install "esp32 by Espressif Systems" from Board Manager
- *    3. Select Board: "AI Thinker ESP32-CAM"
+ *    2. Install "esp32 by Espressif Systems" v2.0.9+ from Board Manager
+ *    3. Select Board: "ESP32S3 Dev Module"
  *    4. Partition Scheme: "Huge APP (3MB No OTA/1MB SPIFFS)"
  *    5. Upload Speed: 115200
- *    6. You need an FTDI programmer to upload (GPIO0→GND for flash mode)
+ *    6. USB CDC On Boot: "Enabled" (allows Serial monitor over USB)
+ *    7. Flash Size: 4MB or 8MB (match your board)
  *
  * ============================================================
  */
@@ -68,26 +73,26 @@
 #include "esp_camera.h"
 
 // ══════════════════════════════════════════════════════════════
-//  AI-THINKER ESP32-CAM — CAMERA PIN DEFINITIONS
+//  ESP32-S3 AI CAM — CAMERA PIN DEFINITIONS
 //  (Do NOT change these — they are fixed by the board design)
 // ══════════════════════════════════════════════════════════════
 
-#define PWDN_GPIO_NUM     32
+#define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
-#define SIOD_GPIO_NUM     26
-#define SIOC_GPIO_NUM     27
-#define Y9_GPIO_NUM       35
-#define Y8_GPIO_NUM       34
-#define Y7_GPIO_NUM       39
-#define Y6_GPIO_NUM       36
-#define Y5_GPIO_NUM       21
-#define Y4_GPIO_NUM       19
-#define Y3_GPIO_NUM       18
-#define Y2_GPIO_NUM        5
-#define VSYNC_GPIO_NUM    25
-#define HREF_GPIO_NUM     23
-#define PCLK_GPIO_NUM     22
+#define XCLK_GPIO_NUM     15
+#define SIOD_GPIO_NUM      4
+#define SIOC_GPIO_NUM      5
+#define Y9_GPIO_NUM       16
+#define Y8_GPIO_NUM       17
+#define Y7_GPIO_NUM       18
+#define Y6_GPIO_NUM       12
+#define Y5_GPIO_NUM       10
+#define Y4_GPIO_NUM        8
+#define Y3_GPIO_NUM        9
+#define Y2_GPIO_NUM       11
+#define VSYNC_GPIO_NUM     6
+#define HREF_GPIO_NUM      7
+#define PCLK_GPIO_NUM     13
 
 
 // ══════════════════════════════════════════════════════════════
@@ -138,8 +143,10 @@ const unsigned long RETRY_DELAY_BASE        = 2000;
 //  PIN DEFINITIONS
 // ══════════════════════════════════════════════════════════════
 
-const int PIN_LED_STATUS = 33;   // Onboard red LED (active LOW)
-const int PIN_LED_FLASH  = 4;    // Onboard flash LED (active HIGH)
+const int PIN_LED_STATUS = 2;    // Onboard LED on ESP32-S3 AI CAM (active HIGH)
+const int PIN_LED_FLASH  = 48;   // Flash LED on ESP32-S3 AI CAM (active HIGH)
+// Note: GPIO2 and GPIO48 are common onboard LED pins for ESP32-S3 AI CAM boards.
+// If your specific board uses different pins, adjust these two lines only.
 
 
 // ══════════════════════════════════════════════════════════════
@@ -174,20 +181,25 @@ bool cameraReady = false;
 // ══════════════════════════════════════════════════════════════
 
 void setup() {
-  // Hardware Serial for communication with Arduino Uno
-  Serial.begin(9600);
+  // USB CDC debug Serial (UART0 via USB — for Serial Monitor)
+  Serial.begin(115200);
 
-  // LED setup
+  // Hardware Serial1 for communication with Arduino Uno (UART1)
+  // GPIO43 = TX (connects to Arduino D0/RX)
+  // GPIO44 = RX (connects to Arduino D1/TX)
+  Serial1.begin(9600, SERIAL_8N1, 44, 43);
+
+  // LED setup — ESP32-S3 AI CAM onboard LED is active HIGH
   pinMode(PIN_LED_STATUS, OUTPUT);
   pinMode(PIN_LED_FLASH,  OUTPUT);
-  digitalWrite(PIN_LED_STATUS, HIGH);  // OFF (active low)
+  digitalWrite(PIN_LED_STATUS, LOW);   // OFF (active high — LOW = off)
   digitalWrite(PIN_LED_FLASH,  LOW);   // OFF
 
   // Boot indication — flash LED twice
   for (int i = 0; i < 2; i++) {
-    digitalWrite(PIN_LED_STATUS, LOW);
+    digitalWrite(PIN_LED_STATUS, HIGH);  // ON
     delay(200);
-    digitalWrite(PIN_LED_STATUS, HIGH);
+    digitalWrite(PIN_LED_STATUS, LOW);   // OFF
     delay(200);
   }
 
@@ -329,19 +341,21 @@ void loop() {
   unsigned long now = millis();
 
   // ── Check WiFi connection ──────────────────────────────
+  // ESP32-S3 LED is active HIGH (HIGH = ON, LOW = OFF)
   if (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(PIN_LED_STATUS, (millis() / 200) % 2 == 0 ? LOW : HIGH);
+    // Blink fast while disconnected
+    digitalWrite(PIN_LED_STATUS, (millis() / 200) % 2 == 0 ? HIGH : LOW);
     if (timeSince(now, lastWiFiAttempt) >= WIFI_RECONNECT_INTERVAL) {
       connectWiFi();
       lastWiFiAttempt = now;
     }
   } else {
-    digitalWrite(PIN_LED_STATUS, LOW);  // Solid ON = connected
+    digitalWrite(PIN_LED_STATUS, HIGH);  // Solid ON = WiFi connected
   }
 
-  // ── Read incoming Serial data from Arduino ─────────────
-  while (Serial.available()) {
-    char c = Serial.read();
+  // ── Read incoming Serial1 data from Arduino (GPIO44 RX) ────
+  while (Serial1.available()) {
+    char c = Serial1.read();
     if (c == '\n') {
       serialBuffer.trim();
       if (serialBuffer.length() > 0) {
@@ -450,8 +464,9 @@ void processAlertPacket(String data) {
     }
   }
 
-  // Visual feedback
+  // Visual feedback — ESP32-S3 LED is active HIGH
   if (!alertSuccess) {
+    // Rapid 5-flash = alert POST failed
     for (int i = 0; i < 5; i++) {
       digitalWrite(PIN_LED_STATUS, HIGH);
       delay(100);
@@ -473,19 +488,20 @@ void connectWiFi() {
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
+  // ESP32-S3 LED is active HIGH
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 30) {
     delay(500);
-    digitalWrite(PIN_LED_STATUS, attempts % 2 == 0 ? LOW : HIGH);
+    digitalWrite(PIN_LED_STATUS, attempts % 2 == 0 ? HIGH : LOW);
     attempts++;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
     wifiFailCount = 0;
-    digitalWrite(PIN_LED_STATUS, LOW);
+    digitalWrite(PIN_LED_STATUS, HIGH);  // ON = connected
   } else {
     wifiFailCount++;
-    digitalWrite(PIN_LED_STATUS, HIGH);
+    digitalWrite(PIN_LED_STATUS, LOW);   // OFF = failed
     if (wifiFailCount >= 10) {
       ESP.restart();
     }
