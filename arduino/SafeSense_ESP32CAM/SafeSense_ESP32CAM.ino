@@ -66,7 +66,8 @@
  *
  * ============================================================
  */
-
+// Add alongside the other #include lines at the top:
+#include <Wire.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -255,23 +256,32 @@ bool initCamera() {
   config.pin_sscb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
+  config.xclk_freq_hz = 16000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
   // Use SVGA (800x600) for a good balance of quality and size
   // ESP32-CAM has 4MB PSRAM, so we can use larger frames
   if (psramFound()) {
-    config.frame_size   = FRAMESIZE_SVGA;   // 800x600
-    config.jpeg_quality = 12;               // 0-63, lower = better quality
-    config.fb_count     = 2;                // Double buffer for faster capture
+    config.frame_size   = FRAMESIZE_VGA;    // 640x480 — safer for OV3660 init
+    config.jpeg_quality = 10;
+    config.fb_count     = 2;
   } else {
     // No PSRAM — use smaller frame
     config.frame_size   = FRAMESIZE_VGA;    // 640x480
     config.jpeg_quality = 15;
     config.fb_count     = 1;
   }
-
+  
   Serial.println("[Camera] Initializing...");
+  // Add this block right before: esp_err_t err = esp_camera_init(&config);
+  Serial.println("[Camera] Scanning I2C for camera sensor...");
+  Wire.begin(SIOD_GPIO_NUM, SIOC_GPIO_NUM);
+  for (byte addr = 1; addr < 127; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      Serial.printf("[Camera] Found I2C device at 0x%02X\n", addr);
+    }
+  }
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("[Camera] Init FAILED — error 0x%x (%s)\n",
