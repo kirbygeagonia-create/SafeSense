@@ -532,7 +532,7 @@ Sent by ESP32-CAM when the Arduino detects a hazardous condition.
   "message":       "CRITICAL: Flood detected. Water level at 75.5%...",
   "latitude":      8.1574,
   "longitude":     124.9282,
-  "location_name": "Brgy. Casisang, Malaybalay City"
+  "location_name": "Brgy. Crossing Rubber, Tupi"
 }
 ```
 

@@ -3,60 +3,31 @@
  *  SafeSense IoT — Arduino Uno Sensor & Alert Controller
  *  Board  : Arduino Uno (ATmega328P)
  *
- *  This sketch runs on the Arduino Uno in the dual-MCU
- *  SafeSense architecture:
+ *  ALERT BEHAVIOR:
+ *    GREEN  (solid)  → System ON, all clear
+ *    YELLOW (solid)  → Rain or water level detected (flood warning)
+ *    RED    (blink)  → Vibration/accident detected → SMS + IoT + camera
  *
- *    Arduino Uno  ←→  ESP32-CAM
- *    (sensors,        (WiFi HTTP,
- *     LEDs,            JSON POST)
- *     GSM SMS)
+ *  SENSOR ROLES:
+ *    Rain Sensor (D2)      → Flood warning → YELLOW
+ *    Water Level (A0)      → Flood warning → YELLOW
+ *    Vibration Sensor (D3) → Accident/crash → RED + SMS alert
  *
- *  The Arduino reads all sensors, controls LEDs, sends SMS
- *  via SIM900A GSM, and forwards sensor data to the ESP32-CAM
- *  over Hardware Serial for WiFi transmission.
- *
- *  ── HARDWARE CONNECTIONS ──
+ * ── HARDWARE CONNECTIONS ──
  *
  *  Sensors:
- *    Water Level Sensor  → A0 (analog, resistive)
- *    Rain Sensor (DO)    → D2 (digital, LOW = rain)
- *    Vibration Sensor    → D3 (digital, HIGH = vibration)
+ *    Water Level Sensor → A0 (analog)
+ *    Rain Sensor (DO)   → D2 (digital, LOW = rain, INPUT_PULLUP)
+ *    Vibration Sensor   → D3 (digital, HIGH = hit, INT1)
  *
- *  Outputs — Two-Lane LED Array (3 LEDs × 2 lanes = 6 LEDs total):
- *    ── Lane 1 (Direction A — Northbound) ──
- *    Lane 1 Green  → D4  (via 220Ω to GND) — Safe
- *    Lane 1 Yellow → D5  (via 220Ω to GND) — Warning
- *    Lane 1 Red    → D6  (via 220Ω to GND) — Danger / Critical
- *    ── Lane 2 (Direction B — Southbound) ──
- *    Lane 2 Green  → D7  (via 220Ω to GND) — Safe
- *    Lane 2 Yellow → D8  (via 220Ω to GND) — Warning
- *    Lane 2 Red    → D9  (via 220Ω to GND) — Danger / Critical
+ *  LEDs — Two-Lane (3 LEDs x 2 lanes = 6 total):
+ *    Lane 1 Green  → D4   Lane 2 Green  → D7
+ *    Lane 1 Yellow → D5   Lane 2 Yellow → D8
+ *    Lane 1 Red    → D6   Lane 2 Red    → D9
  *
- *  SIM900A GSM Module (moved to D10/D11 to free D7/D8 for Lane 2 LEDs):
- *    SIM900A TX → D10 (Arduino SoftSerial RX)
- *    SIM900A RX → D11 (Arduino SoftSerial TX)
- *    SIM900A VCC → 4V external regulator (LM2596)
- *    SIM900A GND → Common GND
- *
- *  Buzzer (moved to D12 to free D9 for Lane 2 Red LED):
- *    Buzzer     → D12 (via 100Ω to GND)
- *
- *  ESP32-S3 AI CAM Serial Bridge:
- *    Arduino TX (D1) → ESP32-S3 GPIO44 (RX)
- *    Arduino RX (D0) → ESP32-S3 GPIO43 (TX)
- *    (Uses Hardware Serial — avoid Serial.print debug
- *     when ESP32-S3 is connected; use SoftSerial for debug)
- *
- *  Power:
- *    Battery → LM2596 Buck Converter
- *      Output 5V  → Arduino VIN + ESP32-CAM VCC
- *      Output ~4V → SIM900A VCC (separate regulator)
- *    ALL GROUNDS CONNECTED
- *
- *  Required Libraries:
- *    - SoftwareSerial (built-in)
- *    - avr/wdt.h (built-in, for watchdog timer)
- *
+ *  SIM900A GSM: TX→D10 (RX), RX→D11 (TX)
+ *  Buzzer: D12
+ *  ESP32-S3: Arduino TX(D1) → GPIO44, Arduino RX(D0) → GPIO43
  * ============================================================
  */
 
@@ -67,80 +38,106 @@
 //  CONFIGURATION
 // ══════════════════════════════════════════════════════════════
 
-// ── SMS Recipients (add your numbers here) ───────────────────
-// Use international format WITHOUT the '+' sign
-// Example: "639171234567" for a Philippine number
 const char* SMS_NUMBERS[] = {
-  "639363195187",   // Emergency Contact 1
-  "639XXXXXXXXX",   // Emergency Contact 2 (Police/Rescue)
+  "639363195187",  // Emergency Contact 1
+  "639XXXXXXXXX",  // Emergency Contact 2 — replace before deployment
 };
 const int SMS_COUNT = sizeof(SMS_NUMBERS) / sizeof(SMS_NUMBERS[0]);
 
-// ── Device Identity ──────────────────────────────────────────
 const char* DEVICE_ID     = "SAFESENSE-001";
-const char* LOCATION_NAME = "Brgy. Crossing Rubber, Tupi";
+const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
-// ── Sensor Thresholds ────────────────────────────────────────
-// Water level sensor (analog 0–1023)
-// The resistive water level sensor outputs higher values when
-// more of the sensor is submerged. Calibrate these for your
-// specific sensor and mounting.
-const int WATER_LEVEL_SAFE     = 200;   // Below this = dry/safe
-const int WATER_LEVEL_WARNING  = 400;   // Yellow LED territory
-const int WATER_LEVEL_DANGER   = 600;   // Red LED slow blink
-const int WATER_LEVEL_CRITICAL = 800;   // Red LED fast blink + alert
+// ── Water Level Thresholds (analog 0–1023) ───────────────────
+// Watch [SENSOR] in Serial Monitor. Submerge 1 cm, note raw value,
+// set WATER_LEVEL_WARNING ~10 below that reading.
+const int WATER_LEVEL_SAFE    = 20;   // Below → dry, no alert
+const int WATER_LEVEL_WARNING = 50;   // At or above → YELLOW flood warning
 
-// Vibration confirmation: how many detections within the
-// confirmation window to count as a real event
-const int  VIBRATION_CONFIRM_COUNT   = 3;
-const unsigned long VIBRATION_WINDOW = 10000;  // 10 seconds
+// ── Vibration (accident detection) ───────────────────────────
+// VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
+const int            VIBRATION_TRIGGER = 2;     // 2 confirmed hits = accident
+const unsigned long  VIBRATION_WINDOW  = 5000;  // within 5 seconds
 
-// ── Buzzer (optional) ────────────────────────────────────────
-// Set to true if you have a piezo buzzer connected to D12
-// If you don't have a buzzer yet, set to false — no errors
-const bool BUZZER_ENABLED = false;   // Change to true when buzzer is wired
+// ── RED hold after accident ───────────────────────────────────
+// Keeps RED on long enough for camera to capture the scene
+const unsigned long ALERT_HOLD_MS = 10000;  // 10 seconds
 
-// ── Timing ───────────────────────────────────────────────────
-const unsigned long SENSOR_READ_INTERVAL  = 2000;   // Read sensors every 2s
-const unsigned long ALERT_COOLDOWN_MS     = 60000;  // 60s between alerts
-const unsigned long ESP32_SEND_INTERVAL   = 3000;   // Send data to ESP32 every 3s
-const unsigned long SMS_COOLDOWN_MS       = 300000;  // 5 min between SMS (expensive)
-const unsigned long HEARTBEAT_INTERVAL    = 300000;  // 5 min heartbeat to ESP32
-const unsigned long LED_FAST_BLINK_MS     = 150;
-const unsigned long LED_SLOW_BLINK_MS     = 500;
-const unsigned long BUZZER_BEEP_DURATION  = 200;     // ms per beep
-const unsigned long BUZZER_BEEP_INTERVAL  = 500;     // ms between beeps
+// ── Buzzer ────────────────────────────────────────────────────
+const bool BUZZER_ENABLED = true;
+
+// ── Timing ────────────────────────────────────────────────────
+const unsigned long SENSOR_READ_INTERVAL = 200;    // 200 ms polling
+const unsigned long SMS_COOLDOWN_MS      = 300000; // 5 min between SMS
+const unsigned long ESP32_SEND_INTERVAL  = 2000;
+const unsigned long HEARTBEAT_INTERVAL   = 300000;
+const unsigned long LED_BLINK_MS         = 300;    // RED blink speed
+
+// ── Rain sensor polarity ──────────────────────────────────────
+// LM393 module: LOW = rain. Change to HIGH if yours is inverted.
+const int RAIN_ACTIVE_LEVEL = LOW;
+
+
+// ══════════════════════════════════════════════════════════════
+//  ALERT STATES
+//  0 = SAFE     → GREEN solid
+//  1 = FLOOD    → YELLOW solid  (rain or water level)
+//  2 = ACCIDENT → RED blinking  (vibration → SMS + IoT + camera)
+// ══════════════════════════════════════════════════════════════
+
+#define STATE_SAFE     0
+#define STATE_FLOOD    1
+#define STATE_ACCIDENT 2
 
 
 // ══════════════════════════════════════════════════════════════
 //  PIN DEFINITIONS
 // ══════════════════════════════════════════════════════════════
 
-// Sensors (D2 = Rain, D3 = Vibration — matches wiring diagram)
-const int PIN_WATER_LEVEL   = A0;  // Analog — resistive water level sensor
-const int PIN_RAIN_DIGITAL  = 2;   // Digital — rain sensor DO (D2, LOW = rain)
-const int PIN_VIBRATION     = 3;   // Digital — vibration sensor OUT (D3, HIGH = vibration)
+const int PIN_WATER_LEVEL   = A0;
+const int PIN_RAIN_DIGITAL  = 2;
+const int PIN_VIBRATION     = 3;  // INT1
 
-// ── LEDs — Right Lane (Lane 1) ────────────
-// Drivers approaching from Right Lane see these three LEDs.
-// Wire: D5/D4/D6 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L1_GREEN  = 4;   // Lane 1 Safe  / Power indicator — D4 matches diagram
-const int PIN_LED_L1_YELLOW = 5;   // Lane 1 Warning               — D5 matches diagram
-const int PIN_LED_L1_RED    = 6;   // Lane 1 Danger / Critical
+const int PIN_LED_L1_GREEN  = 4;
+const int PIN_LED_L1_YELLOW = 5;
+const int PIN_LED_L1_RED    = 6;
+const int PIN_LED_L2_GREEN  = 7;
+const int PIN_LED_L2_YELLOW = 8;
+const int PIN_LED_L2_RED    = 9;
 
-// ── LEDs — Left Lane (Lane 2) ────────────
-// Drivers approaching from Left Lane see these three LEDs.
-// Wire: D7/D8/D9 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L2_GREEN  = 7;   // Lane 2 Safe  / Power indicator — D7 matches diagram
-const int PIN_LED_L2_YELLOW = 8;   // Lane 2 Warning               — D8 matches diagram
-const int PIN_LED_L2_RED    = 9;   // Lane 2 Danger / Critical
+const int PIN_BUZZER = 12;
+const int PIN_GSM_RX = 10;
+const int PIN_GSM_TX = 11;
 
-// Buzzer (optional) — moved to D12 to free D9 for Lane 2 Red LED
-const int PIN_BUZZER        = 12;  // Piezo buzzer (via 100Ω resistor)
 
-// SIM900A GSM (SoftwareSerial) — moved to D10/D11 to free D7/D8 for Lane 2 LEDs
-const int PIN_GSM_RX        = 10;  // Arduino receives FROM SIM900A TX
-const int PIN_GSM_TX        = 11;  // Arduino sends TO SIM900A RX
+// ══════════════════════════════════════════════════════════════
+//  VIBRATION INTERRUPT
+// ══════════════════════════════════════════════════════════════
+
+volatile int           vibCount      = 0;
+volatile unsigned long vibFirstHitMs = 0;
+volatile unsigned long vibLastHitMs  = 0;
+
+void vibrationISR() {
+  unsigned long now = millis();
+  if (now - vibLastHitMs < 50) return;  // 50 ms debounce
+  vibLastHitMs = now;
+
+  if (vibCount == 0) vibFirstHitMs = now;
+
+  if (now - vibFirstHitMs <= VIBRATION_WINDOW) {
+    vibCount++;
+  } else {
+    vibCount      = 1;
+    vibFirstHitMs = now;
+  }
+}
+
+void resetVibration() {
+  noInterrupts();
+  vibCount      = 0;
+  vibFirstHitMs = 0;
+  interrupts();
+}
 
 
 // ══════════════════════════════════════════════════════════════
@@ -149,40 +146,22 @@ const int PIN_GSM_TX        = 11;  // Arduino sends TO SIM900A RX
 
 SoftwareSerial gsmSerial(PIN_GSM_RX, PIN_GSM_TX);
 
-// Timing (all use millis() — overflow-safe comparisons)
-unsigned long lastSensorRead   = 0;
-unsigned long lastAlertTime    = 0;
-// FIX BUG-NEW-1: unsigned underflow makes cooldown appear already expired
-// at boot so the very first SMS is never skipped.
-unsigned long lastSmsTime      = (unsigned long)(0UL - SMS_COOLDOWN_MS);
-unsigned long lastEsp32Send    = 0;
-unsigned long lastHeartbeat    = 0;
-unsigned long lastLedToggle    = 0;
+unsigned long lastSensorRead  = 0;
+unsigned long lastEsp32Send   = 0;
+unsigned long lastHeartbeat   = 0;
+unsigned long lastSmsTime     = (unsigned long)(0UL - SMS_COOLDOWN_MS);
+unsigned long lastLedToggle   = 0;
+unsigned long accidentSetTime = 0;
 
-// Sensor state
-int   waterLevelRaw    = 0;
-float waterLevelPct    = 0.0;   // 0–100%
-bool  isRaining        = false;
-bool  prevRaining      = false;
-bool  vibDetected      = false;
+int   waterLevelRaw = 0;
+float waterLevelPct = 0.0;
+bool  isRaining     = false;
 
-// Vibration confirmation buffer
-int           vibrationCount     = 0;
-unsigned long vibrationFirstTime = 0;
+int  alertState   = STATE_SAFE;
+int  prevState    = STATE_SAFE;
+bool ledBlinkOn   = false;
+bool gsmReady     = false;
 
-// LED state (non-blocking)
-bool ledRedState    = false;
-bool ledYellowState = false;
-
-// Alert level tracking
-// 0 = safe, 1 = warning, 2 = danger, 3 = critical
-int currentAlertLevel = 0;
-int prevAlertLevel    = 0;
-
-// GSM ready flag
-bool gsmReady = false;
-
-// Buzzer state
 unsigned long lastBuzzerToggle = 0;
 bool buzzerOn = false;
 
@@ -192,102 +171,75 @@ bool buzzerOn = false;
 // ══════════════════════════════════════════════════════════════
 
 void setup() {
-  // Enable watchdog timer — 8 second timeout
   wdt_enable(WDTO_8S);
 
-  // Hardware Serial — used to communicate with ESP32-CAM
-  // Baud rate must match ESP32-CAM sketch
   Serial.begin(9600);
-
-  // SoftwareSerial for SIM900A GSM
   gsmSerial.begin(9600);
 
-  // Pin modes
-  pinMode(PIN_WATER_LEVEL,    INPUT);
-  pinMode(PIN_RAIN_DIGITAL,   INPUT_PULLUP);  // Pull-up prevents floating → false rain detection
-  pinMode(PIN_VIBRATION,      INPUT);         // Stays INPUT — active HIGH sensor, not pull-up
-  // Lane 1 LEDs
-  pinMode(PIN_LED_L1_GREEN,   OUTPUT);
-  pinMode(PIN_LED_L1_YELLOW,  OUTPUT);
-  pinMode(PIN_LED_L1_RED,     OUTPUT);
-  // Lane 2 LEDs
-  pinMode(PIN_LED_L2_GREEN,   OUTPUT);
-  pinMode(PIN_LED_L2_YELLOW,  OUTPUT);
-  pinMode(PIN_LED_L2_RED,     OUTPUT);
+  pinMode(PIN_WATER_LEVEL,   INPUT);
+  pinMode(PIN_RAIN_DIGITAL,  INPUT_PULLUP);
+  pinMode(PIN_VIBRATION,     INPUT);
+
+  pinMode(PIN_LED_L1_GREEN,  OUTPUT);
+  pinMode(PIN_LED_L1_YELLOW, OUTPUT);
+  pinMode(PIN_LED_L1_RED,    OUTPUT);
+  pinMode(PIN_LED_L2_GREEN,  OUTPUT);
+  pinMode(PIN_LED_L2_YELLOW, OUTPUT);
+  pinMode(PIN_LED_L2_RED,    OUTPUT);
+
   if (BUZZER_ENABLED) {
     pinMode(PIN_BUZZER, OUTPUT);
-    // Short beep on boot to confirm buzzer works
-    tone(PIN_BUZZER, 1000, 100);
+    tone(PIN_BUZZER, 1000, 150);
   }
 
-  // Startup LED sequence — all 6 LEDs on briefly, then both lane greens stay on
-  digitalWrite(PIN_LED_L1_GREEN,  HIGH);
-  digitalWrite(PIN_LED_L1_YELLOW, HIGH);
-  digitalWrite(PIN_LED_L1_RED,    HIGH);
-  digitalWrite(PIN_LED_L2_GREEN,  HIGH);
-  digitalWrite(PIN_LED_L2_YELLOW, HIGH);
-  digitalWrite(PIN_LED_L2_RED,    HIGH);
-  delay(500);
-  digitalWrite(PIN_LED_L1_YELLOW, LOW);
-  digitalWrite(PIN_LED_L1_RED,    LOW);
-  digitalWrite(PIN_LED_L2_YELLOW, LOW);
-  digitalWrite(PIN_LED_L2_RED,    LOW);
-  // Both lane green LEDs stay on = system powered, both lanes safe
+  attachInterrupt(digitalPinToInterrupt(PIN_VIBRATION), vibrationISR, RISING);
 
-  // Initialize GSM module
+  // Boot: flash all LEDs once, then GREEN only = system ready
+  setAllLEDs(HIGH, HIGH, HIGH, HIGH, HIGH, HIGH);
+  delay(400);
+  setAllLEDs(LOW, LOW, LOW, LOW, LOW, LOW);
+  delay(200);
+  setAllLEDs(HIGH, LOW, LOW, HIGH, LOW, LOW);  // GREEN on
+
   initGSM();
-
-  // Send boot message to ESP32
   Serial.println("$SAFE,BOOT,0,0,0,0");
-
   wdt_reset();
 }
 
 
 // ══════════════════════════════════════════════════════════════
-//  MAIN LOOP (non-blocking)
+//  MAIN LOOP
 // ══════════════════════════════════════════════════════════════
 
 void loop() {
-  wdt_reset();  // Pet the watchdog
-
+  wdt_reset();
   unsigned long now = millis();
 
-  // ── Read sensors at interval ───────────────────────────────
   if (timeSince(now, lastSensorRead) >= SENSOR_READ_INTERVAL) {
     lastSensorRead = now;
     readSensors();
-    evaluateAlertLevel();
+    evaluateState(now);
   }
 
-  // ── Update LEDs and buzzer (non-blocking) ─────────────────
   updateLEDs(now);
   updateBuzzer(now);
 
-  // ── Alert logic ────────────────────────────────────────────
-  if (currentAlertLevel > 0 && currentAlertLevel > prevAlertLevel) {
-    // Alert level escalated — trigger alerts
-
-    if (timeSince(now, lastAlertTime) >= ALERT_COOLDOWN_MS) {
-      triggerAlert(now);
-      lastAlertTime = now;
-    }
+  // Fire alert only on state change
+  if (alertState != prevState) {
+    if (alertState == STATE_ACCIDENT) triggerAccidentAlert(now);
+    else if (alertState == STATE_FLOOD) triggerFloodAlert(now);
+    prevState = alertState;
   }
-  prevAlertLevel = currentAlertLevel;
 
-  // ── Send data to ESP32-CAM periodically ────────────────────
   if (timeSince(now, lastEsp32Send) >= ESP32_SEND_INTERVAL) {
     lastEsp32Send = now;
     sendToESP32();
   }
 
-  // ── Heartbeat to ESP32 ─────────────────────────────────────
   if (timeSince(now, lastHeartbeat) >= HEARTBEAT_INTERVAL) {
     lastHeartbeat = now;
     Serial.println("$SAFE,HEARTBEAT,0,0,0,0");
   }
-
-  prevRaining = isRaining;
 }
 
 
@@ -296,169 +248,130 @@ void loop() {
 // ══════════════════════════════════════════════════════════════
 
 void readSensors() {
-  // ── Water Level (Analog) ────────────────────────────────
-  // Resistive water level sensor: higher analog value = more water
-  // Take average of 5 readings for stability
   long sum = 0;
-  for (int i = 0; i < 5; i++) {
-    sum += analogRead(PIN_WATER_LEVEL);
-    delay(2);  // Short delay between ADC reads for stability
-  }
+  for (int i = 0; i < 5; i++) { sum += analogRead(PIN_WATER_LEVEL); delay(2); }
   waterLevelRaw = sum / 5;
-  waterLevelPct = map(waterLevelRaw, 0, 1023, 0, 100);
-  waterLevelPct = constrain(waterLevelPct, 0.0, 100.0);
+  waterLevelPct = constrain(map(waterLevelRaw, 0, 1023, 0, 100), 0, 100);
 
-  // ── Rain (Digital) ──────────────────────────────────────
-  // Most rain sensor modules: LOW = rain detected, HIGH = dry
-  isRaining = (digitalRead(PIN_RAIN_DIGITAL) == LOW);
+  isRaining = (digitalRead(PIN_RAIN_DIGITAL) == RAIN_ACTIVE_LEVEL);
 
-  // ── Vibration (Digital) ─────────────────────────────────
-  vibDetected = (digitalRead(PIN_VIBRATION) == HIGH);
+  // Expire stale vibration window
+  noInterrupts();
+  unsigned long firstHit = vibFirstHitMs;
+  int           vc       = vibCount;
+  interrupts();
+  if (vc > 0 && timeSince(millis(), firstHit) > VIBRATION_WINDOW * 2) {
+    resetVibration();
+  }
 
-  // Vibration confirmation logic — require multiple detections
-  // within a time window to confirm a real event
-  if (vibDetected) {
-    unsigned long now = millis();
-    if (vibrationCount == 0) {
-      vibrationFirstTime = now;
-    }
-    // Check if still within confirmation window
-    if (timeSince(now, vibrationFirstTime) <= VIBRATION_WINDOW) {
-      vibrationCount++;
-    } else {
-      // Window expired — restart
-      vibrationCount = 1;
-      vibrationFirstTime = now;
-    }
+  // Serial Monitor debug — open at 9600 baud to watch live
+  Serial.print("[SENSOR] Water=");
+  Serial.print(waterLevelRaw);
+  Serial.print("  Rain=");
+  Serial.print(isRaining ? "YES" : "no");
+  Serial.print("  Vib=");
+  Serial.print(vc);
+  Serial.print("  State=");
+  Serial.println(alertState == STATE_SAFE ? "SAFE" :
+                 alertState == STATE_FLOOD ? "FLOOD" : "ACCIDENT");
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  STATE EVALUATION
+//
+//  Priority (highest wins):
+//    STATE_ACCIDENT — vibration threshold met → RED + SMS
+//    STATE_FLOOD    — rain OR water level     → YELLOW
+//    STATE_SAFE     — nothing detected        → GREEN
+//
+//  ACCIDENT holds for ALERT_HOLD_MS so camera has time to capture
+// ══════════════════════════════════════════════════════════════
+
+void evaluateState(unsigned long now) {
+  noInterrupts();
+  int vc = vibCount;
+  interrupts();
+
+  // Accident check — highest priority
+  if (vc >= VIBRATION_TRIGGER) {
+    alertState      = STATE_ACCIDENT;
+    accidentSetTime = now;
+    resetVibration();
+    return;
+  }
+
+  // Hold RED during camera capture window
+  if (alertState == STATE_ACCIDENT) {
+    if (timeSince(now, accidentSetTime) < ALERT_HOLD_MS) return;
+    // Hold expired — fall through to re-evaluate
+  }
+
+  // Flood check
+  if (isRaining || waterLevelRaw >= WATER_LEVEL_WARNING) {
+    alertState = STATE_FLOOD;
   } else {
-    // FIX BUG-A2: reset counter when window expires with no vibration.
-    unsigned long now = millis();
-    if (vibrationCount > 0 && timeSince(now, vibrationFirstTime) > VIBRATION_WINDOW) {
-      vibrationCount = 0;
-    }
+    alertState = STATE_SAFE;
   }
 }
 
 
 // ══════════════════════════════════════════════════════════════
-//  ALERT LEVEL EVALUATION
+//  LED CONTROL
 // ══════════════════════════════════════════════════════════════
 
-void evaluateAlertLevel() {
-  // Determine the highest applicable alert level
-
-  // Check for confirmed vibration event (accident detection)
-  bool vibrationConfirmed = (vibrationCount >= VIBRATION_CONFIRM_COUNT);
-
-  if (waterLevelRaw >= WATER_LEVEL_CRITICAL && isRaining) {
-    currentAlertLevel = 3;  // CRITICAL — flood
-  }
-  else if (vibrationConfirmed && (isRaining || waterLevelRaw >= WATER_LEVEL_WARNING)) {
-    currentAlertLevel = 3;  // CRITICAL — accident during hazardous conditions
-    // Reset vibration counter after confirmation
-    vibrationCount = 0;
-  }
-  else if (waterLevelRaw >= WATER_LEVEL_DANGER && isRaining) {
-    currentAlertLevel = 2;  // DANGER — rising flood
-  }
-  else if (waterLevelRaw >= WATER_LEVEL_WARNING || isRaining) {
-    currentAlertLevel = 1;  // WARNING — rain or rising water
-  }
-  else {
-    currentAlertLevel = 0;  // SAFE
-  }
+void setAllLEDs(int l1g, int l1y, int l1r,
+                int l2g, int l2y, int l2r) {
+  digitalWrite(PIN_LED_L1_GREEN,  l1g);
+  digitalWrite(PIN_LED_L1_YELLOW, l1y);
+  digitalWrite(PIN_LED_L1_RED,    l1r);
+  digitalWrite(PIN_LED_L2_GREEN,  l2g);
+  digitalWrite(PIN_LED_L2_YELLOW, l2y);
+  digitalWrite(PIN_LED_L2_RED,    l2r);
 }
-
-
-// ══════════════════════════════════════════════════════════════
-//  LED CONTROL (non-blocking)
-// ══════════════════════════════════════════════════════════════
 
 void updateLEDs(unsigned long now) {
-  // Both lanes always mirror the same alert level.
-  // Lane 1 = Direction A (Northbound), Lane 2 = Direction B (Southbound).
-  // One set of sensors drives both sets of LEDs — drivers from both
-  // directions receive the same warning simultaneously.
+  switch (alertState) {
 
-  switch (currentAlertLevel) {
-
-    case 0:  // SAFE — both lanes solid green
-      digitalWrite(PIN_LED_L1_GREEN,  HIGH);
-      digitalWrite(PIN_LED_L1_YELLOW, LOW);
-      digitalWrite(PIN_LED_L1_RED,    LOW);
-      digitalWrite(PIN_LED_L2_GREEN,  HIGH);
-      digitalWrite(PIN_LED_L2_YELLOW, LOW);
-      digitalWrite(PIN_LED_L2_RED,    LOW);
+    case STATE_SAFE:
+      setAllLEDs(HIGH, LOW, LOW, HIGH, LOW, LOW);
+      ledBlinkOn = false;
       break;
 
-    case 1:  // WARNING — both lanes solid yellow, green off
-      digitalWrite(PIN_LED_L1_GREEN,  LOW);
-      digitalWrite(PIN_LED_L1_YELLOW, HIGH);
-      digitalWrite(PIN_LED_L1_RED,    LOW);
-      digitalWrite(PIN_LED_L2_GREEN,  LOW);
-      digitalWrite(PIN_LED_L2_YELLOW, HIGH);
-      digitalWrite(PIN_LED_L2_RED,    LOW);
+    case STATE_FLOOD:
+      setAllLEDs(LOW, HIGH, LOW, LOW, HIGH, LOW);
+      ledBlinkOn = false;
       break;
 
-    case 2:  // DANGER — both lanes: yellow solid + red slow blink
-      digitalWrite(PIN_LED_L1_GREEN,  LOW);
-      digitalWrite(PIN_LED_L1_YELLOW, HIGH);
-      digitalWrite(PIN_LED_L2_GREEN,  LOW);
-      digitalWrite(PIN_LED_L2_YELLOW, HIGH);
-      if (timeSince(now, lastLedToggle) >= LED_SLOW_BLINK_MS) {
+    case STATE_ACCIDENT:
+      // All off first — guarantees green and yellow never bleed through
+      setAllLEDs(LOW, LOW, LOW, LOW, LOW, LOW);
+      if (timeSince(now, lastLedToggle) >= LED_BLINK_MS) {
         lastLedToggle = now;
-        ledRedState = !ledRedState;
-        // Both lane reds blink in sync
-        digitalWrite(PIN_LED_L1_RED, ledRedState ? HIGH : LOW);
-        digitalWrite(PIN_LED_L2_RED, ledRedState ? HIGH : LOW);
+        ledBlinkOn    = !ledBlinkOn;
       }
-      break;
-
-    case 3:  // CRITICAL — both lanes: red + yellow fast alternating blink
-      digitalWrite(PIN_LED_L1_GREEN, LOW);
-      digitalWrite(PIN_LED_L2_GREEN, LOW);
-      if (timeSince(now, lastLedToggle) >= LED_FAST_BLINK_MS) {
-        lastLedToggle = now;
-        ledRedState = !ledRedState;
-        // Both lanes blink red and yellow in opposite phase (alternating)
-        digitalWrite(PIN_LED_L1_RED,    ledRedState    ? HIGH : LOW);
-        digitalWrite(PIN_LED_L1_YELLOW, (!ledRedState) ? HIGH : LOW);
-        digitalWrite(PIN_LED_L2_RED,    ledRedState    ? HIGH : LOW);
-        digitalWrite(PIN_LED_L2_YELLOW, (!ledRedState) ? HIGH : LOW);
-      }
+      digitalWrite(PIN_LED_L1_RED, ledBlinkOn ? HIGH : LOW);
+      digitalWrite(PIN_LED_L2_RED, ledBlinkOn ? HIGH : LOW);
       break;
   }
 }
 
 
 // ══════════════════════════════════════════════════════════════
-//  BUZZER CONTROL (non-blocking, optional)
+//  BUZZER
 // ══════════════════════════════════════════════════════════════
 
 void updateBuzzer(unsigned long now) {
   if (!BUZZER_ENABLED) return;
-
-  if (currentAlertLevel >= 2) {
-    // Beep pattern: DANGER = slow beep, CRITICAL = rapid beep
-    unsigned long interval = (currentAlertLevel == 3)
-      ? BUZZER_BEEP_INTERVAL / 2   // Fast beeping for critical
-      : BUZZER_BEEP_INTERVAL;      // Normal beeping for danger
-
-    if (timeSince(now, lastBuzzerToggle) >= interval) {
+  if (alertState == STATE_ACCIDENT) {
+    if (timeSince(now, lastBuzzerToggle) >= 400) {
       lastBuzzerToggle = now;
       buzzerOn = !buzzerOn;
-      if (buzzerOn) {
-        tone(PIN_BUZZER, currentAlertLevel == 3 ? 2000 : 1000, BUZZER_BEEP_DURATION);
-      } else {
-        noTone(PIN_BUZZER);
-      }
+      if (buzzerOn) tone(PIN_BUZZER, 2000, 200);
+      else          noTone(PIN_BUZZER);
     }
   } else {
-    // No alert — ensure buzzer is off
-    if (buzzerOn) {
-      noTone(PIN_BUZZER);
-      buzzerOn = false;
-    }
+    if (buzzerOn) { noTone(PIN_BUZZER); buzzerOn = false; }
   }
 }
 
@@ -467,209 +380,113 @@ void updateBuzzer(unsigned long now) {
 //  ALERT TRIGGERING
 // ══════════════════════════════════════════════════════════════
 
-void triggerAlert(unsigned long now) {
-  // Build alert message
-  String levelStr;
-  String eventType;
-  String message;
+void triggerAccidentAlert(unsigned long now) {
+  String message = "ACCIDENT DETECTED: Possible vehicle crash. ";
+  message += "Water: " + String(waterLevelPct, 1) + "%. ";
+  message += "Rain: " + String(isRaining ? "Yes" : "No") + ". ";
+  message += "Camera capturing for verification. ";
+  message += "Location: " + String(LOCATION_NAME);
 
-  switch (currentAlertLevel) {
-    case 3:
-      levelStr = "critical";
-      if (vibrationCount >= VIBRATION_CONFIRM_COUNT) {
-        eventType = "accident";
-        message = "CRITICAL: Possible road accident detected via vibration sensor during ";
-        message += isRaining ? "rain" : "flood";
-        message += " event. Water level: ";
-        message += String(waterLevelPct, 1);
-        message += "%.";
-      } else {
-        eventType = "flood";
-        message = "CRITICAL: Flood detected. Water level at ";
-        message += String(waterLevelPct, 1);
-        message += "% — DANGER threshold exceeded. Immediate response required!";
-      }
-      break;
+  // Notify ESP32 → IoT dashboard + triggers camera capture
+  Serial.print("$SAFE,ALERT,danger,accident,");
+  Serial.print(waterLevelPct, 1);
+  Serial.print(",1|");
+  Serial.println(message);
 
-    case 2:
-      levelStr = "danger";
-      eventType = "flood";
-      message = "DANGER: Rising floodwater detected. Water level: ";
-      message += String(waterLevelPct, 1);
-      message += "%. Road hazard likely.";
-      break;
-
-    case 1:
-      levelStr = "warning";
-      eventType = isRaining ? "rain" : "flood";
-      message = "WARNING: ";
-      message += isRaining ? "Rain detected." : "Water level rising.";
-      message += " Water level: ";
-      message += String(waterLevelPct, 1);
-      message += "%. Monitoring conditions.";
-      break;
-
-    default:
-      return;  // No alert needed
-  }
-
-  // ── Send to ESP32-CAM (for WiFi HTTP POST) ──────────────
-  sendAlertToESP32(levelStr, eventType, message);
-
-  // ── Send SMS via GSM (with separate cooldown) ───────────
-  if (currentAlertLevel >= 2 && timeSince(now, lastSmsTime) >= SMS_COOLDOWN_MS) {
+  // SMS to emergency contacts
+  if (timeSince(now, lastSmsTime) >= SMS_COOLDOWN_MS) {
     sendSMS(message);
     lastSmsTime = now;
   }
 }
 
+void triggerFloodAlert(unsigned long now) {
+  String message = "FLOOD WARNING: ";
+  if (isRaining && waterLevelRaw >= WATER_LEVEL_WARNING) {
+    message += "Rain and rising water detected.";
+  } else if (isRaining) {
+    message += "Rain detected.";
+  } else {
+    message += "Rising water level detected.";
+  }
+  message += " Water: " + String(waterLevelPct, 1) + "%.";
+  message += " Location: " + String(LOCATION_NAME);
 
-// ══════════════════════════════════════════════════════════════
-//  ESP32-CAM SERIAL COMMUNICATION
-// ══════════════════════════════════════════════════════════════
-
-/*
- * Data protocol (Arduino → ESP32-CAM):
- *
- * Periodic sensor data:
- *   $SAFE,DATA,<rain>,<waterRaw>,<vibCount>,<alertLevel>\n
- *
- * Alert trigger:
- *   $SAFE,ALERT,<level>,<eventType>,<waterPct>,<vibration>|<message>\n
- *
- * Heartbeat:
- *   $SAFE,HEARTBEAT,0,0,0,0\n
- *
- * Boot notification:
- *   $SAFE,BOOT,0,0,0,0\n
- */
-
-void sendToESP32() {
-  // Periodic sensor data packet
-  Serial.print("$SAFE,DATA,");
-  Serial.print(isRaining ? 1 : 0);
-  Serial.print(",");
-  Serial.print(waterLevelRaw);
-  Serial.print(",");
-  Serial.print(vibrationCount);
-  Serial.print(",");
-  Serial.println(currentAlertLevel);
-}
-
-void sendAlertToESP32(String level, String eventType, String message) {
-  Serial.print("$SAFE,ALERT,");
-  Serial.print(level);
-  Serial.print(",");
-  Serial.print(eventType);
-  Serial.print(",");
+  // Notify ESP32 → IoT dashboard only (no SMS for flood warning)
+  Serial.print("$SAFE,ALERT,warning,flood,");
   Serial.print(waterLevelPct, 1);
-  Serial.print(",");
-  Serial.print(vibrationCount >= VIBRATION_CONFIRM_COUNT ? 1 : 0);
-  Serial.print("|");
+  Serial.print(",0|");
   Serial.println(message);
 }
 
 
 // ══════════════════════════════════════════════════════════════
-//  SIM900A GSM — SMS FUNCTIONS
+//  ESP32-S3 SERIAL COMMUNICATION
+// ══════════════════════════════════════════════════════════════
+
+void sendToESP32() {
+  noInterrupts();
+  int vc = vibCount;
+  interrupts();
+
+  Serial.print("$SAFE,DATA,");
+  Serial.print(isRaining ? 1 : 0);
+  Serial.print(",");
+  Serial.print(waterLevelRaw);
+  Serial.print(",");
+  Serial.print(vc);
+  Serial.print(",");
+  Serial.println(alertState);
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  SIM900A GSM
 // ══════════════════════════════════════════════════════════════
 
 void initGSM() {
-  // Allow SIM900A to boot (needs ~3-5 seconds after power on)
   delay(1000);
-
-  // Test AT communication
   gsmSerial.println("AT");
   delay(1000);
-  if (gsmReadResponse().indexOf("OK") >= 0) {
-    gsmReady = true;
-  } else {
-    // Retry once
+  gsmReady = (gsmReadResponse().indexOf("OK") >= 0);
+  if (!gsmReady) {
     gsmSerial.println("AT");
     delay(2000);
-    if (gsmReadResponse().indexOf("OK") >= 0) {
-      gsmReady = true;
-    }
+    gsmReady = (gsmReadResponse().indexOf("OK") >= 0);
   }
-
   if (gsmReady) {
-    // Set SMS text mode
-    gsmSerial.println("AT+CMGF=1");
-    delay(500);
-    gsmReadResponse();
-
-    // Set character set to GSM default
-    gsmSerial.println("AT+CSCS=\"GSM\"");
-    delay(500);
-    gsmReadResponse();
-
-    // Check SIM card status
-    gsmSerial.println("AT+CPIN?");
-    delay(500);
-    String simStatus = gsmReadResponse();
-    if (simStatus.indexOf("READY") >= 0) {
-      // SIM is ready
-    }
-
-    // Check network registration
-    gsmSerial.println("AT+CREG?");
-    delay(500);
-    gsmReadResponse();
-
-    // Signal quality check
-    gsmSerial.println("AT+CSQ");
-    delay(500);
-    gsmReadResponse();
+    gsmSerial.println("AT+CMGF=1");       delay(500); gsmReadResponse();
+    gsmSerial.println("AT+CSCS=\"GSM\""); delay(500); gsmReadResponse();
+    gsmSerial.println("AT+CPIN?");        delay(500); gsmReadResponse();
+    gsmSerial.println("AT+CREG?");        delay(500); gsmReadResponse();
+    gsmSerial.println("AT+CSQ");          delay(500); gsmReadResponse();
   }
 }
 
 void sendSMS(String message) {
-  if (!gsmReady) {
-    // Try to re-initialize
-    initGSM();
-    if (!gsmReady) return;
-  }
+  if (!gsmReady) { initGSM(); if (!gsmReady) return; }
 
-  // Prepend device info to SMS
-  String smsBody = "[SafeSense " + String(DEVICE_ID) + "] ";
-  smsBody += message;
-  smsBody += " | Location: ";
-  smsBody += LOCATION_NAME;
-
-  // Truncate to 160 chars (single SMS limit)
-  if (smsBody.length() > 160) {
-    smsBody = smsBody.substring(0, 157) + "...";
-  }
+  String smsBody = "[SafeSense " + String(DEVICE_ID) + "] " + message;
+  if (smsBody.length() > 160) smsBody = smsBody.substring(0, 157) + "...";
 
   for (int i = 0; i < SMS_COUNT; i++) {
-    wdt_reset();  // Reset watchdog during potentially long SMS operation
-
+    wdt_reset();
     gsmSerial.print("AT+CMGS=\"");
     gsmSerial.print(SMS_NUMBERS[i]);
     gsmSerial.println("\"");
     delay(1000);
-
-    // Wait for '>' prompt
-    String prompt = gsmReadResponse();
-    // FIX BUG-A3: only send body when > prompt is confirmed.
-    if (prompt.indexOf(">") >= 0) {
+    if (gsmReadResponse().indexOf(">") >= 0) {
       gsmSerial.print(smsBody);
-      gsmSerial.write(26);  // Ctrl+Z to send
-      delay(5000);          // Wait for SMS to be sent
-
-      String result = gsmReadResponse();
-      if (result.indexOf("OK") >= 0) {
-        // SMS sent successfully
-      }
+      gsmSerial.write(26);
+      delay(5000);
+      gsmReadResponse();
     }
-
-    delay(2000);  // Pause between multiple SMS sends
+    delay(2000);
     wdt_reset();
   }
 }
 
 String gsmReadResponse() {
-  // FIX BUG-A1: wdt_reset() added — early exit stops spinning the full 3 s.
   String response = "";
   unsigned long start = millis();
   while (timeSince(millis(), start) < 3000) {
@@ -677,10 +494,8 @@ String gsmReadResponse() {
     if (gsmSerial.available()) {
       char c = gsmSerial.read();
       response += c;
-      if (response.indexOf("OK") >= 0    ||
-          response.indexOf("ERROR") >= 0 ||
-          response.indexOf(">") >= 0     ||
-          response.indexOf("+CMGS:") >= 0) {
+      if (response.indexOf("OK")    >= 0 || response.indexOf("ERROR") >= 0 ||
+          response.indexOf(">")     >= 0 || response.indexOf("+CMGS:") >= 0) {
         delay(50);
         while (gsmSerial.available()) response += (char)gsmSerial.read();
         break;
@@ -692,19 +507,9 @@ String gsmReadResponse() {
 
 
 // ══════════════════════════════════════════════════════════════
-//  UTILITY FUNCTIONS
+//  UTILITY
 // ══════════════════════════════════════════════════════════════
 
-/*
- * Overflow-safe time comparison.
- * Returns the elapsed milliseconds from 'start' to 'now',
- * correctly handling the millis() rollover at ~49 days.
- *
- * Because unsigned subtraction wraps naturally on overflow,
- * (now - start) always gives the correct elapsed time even
- * when millis() has rolled over, as long as the actual
- * elapsed time is less than ~49 days.
- */
 unsigned long timeSince(unsigned long now, unsigned long start) {
-  return now - start;  // Unsigned subtraction handles overflow
+  return now - start;
 }

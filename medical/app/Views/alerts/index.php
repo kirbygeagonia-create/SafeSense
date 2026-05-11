@@ -88,6 +88,20 @@
                   <?php endif; ?>
                 </div>
                 <p class="mb-2 fw-semibold"><?php echo htmlspecialchars($a['message']); ?></p>
+                <?php if (!empty($a['image_path'])): ?>
+                <div class="mb-2">
+                  <a href="<?php echo url('/' . $a['image_path']); ?>" target="_blank">
+                    <img src="<?php echo url('/' . $a['image_path']); ?>"
+                         alt="Camera capture"
+                         class="rounded border"
+                         style="max-height:180px;max-width:320px;object-fit:cover;cursor:zoom-in;"
+                         title="Click to view full image">
+                  </a>
+                  <div class="text-muted mt-1" style="font-size:0.75rem;">
+                    <i class="fas fa-camera me-1"></i>Camera capture — click to enlarge
+                  </div>
+                </div>
+                <?php endif; ?>
                 <div class="d-flex flex-wrap gap-3 text-muted ss-alert-meta-row">
                   <span><i class="fas fa-map-marker-alt me-1 text-danger"></i><?php echo htmlspecialchars($a['location_name'] ?? '—'); ?></span>
                   <span><i class="fas fa-clock me-1"></i><?php echo $dt->format('h:i:s A'); ?></span>
@@ -279,6 +293,19 @@ window.ssInjectAlert = function(a) {
                 <span class="ss-new-badge">NEW</span>
               </div>
               <p class="mb-2 fw-semibold">${a.message}</p>
+              ${a.image_path ? `
+              <div class="mb-2">
+                <a href="${window.BASE_URL}/${a.image_path}" target="_blank">
+                  <img src="${window.BASE_URL}/${a.image_path}"
+                       alt="Camera capture"
+                       class="rounded border"
+                       style="max-height:180px;max-width:320px;object-fit:cover;cursor:zoom-in;"
+                       title="Click to view full image">
+                </a>
+                <div class="text-muted mt-1" style="font-size:0.75rem;">
+                  <i class="fas fa-camera me-1"></i>Camera capture — click to enlarge
+                </div>
+              </div>` : ''}
               <div class="d-flex flex-wrap gap-3 text-muted ss-alert-meta-row">
                 <span><i class="fas fa-map-marker-alt me-1 text-danger"></i>${a.location_name || '—'}</span>
                 <span><i class="fas fa-clock me-1"></i>${timeStr}</span>

@@ -93,6 +93,7 @@ class AlertController extends BaseController {
         $alert->latitude      = isset($data['latitude'])     ? (float)$data['latitude']      : null;
         $alert->longitude     = isset($data['longitude'])    ? (float)$data['longitude']     : null;
         $alert->location_name = $this->sanitize($data['location_name'] ?? 'Unknown Location');
+        $alert->image_path    = null; // set later by uploadImage() when ESP32-CAM posts the photo
 
         if ($alert->create()) {
             $this->jsonResponse(['success' => true, 'message' => 'Alert received and stored.'], 201);
@@ -241,6 +242,7 @@ class AlertController extends BaseController {
         $alert->latitude      = 8.1574;
         $alert->longitude     = 124.9282;
         $alert->location_name = 'Brgy. Crossing Rubber, Tupi';
+        $alert->image_path    = null;
 
         if ($alert->create()) {
             $this->jsonResponse([
@@ -328,12 +330,11 @@ class AlertController extends BaseController {
             return;
         }
 
-        // Try to associate the image with the most recent alert from this device
+        // Link image to the most recent alert from this device (within last 60 seconds)
         $database = new Database();
         $db       = $database->getConnection();
 
         try {
-            // Find the most recent alert from this device (within the last 60 seconds)
             $stmt = $db->prepare("
                 SELECT id FROM safesense_alerts
                 WHERE device_id = :device_id
@@ -341,30 +342,17 @@ class AlertController extends BaseController {
                 ORDER BY id DESC LIMIT 1
             ");
             $stmt->execute([':device_id' => $this->sanitize($_POST['device_id'] ?? 'SAFESENSE-001')]);
-            $alert = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            if ($alert) {
-                // Check if image_path column exists; if not, store in a metadata file
-                try {
-                    $updateStmt = $db->prepare("UPDATE safesense_alerts SET image_path = :path WHERE id = :id");
-                    $updateStmt->execute([':path' => 'storage/alert_images/' . $filename, ':id' => $alert['id']]);
-                } catch (\PDOException $e) {
-                    // Column doesn't exist yet — store reference in a sidecar JSON file
-                    $metaFile = $imageDir . '/' . pathinfo($filename, PATHINFO_FILENAME) . '.json';
-                    file_put_contents($metaFile, json_encode([
-                        'alert_id'    => $alert['id'],
-                        'device_id'   => $_POST['device_id'] ?? 'unknown',
-                        'alert_level' => $_POST['alert_level'] ?? 'unknown',
-                        'event_type'  => $_POST['event_type'] ?? 'unknown',
-                        'latitude'    => $_POST['latitude'] ?? null,
-                        'longitude'   => $_POST['longitude'] ?? null,
-                        'filename'    => $filename,
-                        'captured_at' => date('Y-m-d H:i:s'),
-                    ], JSON_PRETTY_PRINT));
-                }
+            if ($row) {
+                $updateStmt = $db->prepare("UPDATE safesense_alerts SET image_path = :path WHERE id = :id");
+                $updateStmt->execute([
+                    ':path' => 'storage/alert_images/' . $filename,
+                    ':id'   => $row['id'],
+                ]);
             }
         } catch (\Exception $e) {
-            // Non-critical — image is saved even if DB linkage fails
+            // Non-critical — image is saved on disk even if DB link fails
         }
 
         $this->jsonResponse([

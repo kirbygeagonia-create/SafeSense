@@ -50,10 +50,13 @@ try {
         longitude     DECIMAL(11,8) DEFAULT NULL,
         location_name VARCHAR(255)  DEFAULT 'Unknown Location',
 
+        -- Camera image captured by ESP32-CAM during the alert
+        image_path    VARCHAR(500)  DEFAULT NULL,   -- relative path: storage/alert_images/filename.jpg
+
         -- Lifecycle
         is_read       TINYINT(1)    NOT NULL DEFAULT 0,
         is_dismissed  TINYINT(1)    NOT NULL DEFAULT 0,
-        acknowledged_by INT         DEFAULT NULL,   -- FK to users.id (future)
+        acknowledged_by INT         DEFAULT NULL,
         acknowledged_at TIMESTAMP NULL DEFAULT NULL,
 
         created_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
@@ -67,6 +70,15 @@ try {
 
     $pdo->exec($sql);
     echo "safesense_alerts table created successfully\n";
+
+    // Add image_path column to existing tables that were created before this migration
+    try {
+        $pdo->exec("ALTER TABLE safesense_alerts ADD COLUMN image_path VARCHAR(500) DEFAULT NULL AFTER location_name");
+        echo "image_path column added.\n";
+    } catch (PDOException $e) {
+        // Column already exists — safe to ignore
+        echo "image_path column already exists (skipped).\n";
+    }
 
     // Seed a demo alert so the dashboard is not empty
     $seed = "

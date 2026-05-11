@@ -83,7 +83,7 @@ Content-Type: application/json
   "message":       "CRITICAL: Flood detected. Water level at 45.2 cm.",
   "latitude":      8.1574,
   "longitude":     124.9282,
-  "location_name": "Brgy. Casisang, Malaybalay City"
+  "location_name": "Brgy. Crossing Rubber, Tupi"
 }
 ```
 

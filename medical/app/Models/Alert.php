@@ -21,6 +21,7 @@ class Alert {
     public $latitude;
     public $longitude;
     public $location_name;
+    public $image_path;
     public $is_read;
     public $is_dismissed;
     public $created_at;
@@ -33,10 +34,10 @@ class Alert {
     public function create() {
         $query = "INSERT INTO {$this->table}
                     (device_id, station_type, alert_level, event_type, rain_status,
-                     water_level, vibration, message, latitude, longitude, location_name)
+                     water_level, vibration, message, latitude, longitude, location_name, image_path)
                   VALUES
                     (:device_id, :station_type, :alert_level, :event_type, :rain_status,
-                     :water_level, :vibration, :message, :latitude, :longitude, :location_name)";
+                     :water_level, :vibration, :message, :latitude, :longitude, :location_name, :image_path)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -51,6 +52,7 @@ class Alert {
         $stmt->bindParam(':latitude',      $this->latitude);
         $stmt->bindParam(':longitude',     $this->longitude);
         $stmt->bindParam(':location_name', $this->location_name);
+        $stmt->bindParam(':image_path',    $this->image_path);
 
         return $stmt->execute();
     }

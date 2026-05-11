@@ -2,7 +2,7 @@
 
 You are about to work on the firmware of an IoT road safety system called **SafeSense**.
 
-SafeSense is a two-lane road flood and accident detection system deployed in Brgy. Casisang, Malaybalay City, Bukidnon, Philippines. It uses an Arduino Uno paired with an ESP32-S3 AI CAM to monitor road conditions in real time using water level, rain, and vibration sensors. It sends SMS alerts via a SIM900A GSM module and posts JSON data to a live cloud dashboard hosted on Render.
+SafeSense is a two-lane road flood and accident detection system deployed in Brgy. Crossing Rubber, Tupi, Bukidnon, Philippines. It uses an Arduino Uno paired with an ESP32-S3 AI CAM to monitor road conditions in real time using water level, rain, and vibration sensors. It sends SMS alerts via a SIM900A GSM module and posts JSON data to a live cloud dashboard hosted on Render.
 
 ---
 
