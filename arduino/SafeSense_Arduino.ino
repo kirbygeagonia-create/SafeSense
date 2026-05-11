@@ -71,14 +71,14 @@
 // Use international format WITHOUT the '+' sign
 // Example: "639171234567" for a Philippine number
 const char* SMS_NUMBERS[] = {
-  "639XXXXXXXXX",   // Emergency Contact 1
+  "639363195187",   // Emergency Contact 1
   "639XXXXXXXXX",   // Emergency Contact 2 (Police/Rescue)
 };
 const int SMS_COUNT = sizeof(SMS_NUMBERS) / sizeof(SMS_NUMBERS[0]);
 
 // ── Device Identity ──────────────────────────────────────────
 const char* DEVICE_ID     = "SAFESENSE-001";
-const char* LOCATION_NAME = "Brgy. Casisang, Malaybalay City";
+const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
 // ── Sensor Thresholds ────────────────────────────────────────
 // Water level sensor (analog 0–1023)
@@ -121,18 +121,18 @@ const int PIN_WATER_LEVEL   = A0;  // Analog — resistive water level sensor
 const int PIN_RAIN_DIGITAL  = 2;   // Digital — rain sensor DO (D2, LOW = rain)
 const int PIN_VIBRATION     = 3;   // Digital — vibration sensor OUT (D3, HIGH = vibration)
 
-// ── LEDs — Lane 1 (Direction A — e.g. Northbound) ────────────
-// Drivers approaching from Direction A see these three LEDs.
-// Wire: D4/D5/D6 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L1_GREEN  = 4;   // Lane 1 Safe  / Power indicator
-const int PIN_LED_L1_YELLOW = 5;   // Lane 1 Warning
+// ── LEDs — Right Lane (Lane 1) ────────────
+// Drivers approaching from Right Lane see these three LEDs.
+// Wire: D5/D4/D6 ──[220Ω]──► LED anode, LED cathode ── GND
+const int PIN_LED_L1_GREEN  = 5;   // Lane 1 Safe  / Power indicator
+const int PIN_LED_L1_YELLOW = 4;   // Lane 1 Warning
 const int PIN_LED_L1_RED    = 6;   // Lane 1 Danger / Critical
 
-// ── LEDs — Lane 2 (Direction B — e.g. Southbound) ────────────
-// Drivers approaching from Direction B see these three LEDs.
-// Wire: D7/D8/D9 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L2_GREEN  = 7;   // Lane 2 Safe  / Power indicator
-const int PIN_LED_L2_YELLOW = 8;   // Lane 2 Warning
+// ── LEDs — Left Lane (Lane 2) ────────────
+// Drivers approaching from Left Lane see these three LEDs.
+// Wire: D8/D7/D9 ──[220Ω]──► LED anode, LED cathode ── GND
+const int PIN_LED_L2_GREEN  = 8;   // Lane 2 Safe  / Power indicator
+const int PIN_LED_L2_YELLOW = 7;   // Lane 2 Warning
 const int PIN_LED_L2_RED    = 9;   // Lane 2 Danger / Critical
 
 // Buzzer (optional) — moved to D12 to free D9 for Lane 2 Red LED
