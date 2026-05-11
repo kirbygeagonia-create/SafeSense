@@ -80,7 +80,7 @@ const char* STATION_TYPE  = "hospital";  // hospital | police | fire
 // Location (set to your actual deployment coordinates)
 const float  LATITUDE      = 8.1574;
 const float  LONGITUDE     = 124.9282;
-const char*  LOCATION_NAME = "Brgy. Casisang, Malaybalay City";
+const char*  LOCATION_NAME = "Brgy. Crossing Rubber, Tupi";
 
 
 // ══════════════════════════════════════════════════════════════

@@ -78,7 +78,7 @@ const int SMS_COUNT = sizeof(SMS_NUMBERS) / sizeof(SMS_NUMBERS[0]);
 
 // ── Device Identity ──────────────────────────────────────────
 const char* DEVICE_ID     = "SAFESENSE-001";
-const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
+const char* LOCATION_NAME = "Brgy. Crossing Rubber, Tupi";
 
 // ── Sensor Thresholds ────────────────────────────────────────
 // Water level sensor (analog 0–1023)

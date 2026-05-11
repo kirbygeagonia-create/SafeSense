@@ -31,7 +31,7 @@ class AlertController extends BaseController {
      *   "message":       "Flood detected...",
      *   "latitude":      8.1574,
      *   "longitude":     124.9282,
-     *   "location_name": "Brgy. Casisang, Malaybalay City",
+     *   "location_name": "Brgy. Crossing Rubber, Tupi",
      *   "api_key":       "SAFESENSE_SECRET_KEY"   // shared secret
      * }
      */
@@ -240,7 +240,7 @@ class AlertController extends BaseController {
         $alert->message       = $messages[$level];
         $alert->latitude      = 8.1574;
         $alert->longitude     = 124.9282;
-        $alert->location_name = 'Brgy. Casisang, Malaybalay City';
+        $alert->location_name = 'Brgy. Crossing Rubber, Tupi';
 
         if ($alert->create()) {
             $this->jsonResponse([

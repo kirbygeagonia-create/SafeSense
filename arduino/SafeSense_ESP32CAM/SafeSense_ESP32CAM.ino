@@ -127,7 +127,7 @@ const char* STATION_TYPE  = "hospital";   // hospital | police | fire
 // ── Location ─────────────────────────────────────────────────
 const float  LATITUDE      = 8.1574;
 const float  LONGITUDE     = 124.9282;
-const char*  LOCATION_NAME = "Brgy. Casisang, Malaybalay City";
+const char*  LOCATION_NAME = "Brgy. Crossing Rubber, Tupi";
 
 // ── Camera Settings ──────────────────────────────────────────
 const bool   CAMERA_ENABLED     = true;    // Set false to disable camera

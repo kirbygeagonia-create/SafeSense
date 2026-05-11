@@ -156,7 +156,7 @@
       &nbsp;&nbsp;"message": "CRITICAL: Flood detected...",<br>
       &nbsp;&nbsp;"latitude": 8.1574,<br>
       &nbsp;&nbsp;"longitude": 124.9282,<br>
-      &nbsp;&nbsp;"location_name": "Brgy. Casisang, Malaybalay City"<br>
+      &nbsp;&nbsp;"location_name": "Brgy. Crossing Rubber, Tupi"<br>
       }
     </code>
   </div>

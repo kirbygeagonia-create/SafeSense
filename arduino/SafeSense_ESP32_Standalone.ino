@@ -79,7 +79,7 @@ const char* STATION_TYPE  = "hospital";
 // ── Location ─────────────────────────────────────────────────
 const float  LATITUDE      = 8.1574;
 const float  LONGITUDE     = 124.9282;
-const char*  LOCATION_NAME = "Brgy. Casisang, Malaybalay City";
+const char*  LOCATION_NAME = "Brgy. Crossing Rubber, Tupi";
 
 // ── SMS Recipients ───────────────────────────────────────────
 const char* SMS_NUMBERS[] = {

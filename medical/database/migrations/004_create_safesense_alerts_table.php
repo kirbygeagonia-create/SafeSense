@@ -75,10 +75,10 @@ try {
     VALUES
         ('SAFESENSE-001','hospital','critical','flood','heavy',45.2,0,
          'CRITICAL: Flood detected. Water level at 45.2 cm — DANGER threshold exceeded. Immediate evacuation recommended.',
-         8.1574,124.9282,'Brgy. Casisang, Malaybalay City'),
+         8.1574,124.9282,'Brgy. Crossing Rubber, Tupi'),
         ('SAFESENSE-001','hospital','warning','rain','moderate',12.5,0,
          'WARNING: Moderate rain detected. Water level rising (12.5 cm). Monitor road conditions.',
-         8.1580,124.9295,'Brgy. Poblacion, Malaybalay City'),
+         8.1580,124.9295,'Brgy. Crossing Rubber, Tupi'),
         ('SAFESENSE-001','hospital','danger','accident','light',8.0,1,
          'DANGER: Accident detected via vibration sensor during rain event. Possible road incident.',
          8.1560,124.9310,'National Highway, Malaybalay City')
