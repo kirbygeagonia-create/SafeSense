@@ -124,15 +124,15 @@ const int PIN_VIBRATION     = 3;   // Digital — vibration sensor OUT (D3, HIGH
 // ── LEDs — Right Lane (Lane 1) ────────────
 // Drivers approaching from Right Lane see these three LEDs.
 // Wire: D5/D4/D6 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L1_GREEN  = 5;   // Lane 1 Safe  / Power indicator
-const int PIN_LED_L1_YELLOW = 4;   // Lane 1 Warning
+const int PIN_LED_L1_GREEN  = 4;   // Lane 1 Safe  / Power indicator — D4 matches diagram
+const int PIN_LED_L1_YELLOW = 5;   // Lane 1 Warning               — D5 matches diagram
 const int PIN_LED_L1_RED    = 6;   // Lane 1 Danger / Critical
 
 // ── LEDs — Left Lane (Lane 2) ────────────
 // Drivers approaching from Left Lane see these three LEDs.
-// Wire: D8/D7/D9 ──[220Ω]──► LED anode, LED cathode ── GND
-const int PIN_LED_L2_GREEN  = 8;   // Lane 2 Safe  / Power indicator
-const int PIN_LED_L2_YELLOW = 7;   // Lane 2 Warning
+// Wire: D7/D8/D9 ──[220Ω]──► LED anode, LED cathode ── GND
+const int PIN_LED_L2_GREEN  = 7;   // Lane 2 Safe  / Power indicator — D7 matches diagram
+const int PIN_LED_L2_YELLOW = 8;   // Lane 2 Warning               — D8 matches diagram
 const int PIN_LED_L2_RED    = 9;   // Lane 2 Danger / Critical
 
 // Buzzer (optional) — moved to D12 to free D9 for Lane 2 Red LED
@@ -204,8 +204,8 @@ void setup() {
 
   // Pin modes
   pinMode(PIN_WATER_LEVEL,    INPUT);
-  pinMode(PIN_RAIN_DIGITAL,   INPUT);
-  pinMode(PIN_VIBRATION,      INPUT);
+  pinMode(PIN_RAIN_DIGITAL,   INPUT_PULLUP);  // Pull-up prevents floating → false rain detection
+  pinMode(PIN_VIBRATION,      INPUT);         // Stays INPUT — active HIGH sensor, not pull-up
   // Lane 1 LEDs
   pinMode(PIN_LED_L1_GREEN,   OUTPUT);
   pinMode(PIN_LED_L1_YELLOW,  OUTPUT);

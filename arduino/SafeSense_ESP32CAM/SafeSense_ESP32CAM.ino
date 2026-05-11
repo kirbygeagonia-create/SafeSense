@@ -184,11 +184,20 @@ bool cameraReady = false;
 void setup() {
   // USB CDC debug Serial (UART0 via USB — for Serial Monitor)
   Serial.begin(115200);
+  delay(500);  // Brief delay so Serial Monitor can connect before first prints
+  Serial.println("========================================");
+  Serial.println(" SafeSense ESP32-S3 — Booting...");
+  Serial.println("========================================");
+  Serial.printf("[Boot] Free heap  : %d bytes\n", ESP.getFreeHeap());
+  Serial.printf("[Boot] PSRAM found: %s\n", psramFound() ? "YES" : "NO");
+  Serial.printf("[Boot] Chip model : %s rev%d\n",
+                ESP.getChipModel(), ESP.getChipRevision());
 
   // Hardware Serial1 for communication with Arduino Uno (UART1)
   // GPIO43 = TX (connects to Arduino D0/RX)
   // GPIO44 = RX (connects to Arduino D1/TX)
   Serial1.begin(9600, SERIAL_8N1, 44, 43);
+  Serial.println("[Boot] Serial1 (Arduino bridge) ready on GPIO43/44.");
 
   // LED setup — ESP32-S3 AI CAM onboard LED is active HIGH
   pinMode(PIN_LED_STATUS, OUTPUT);
@@ -207,9 +216,17 @@ void setup() {
   // Initialize camera
   if (CAMERA_ENABLED) {
     cameraReady = initCamera();
+    if (cameraReady) {
+      Serial.println("[Boot] Camera ready.");
+    } else {
+      Serial.println("[Boot] Camera NOT ready — running without camera.");
+    }
+  } else {
+    Serial.println("[Boot] Camera disabled in config.");
   }
 
   // Connect to WiFi
+  Serial.println("[Boot] Connecting to WiFi...");
   connectWiFi();
 }
 
@@ -254,15 +271,20 @@ bool initCamera() {
     config.fb_count     = 1;
   }
 
+  Serial.println("[Camera] Initializing...");
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-    // Camera init failed
+    Serial.printf("[Camera] Init FAILED — error 0x%x (%s)\n",
+                  err, esp_err_to_name(err));
+    Serial.println("[Camera] Check: board target, PSRAM setting, camera pin definitions.");
     return false;
   }
+  Serial.println("[Camera] Init OK.");
 
   // Adjust camera settings for outdoor use
   sensor_t * s = esp_camera_sensor_get();
   if (s) {
+    Serial.printf("[Camera] Sensor detected: PID 0x%x\n", s->id.PID);
     s->set_brightness(s, 1);     // Slightly brighter
     s->set_contrast(s, 1);       // Slightly more contrast
     s->set_saturation(s, 0);     // Normal saturation
@@ -500,10 +522,14 @@ void connectWiFi() {
   if (WiFi.status() == WL_CONNECTED) {
     wifiFailCount = 0;
     digitalWrite(PIN_LED_STATUS, HIGH);  // ON = connected
+    Serial.printf("[WiFi] Connected. IP: %s  RSSI: %d dBm\n",
+                  WiFi.localIP().toString().c_str(), WiFi.RSSI());
   } else {
     wifiFailCount++;
     digitalWrite(PIN_LED_STATUS, LOW);   // OFF = failed
+    Serial.printf("[WiFi] Connection FAILED (attempt %d).\n", wifiFailCount);
     if (wifiFailCount >= 10) {
+      Serial.println("[WiFi] Too many failures — restarting.");
       ESP.restart();
     }
   }
