@@ -61,16 +61,15 @@
 #include <ArduinoJson.h>
 #include "esp_camera.h"
 
-// DFRobot FireBeetle 2 ESP32-S3 V1.0 has an AXP313A power management chip
-// that controls camera power. Without calling axp.enableCameraPower() the
-// camera sensor gets no voltage and reports "unsupported" or 0x105.
-// V1.1+ boards do NOT need this — the #ifdef makes it safe for both.
+// DFRobot FireBeetle 2 ESP32-S3 V1.0 needs AXP313A to power the camera.
+// Install "DFRobot_AXP313A" from Library Manager if on V1.0 hardware.
+// V1.1+ and other boards skip this entirely.
 #ifdef ARDUINO_DFRobot_FireBeetle2_ESP32S3
   #include "DFRobot_AXP313A.h"
   DFRobot_AXP313A axp;
-  #define NEEDS_AXP_POWER true
+  #define NEEDS_AXP_POWER 1
 #else
-  #define NEEDS_AXP_POWER false
+  #define NEEDS_AXP_POWER 0
 #endif
 
 
@@ -103,8 +102,8 @@
 // ══════════════════════════════════════════════════════════════
 
 // ── WiFi ─────────────────────────────────────────────────────
-const char* WIFI_SSID     = "Fracks";
-const char* WIFI_PASSWORD = "686L[w36";
+const char* WIFI_SSID     = "vivo-1906";
+const char* WIFI_PASSWORD = "KIRBY@321g";
 
 // ── Server ───────────────────────────────────────────────────
 const char* SERVER_URL = "https://safesense-tksy.onrender.com";
@@ -145,7 +144,7 @@ const unsigned long RETRY_DELAY_BASE        = 2000;
 // ══════════════════════════════════════════════════════════════
 
 const int PIN_LED_STATUS = 2;    // Onboard LED — active HIGH
-const int PIN_LED_FLASH  = 48;   // Flash LED — active HIGH
+const int PIN_LED_FLASH  = 3;    // Flash LED — GPIO3 (GPIO48 conflicts with Y9 camera data pin)
 
 
 // ══════════════════════════════════════════════════════════════
