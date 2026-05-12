@@ -102,12 +102,12 @@ const int PIN_WATER_LEVEL   = A0;
 const int PIN_RAIN_DIGITAL  = 2;
 const int PIN_VIBRATION     = 3;  // INT1
 
-const int PIN_LED_L1_GREEN  = 8;
-const int PIN_LED_L1_YELLOW = 7;
-const int PIN_LED_L1_RED    = 9;
-const int PIN_LED_L2_GREEN  = 5;
-const int PIN_LED_L2_YELLOW = 4;
-const int PIN_LED_L2_RED    = 6;
+const int PIN_LED_L1_GREEN  = 4;   // D4 — Lane 1 Green
+const int PIN_LED_L1_YELLOW = 5;   // D5 — Lane 1 Yellow
+const int PIN_LED_L1_RED    = 6;   // D6 — Lane 1 Red
+const int PIN_LED_L2_GREEN  = 7;   // D7 — Lane 2 Green
+const int PIN_LED_L2_YELLOW = 8;   // D8 — Lane 2 Yellow
+const int PIN_LED_L2_RED    = 9;   // D9 — Lane 2 Red
 
 const int PIN_BUZZER = 12;
 const int PIN_GSM_RX = 10;
@@ -402,14 +402,14 @@ void updateBuzzer(unsigned long now) {
 // ══════════════════════════════════════════════════════════════
 
 void triggerAccidentAlert(unsigned long now) {
-  String message = "ACCIDENT DETECTED: Possible vehicle crash. ";
+  String message = "CRITICAL: ACCIDENT DETECTED — Possible vehicle crash. ";
   message += "Water: " + String(waterLevelPct, 1) + "%. ";
   message += "Rain: " + String(isRaining ? "Yes" : "No") + ". ";
   message += "Camera capturing for verification. ";
   message += "Location: " + String(LOCATION_NAME);
 
-  // Notify ESP32 → IoT dashboard + triggers camera capture
-  Serial.print("$SAFE,ALERT,danger,accident,");
+  // Send as CRITICAL/accident so the IoT modal shows the correct alert type
+  Serial.print("$SAFE,ALERT,critical,accident,");
   Serial.print(waterLevelPct, 1);
   Serial.print(",1|");
   Serial.println(message);
@@ -439,15 +439,20 @@ void triggerFloodAlert(unsigned long now) {
 }
 
 void triggerCriticalFloodAlert(unsigned long now) {
-  String message = "CRITICAL FLOOD WARNING: Both rain and rising water detected. ";
+  String message = "CRITICAL FLOOD: Both rain and rising water detected. ";
   message += "Water: " + String(waterLevelPct, 1) + "%. ";
   message += "Location: " + String(LOCATION_NAME);
 
-  // Notify ESP32 → IoT dashboard only (no SMS for critical flood)
-  Serial.print("$SAFE,ALERT,danger,flood,");
+  Serial.print("$SAFE,ALERT,critical,flood,");
   Serial.print(waterLevelPct, 1);
   Serial.print(",0|");
   Serial.println(message);
+
+  // SMS for critical flood too
+  if (timeSince(now, lastSmsTime) >= SMS_COOLDOWN_MS) {
+    sendSMS(message);
+    lastSmsTime = now;
+  }
 }
 
 
@@ -502,14 +507,17 @@ void sendSMS(String message) {
 
   for (int i = 0; i < SMS_COUNT; i++) {
     wdt_reset();
-    gsmSerial.print("AT+CMGS=\"");
+    // SIM900A requires international format with + prefix: "+639XXXXXXXXX"
+    gsmSerial.print("AT+CMGS=\"+");
     gsmSerial.print(SMS_NUMBERS[i]);
     gsmSerial.println("\"");
-    delay(1000);
-    if (gsmReadResponse().indexOf(">") >= 0) {
+    delay(1500);  // Give SIM900A time to show the > prompt
+    String prompt = gsmReadResponse();
+    if (prompt.indexOf(">") >= 0) {
       gsmSerial.print(smsBody);
-      gsmSerial.write(26);
-      delay(5000);
+      delay(100);
+      gsmSerial.write(26);  // Ctrl+Z to send
+      delay(6000);          // Wait for send confirmation
       gsmReadResponse();
     }
     delay(2000);
