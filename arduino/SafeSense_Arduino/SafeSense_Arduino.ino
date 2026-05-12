@@ -82,16 +82,14 @@ const int RAIN_ACTIVE_LEVEL = LOW;
 
 // ══════════════════════════════════════════════════════════════
 //  ALERT STATES
-//  0 = SAFE          → GREEN solid
-//  1 = FLOOD         → YELLOW solid  (rain only OR water only)
-//  2 = ACCIDENT      → RED blinking  (vibration → SMS + IoT + camera)
-//  3 = CRITICAL_FLOOD→ RED solid     (rain AND water level)
+//  0 = SAFE     → GREEN solid
+//  1 = FLOOD    → YELLOW solid  (rain OR water level OR both)
+//  2 = ACCIDENT → RED blinking  (vibration → SMS + IoT + camera)
 // ══════════════════════════════════════════════════════════════
 
-#define STATE_SAFE          0
-#define STATE_FLOOD         1
-#define STATE_ACCIDENT      2
-#define STATE_CRITICAL_FLOOD 3
+#define STATE_SAFE     0
+#define STATE_FLOOD    1
+#define STATE_ACCIDENT 2
 
 
 // ══════════════════════════════════════════════════════════════
@@ -233,7 +231,6 @@ void loop() {
   if (alertState != prevState) {
     if (alertState == STATE_ACCIDENT) triggerAccidentAlert(now);
     else if (alertState == STATE_FLOOD) triggerFloodAlert(now);
-    else if (alertState == STATE_CRITICAL_FLOOD) triggerCriticalFloodAlert(now);
     prevState = alertState;
   }
 
@@ -300,35 +297,18 @@ void evaluateState(unsigned long now) {
   // Hold RED during camera capture window
   if (alertState == STATE_ACCIDENT) {
     if (timeSince(now, accidentSetTime) < ALERT_HOLD_MS) return;
-    // Hold expired — fall through to re-evaluate
   }
 
-  // Critical flood check — BOTH rain AND water level
-  bool rainDetected  = isRaining;
-  bool waterDetected = (alertState == STATE_FLOOD || alertState == STATE_CRITICAL_FLOOD)
-                         ? (waterLevelRaw >= WATER_LEVEL_SAFE)
-                         : (waterLevelRaw >= WATER_LEVEL_WARNING);
-
-  if (rainDetected && waterDetected) {
-    alertState = STATE_CRITICAL_FLOOD;
-    return;
-  }
-
-  // Flood check — hysteresis prevents flickering at the boundary
-  // Once YELLOW: stays YELLOW until reading drops below WATER_LEVEL_SAFE
-  // Once GREEN:  stays GREEN until reading rises above WATER_LEVEL_WARNING
+  // Flood check — rain OR water level → YELLOW
+  // Hysteresis: once YELLOW, stays until reading drops below WATER_LEVEL_SAFE
   bool floodDetected;
-  if (alertState == STATE_FLOOD || alertState == STATE_CRITICAL_FLOOD) {
+  if (alertState == STATE_FLOOD) {
     floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_SAFE);
   } else {
     floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_WARNING);
   }
 
-  if (floodDetected) {
-    alertState = STATE_FLOOD;
-  } else {
-    alertState = STATE_SAFE;
-  }
+  alertState = floodDetected ? STATE_FLOOD : STATE_SAFE;
 }
 
 
@@ -350,22 +330,19 @@ void updateLEDs(unsigned long now) {
   switch (alertState) {
 
     case STATE_SAFE:
+      // GREEN solid — all others off
       setAllLEDs(HIGH, LOW, LOW, HIGH, LOW, LOW);
       ledBlinkOn = false;
       break;
 
     case STATE_FLOOD:
+      // YELLOW solid — all others off
       setAllLEDs(LOW, HIGH, LOW, LOW, HIGH, LOW);
       ledBlinkOn = false;
       break;
 
-    case STATE_CRITICAL_FLOOD:
-      setAllLEDs(LOW, LOW, HIGH, LOW, LOW, HIGH);
-      ledBlinkOn = false;
-      break;
-
     case STATE_ACCIDENT:
-      // All off first — guarantees green and yellow never bleed through
+      // RED blinking — all others always off
       setAllLEDs(LOW, LOW, LOW, LOW, LOW, LOW);
       if (timeSince(now, lastLedToggle) >= LED_BLINK_MS) {
         lastLedToggle = now;
@@ -422,39 +399,35 @@ void triggerAccidentAlert(unsigned long now) {
 }
 
 void triggerFloodAlert(unsigned long now) {
-  String message = "FLOOD WARNING: ";
-  if (isRaining) {
-    message += "Rain detected.";
+  // Rain only → no alert, just LED (already handled by LED state)
+  // Water level detected (with or without rain) → critical flood alert + SMS
+  if (waterLevelRaw < WATER_LEVEL_WARNING && !isRaining) return;
+
+  // Only send alert if water level is actually triggered
+  // Rain alone does NOT send an alert — only lights up YELLOW
+  if (waterLevelRaw < WATER_LEVEL_WARNING) return;
+
+  String message = "CRITICAL FLOOD WARNING: ";
+  if (isRaining && waterLevelRaw >= WATER_LEVEL_WARNING) {
+    message += "Rain and rising water detected.";
   } else {
     message += "Rising water level detected.";
   }
   message += " Water: " + String(waterLevelPct, 1) + "%.";
   message += " Location: " + String(LOCATION_NAME);
 
-  // Notify ESP32 → IoT dashboard only (no SMS for flood warning)
-  Serial.print("$SAFE,ALERT,warning,flood,");
-  Serial.print(waterLevelPct, 1);
-  Serial.print(",0|");
-  Serial.println(message);
-}
-
-void triggerCriticalFloodAlert(unsigned long now) {
-  String message = "CRITICAL FLOOD: Both rain and rising water detected. ";
-  message += "Water: " + String(waterLevelPct, 1) + "%. ";
-  message += "Location: " + String(LOCATION_NAME);
-
+  // critical level → RED in IoT modal
   Serial.print("$SAFE,ALERT,critical,flood,");
   Serial.print(waterLevelPct, 1);
   Serial.print(",0|");
   Serial.println(message);
 
-  // SMS for critical flood too
+  // SMS for flood when water level is triggered
   if (timeSince(now, lastSmsTime) >= SMS_COOLDOWN_MS) {
     sendSMS(message);
     lastSmsTime = now;
   }
 }
-
 
 // ══════════════════════════════════════════════════════════════
 //  ESP32-S3 SERIAL COMMUNICATION
