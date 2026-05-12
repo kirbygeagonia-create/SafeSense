@@ -56,34 +56,46 @@
 
 // FIX-E1: Wire.h REMOVED — it conflicted with esp_camera's I2C driver
 #include <WiFi.h>
-#include <WiFiClientSecure.h>   // FIX-E2/E3/E4: required for HTTPS
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "esp_camera.h"
 
+// DFRobot FireBeetle 2 ESP32-S3 V1.0 has an AXP313A power management chip
+// that controls camera power. Without calling axp.enableCameraPower() the
+// camera sensor gets no voltage and reports "unsupported" or 0x105.
+// V1.1+ boards do NOT need this — the #ifdef makes it safe for both.
+#ifdef ARDUINO_DFRobot_FireBeetle2_ESP32S3
+  #include "DFRobot_AXP313A.h"
+  DFRobot_AXP313A axp;
+  #define NEEDS_AXP_POWER true
+#else
+  #define NEEDS_AXP_POWER false
+#endif
+
 
 // ══════════════════════════════════════════════════════════════
-//  CAMERA PIN DEFINITIONS — DFRobot ESP32-S3 Camera V1.1
-//  Source: DFRobot wiki schematic for DFR0975
-//  (Do NOT change these — fixed by the board's PCB design)
+//  CAMERA PIN DEFINITIONS — DFRobot FireBeetle 2 ESP32-S3 (DFR0975)
+//  Source: espressif/arduino-esp32 camera_pins.h (official)
+//  CAMERA_MODEL_DFRobot_FireBeetle2_ESP32S3
 // ══════════════════════════════════════════════════════════════
 
-#define PWDN_GPIO_NUM     -1
-#define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM     40
-#define SIOD_GPIO_NUM     17
-#define SIOC_GPIO_NUM     18
-#define Y9_GPIO_NUM       39
-#define Y8_GPIO_NUM       41
-#define Y7_GPIO_NUM       42
-#define Y6_GPIO_NUM       12
-#define Y5_GPIO_NUM       3
-#define Y4_GPIO_NUM       14
-#define Y3_GPIO_NUM       47
-#define Y2_GPIO_NUM       13
-#define VSYNC_GPIO_NUM    21
-#define HREF_GPIO_NUM     38
-#define PCLK_GPIO_NUM     11
+#define PWDN_GPIO_NUM   -1
+#define RESET_GPIO_NUM  -1
+#define XCLK_GPIO_NUM   45
+#define SIOD_GPIO_NUM    1
+#define SIOC_GPIO_NUM    2
+#define Y9_GPIO_NUM     48
+#define Y8_GPIO_NUM     46
+#define Y7_GPIO_NUM      8
+#define Y6_GPIO_NUM      7
+#define Y5_GPIO_NUM      4
+#define Y4_GPIO_NUM     41
+#define Y3_GPIO_NUM     40
+#define Y2_GPIO_NUM     39
+#define VSYNC_GPIO_NUM   6
+#define HREF_GPIO_NUM   42
+#define PCLK_GPIO_NUM    5
 
 
 // ══════════════════════════════════════════════════════════════
@@ -275,6 +287,25 @@ bool initCamera() {
   // esp_camera_init() manages I2C internally; do not touch Wire before it.
 
   Serial.println("[Camera] Calling esp_camera_init()...");
+
+  // DFRobot FireBeetle 2 V1.0: enable camera power via AXP313A PMIC
+  // V1.1+ skips this block automatically
+#if NEEDS_AXP_POWER
+  int axpRetry = 0;
+  while (axp.begin() != 0 && axpRetry < 5) {
+    Serial.println("[Camera] AXP313A init error — retrying...");
+    delay(500);
+    axpRetry++;
+  }
+  if (axpRetry < 5) {
+    axp.enableCameraPower(axp.eOV2640);
+    Serial.println("[Camera] AXP313A camera power enabled.");
+    delay(100);
+  } else {
+    Serial.println("[Camera] AXP313A failed — camera may not have power.");
+  }
+#endif
+
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("[Camera] Init FAILED — error 0x%x (%s)\n",

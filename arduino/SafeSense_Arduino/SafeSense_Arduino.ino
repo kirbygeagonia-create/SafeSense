@@ -50,8 +50,8 @@ const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
 // Watch [SENSOR] in Serial Monitor. Submerge 1 cm, note raw value,
 // set WATER_LEVEL_WARNING ~10 below that reading.
-const int WATER_LEVEL_SAFE    = 20;   // Below → dry, no alert
-const int WATER_LEVEL_WARNING = 50;   // At or above → YELLOW flood warning
+const int WATER_LEVEL_SAFE    = 10;   // Below → dry, no alert
+const int WATER_LEVEL_WARNING = 30;   // At or above → YELLOW flood warning (lowered — most sensors read 20-40 on contact)
 
 // ── Vibration (accident detection) ───────────────────────────
 // VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
@@ -263,17 +263,6 @@ void readSensors() {
   if (vc > 0 && timeSince(millis(), firstHit) > VIBRATION_WINDOW * 2) {
     resetVibration();
   }
-
-  // Serial Monitor debug — open at 9600 baud to watch live
-  Serial.print("[SENSOR] Water=");
-  Serial.print(waterLevelRaw);
-  Serial.print("  Rain=");
-  Serial.print(isRaining ? "YES" : "no");
-  Serial.print("  Vib=");
-  Serial.print(vc);
-  Serial.print("  State=");
-  Serial.println(alertState == STATE_SAFE ? "SAFE" :
-                 alertState == STATE_FLOOD ? "FLOOD" : "ACCIDENT");
 }
 
 
