@@ -49,12 +49,12 @@ const char* DEVICE_ID     = "SAFESENSE-001";
 const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
-// Sensor noise floor (dry air): ~64-66
-// WATER_LEVEL_WARNING: reading must EXCEED this to trigger YELLOW
-// WATER_LEVEL_SAFE: reading must DROP BELOW this to return to GREEN
-// The gap between them (hysteresis) prevents flickering at the boundary.
-const int WATER_LEVEL_SAFE    = 68;   // Drop below this → back to GREEN (just above dry noise of 64-66)
-const int WATER_LEVEL_WARNING = 75;   // Exceed this → YELLOW (low threshold — easy to trigger)
+// Dry noise floor from serial output: 38-68 (varies)
+// With water: 75+
+// SAFE must be clearly below dry noise to avoid false clears
+// WARNING must be clearly above dry noise to avoid false triggers
+const int WATER_LEVEL_SAFE    = 35;   // Drop below this → GREEN (well below dry noise)
+const int WATER_LEVEL_WARNING = 80;   // Exceed this → YELLOW (well above dry noise)
 
 // ── Vibration (accident detection) ───────────────────────────
 // VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
@@ -64,7 +64,7 @@ const unsigned long  VIBRATION_WINDOW  = 5000;  // within 5 seconds
 // ── Alert Hold Hysteresis ─────────────────────────────────────
 // How long a state must be consistently detected before it changes.
 // Prevents false triggers from brief sensor contact or noise.
-const unsigned long STATE_CONFIRM_MS = 1500;  // must hold for 1.5s before state changes
+const unsigned long STATE_CONFIRM_MS = 2000;  // must hold for 2s before state changes
 const unsigned long ALERT_HOLD_MS    = 10000; // RED stays on 10s after accident clears
 
 // ── Buzzer ────────────────────────────────────────────────────
@@ -78,8 +78,9 @@ const unsigned long HEARTBEAT_INTERVAL   = 300000;
 const unsigned long LED_BLINK_MS         = 300;    // RED blink speed
 
 // ── Rain sensor polarity ──────────────────────────────────────
-// LM393 module: LOW = rain. Change to HIGH if yours is inverted.
-const int RAIN_ACTIVE_LEVEL = LOW;
+// Your module outputs HIGH when rain is detected (DO pin goes HIGH when wet).
+// Change back to LOW if your module is active-LOW.
+const int RAIN_ACTIVE_LEVEL = HIGH;
 
 
 // ══════════════════════════════════════════════════════════════
