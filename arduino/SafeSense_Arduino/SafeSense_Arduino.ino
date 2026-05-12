@@ -49,12 +49,9 @@ const char* DEVICE_ID     = "SAFESENSE-001";
 const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
-// Dry noise floor from serial output: 38-68 (varies)
-// With water: 75+
-// WARNING: must exceed this to trigger YELLOW
-// SAFE: must drop below this to return to GREEN
-// Keep SAFE above the dry noise floor so residual moisture clears properly
-const int WATER_LEVEL_SAFE    = 72;   // Drop below this → GREEN (just above dry noise max of ~68)
+// Dry readings from serial: 23-49 (noise floor)
+// With water: 80+
+const int WATER_LEVEL_SAFE    = 55;   // Drop below this → GREEN
 const int WATER_LEVEL_WARNING = 80;   // Exceed this → YELLOW
 
 // ── Vibration (accident detection) ───────────────────────────
@@ -81,9 +78,9 @@ const unsigned long HEARTBEAT_INTERVAL   = 300000;
 const unsigned long LED_BLINK_MS         = 300;    // RED blink speed
 
 // ── Rain sensor polarity ──────────────────────────────────────
-// Your module outputs HIGH when rain is detected (DO pin goes HIGH when wet).
-// Change back to LOW if your module is active-LOW.
-const int RAIN_ACTIVE_LEVEL = HIGH;
+// LM393 module with INPUT_PULLUP: LOW = rain detected (active LOW).
+// The DO pin is pulled HIGH internally when dry, goes LOW when wet.
+const int RAIN_ACTIVE_LEVEL = LOW;
 
 
 // ══════════════════════════════════════════════════════════════
