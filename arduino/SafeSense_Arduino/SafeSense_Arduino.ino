@@ -5,13 +5,14 @@
  *
  *  ALERT BEHAVIOR:
  *    GREEN  (solid)  → System ON, all clear
- *    YELLOW (solid)  → Rain or water level detected (flood warning)
+ *    YELLOW (solid)  → Rain OR water level detected only
+ *    RED    (solid)  → BOTH rain AND water level detected
  *    RED    (blink)  → Vibration/accident detected → SMS + IoT + camera
  *
  *  SENSOR ROLES:
- *    Rain Sensor (D2)      → Flood warning → YELLOW
- *    Water Level (A0)      → Flood warning → YELLOW
- *    Vibration Sensor (D3) → Accident/crash → RED + SMS alert
+ *    Rain Sensor (D2)      → Flood warning → YELLOW (only rain) / RED (rain + water)
+ *    Water Level (A0)      → Flood warning → YELLOW (only water) / RED (rain + water)
+ *    Vibration Sensor (D3) → Accident/crash → RED blink + SMS alert
  *
  * ── HARDWARE CONNECTIONS ──
  *
@@ -39,7 +40,7 @@
 // ══════════════════════════════════════════════════════════════
 
 const char* SMS_NUMBERS[] = {
-  "639363195187",  // Emergency Contact 1
+  "639709126550",  // Emergency Contact 1
 
 };
 const int SMS_COUNT = sizeof(SMS_NUMBERS) / sizeof(SMS_NUMBERS[0]);
@@ -48,11 +49,12 @@ const char* DEVICE_ID     = "SAFESENSE-001";
 const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
-// Your sensor reads 64-66 in dry air (noise floor).
-// Set WATER_LEVEL_WARNING above the noise floor.
-// Submerge 1 cm and note the reading, then set WARNING ~10 below that.
-const int WATER_LEVEL_SAFE    = 70;   // Below → dry/safe (above noise floor of 64-66)
-const int WATER_LEVEL_WARNING = 80;   // At or above → YELLOW (adjust after testing with water)
+// Sensor noise floor (dry air): ~64-66
+// WATER_LEVEL_WARNING: reading must EXCEED this to trigger YELLOW
+// WATER_LEVEL_SAFE: reading must DROP BELOW this to return to GREEN
+// The gap between them (hysteresis) prevents flickering at the boundary.
+const int WATER_LEVEL_SAFE    = 68;   // Drop below this → back to GREEN (just above dry noise of 64-66)
+const int WATER_LEVEL_WARNING = 75;   // Exceed this → YELLOW (low threshold — easy to trigger)
 
 // ── Vibration (accident detection) ───────────────────────────
 // VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
@@ -80,14 +82,16 @@ const int RAIN_ACTIVE_LEVEL = LOW;
 
 // ══════════════════════════════════════════════════════════════
 //  ALERT STATES
-//  0 = SAFE     → GREEN solid
-//  1 = FLOOD    → YELLOW solid  (rain or water level)
-//  2 = ACCIDENT → RED blinking  (vibration → SMS + IoT + camera)
+//  0 = SAFE          → GREEN solid
+//  1 = FLOOD         → YELLOW solid  (rain only OR water only)
+//  2 = ACCIDENT      → RED blinking  (vibration → SMS + IoT + camera)
+//  3 = CRITICAL_FLOOD→ RED solid     (rain AND water level)
 // ══════════════════════════════════════════════════════════════
 
-#define STATE_SAFE     0
-#define STATE_FLOOD    1
-#define STATE_ACCIDENT 2
+#define STATE_SAFE          0
+#define STATE_FLOOD         1
+#define STATE_ACCIDENT      2
+#define STATE_CRITICAL_FLOOD 3
 
 
 // ══════════════════════════════════════════════════════════════
@@ -98,12 +102,12 @@ const int PIN_WATER_LEVEL   = A0;
 const int PIN_RAIN_DIGITAL  = 2;
 const int PIN_VIBRATION     = 3;  // INT1
 
-const int PIN_LED_L1_GREEN  = 4;
-const int PIN_LED_L1_YELLOW = 5;
-const int PIN_LED_L1_RED    = 6;
-const int PIN_LED_L2_GREEN  = 7;
-const int PIN_LED_L2_YELLOW = 8;
-const int PIN_LED_L2_RED    = 9;
+const int PIN_LED_L1_GREEN  = 8;
+const int PIN_LED_L1_YELLOW = 7;
+const int PIN_LED_L1_RED    = 9;
+const int PIN_LED_L2_GREEN  = 5;
+const int PIN_LED_L2_YELLOW = 4;
+const int PIN_LED_L2_RED    = 6;
 
 const int PIN_BUZZER = 12;
 const int PIN_GSM_RX = 10;
@@ -229,6 +233,7 @@ void loop() {
   if (alertState != prevState) {
     if (alertState == STATE_ACCIDENT) triggerAccidentAlert(now);
     else if (alertState == STATE_FLOOD) triggerFloodAlert(now);
+    else if (alertState == STATE_CRITICAL_FLOOD) triggerCriticalFloodAlert(now);
     prevState = alertState;
   }
 
@@ -271,9 +276,10 @@ void readSensors() {
 //  STATE EVALUATION
 //
 //  Priority (highest wins):
-//    STATE_ACCIDENT — vibration threshold met → RED + SMS
-//    STATE_FLOOD    — rain OR water level     → YELLOW
-//    STATE_SAFE     — nothing detected        → GREEN
+//    STATE_ACCIDENT      — vibration threshold met → RED blink + SMS
+//    STATE_CRITICAL_FLOOD— rain AND water level     → RED solid
+//    STATE_FLOOD         — rain OR water level only → YELLOW
+//    STATE_SAFE          — nothing detected          → GREEN
 //
 //  ACCIDENT holds for ALERT_HOLD_MS so camera has time to capture
 // ══════════════════════════════════════════════════════════════
@@ -297,8 +303,28 @@ void evaluateState(unsigned long now) {
     // Hold expired — fall through to re-evaluate
   }
 
-  // Flood check
-  if (isRaining || waterLevelRaw >= WATER_LEVEL_WARNING) {
+  // Critical flood check — BOTH rain AND water level
+  bool rainDetected  = isRaining;
+  bool waterDetected = (alertState == STATE_FLOOD || alertState == STATE_CRITICAL_FLOOD)
+                         ? (waterLevelRaw >= WATER_LEVEL_SAFE)
+                         : (waterLevelRaw >= WATER_LEVEL_WARNING);
+
+  if (rainDetected && waterDetected) {
+    alertState = STATE_CRITICAL_FLOOD;
+    return;
+  }
+
+  // Flood check — hysteresis prevents flickering at the boundary
+  // Once YELLOW: stays YELLOW until reading drops below WATER_LEVEL_SAFE
+  // Once GREEN:  stays GREEN until reading rises above WATER_LEVEL_WARNING
+  bool floodDetected;
+  if (alertState == STATE_FLOOD || alertState == STATE_CRITICAL_FLOOD) {
+    floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_SAFE);
+  } else {
+    floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_WARNING);
+  }
+
+  if (floodDetected) {
     alertState = STATE_FLOOD;
   } else {
     alertState = STATE_SAFE;
@@ -330,6 +356,11 @@ void updateLEDs(unsigned long now) {
 
     case STATE_FLOOD:
       setAllLEDs(LOW, HIGH, LOW, LOW, HIGH, LOW);
+      ledBlinkOn = false;
+      break;
+
+    case STATE_CRITICAL_FLOOD:
+      setAllLEDs(LOW, LOW, HIGH, LOW, LOW, HIGH);
       ledBlinkOn = false;
       break;
 
@@ -392,9 +423,7 @@ void triggerAccidentAlert(unsigned long now) {
 
 void triggerFloodAlert(unsigned long now) {
   String message = "FLOOD WARNING: ";
-  if (isRaining && waterLevelRaw >= WATER_LEVEL_WARNING) {
-    message += "Rain and rising water detected.";
-  } else if (isRaining) {
+  if (isRaining) {
     message += "Rain detected.";
   } else {
     message += "Rising water level detected.";
@@ -404,6 +433,18 @@ void triggerFloodAlert(unsigned long now) {
 
   // Notify ESP32 → IoT dashboard only (no SMS for flood warning)
   Serial.print("$SAFE,ALERT,warning,flood,");
+  Serial.print(waterLevelPct, 1);
+  Serial.print(",0|");
+  Serial.println(message);
+}
+
+void triggerCriticalFloodAlert(unsigned long now) {
+  String message = "CRITICAL FLOOD WARNING: Both rain and rising water detected. ";
+  message += "Water: " + String(waterLevelPct, 1) + "%. ";
+  message += "Location: " + String(LOCATION_NAME);
+
+  // Notify ESP32 → IoT dashboard only (no SMS for critical flood)
+  Serial.print("$SAFE,ALERT,danger,flood,");
   Serial.print(waterLevelPct, 1);
   Serial.print(",0|");
   Serial.println(message);
