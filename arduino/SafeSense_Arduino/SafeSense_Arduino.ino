@@ -61,9 +61,11 @@ const int WATER_LEVEL_WARNING = 75;   // Exceed this → YELLOW (low threshold �
 const int            VIBRATION_TRIGGER = 2;     // 2 confirmed hits = accident
 const unsigned long  VIBRATION_WINDOW  = 5000;  // within 5 seconds
 
-// ── RED hold after accident ───────────────────────────────────
-// Keeps RED on long enough for camera to capture the scene
-const unsigned long ALERT_HOLD_MS = 10000;  // 10 seconds
+// ── Alert Hold Hysteresis ─────────────────────────────────────
+// How long a state must be consistently detected before it changes.
+// Prevents false triggers from brief sensor contact or noise.
+const unsigned long STATE_CONFIRM_MS = 1500;  // must hold for 1.5s before state changes
+const unsigned long ALERT_HOLD_MS    = 10000; // RED stays on 10s after accident clears
 
 // ── Buzzer ────────────────────────────────────────────────────
 const bool BUZZER_ENABLED = true;
@@ -164,6 +166,10 @@ int  alertState   = STATE_SAFE;
 int  prevState    = STATE_SAFE;
 bool ledBlinkOn   = false;
 bool gsmReady     = false;
+
+// State confirmation — a candidate state must hold for STATE_CONFIRM_MS before applying
+int           pendingState       = STATE_SAFE;
+unsigned long pendingStateStart  = 0;
 
 unsigned long lastBuzzerToggle = 0;
 bool buzzerOn = false;
@@ -286,29 +292,50 @@ void evaluateState(unsigned long now) {
   int vc = vibCount;
   interrupts();
 
-  // Accident check — highest priority
+  // ── Determine what the sensors are saying right now ──────
+  int targetState;
+
   if (vc >= VIBRATION_TRIGGER) {
+    targetState = STATE_ACCIDENT;
+    resetVibration();
+  } else if (alertState == STATE_ACCIDENT) {
+    // Hold RED until ALERT_HOLD_MS expires, then re-evaluate flood/safe
+    if (timeSince(now, accidentSetTime) < ALERT_HOLD_MS) return;
+    // Fall through to flood/safe check
+    bool floodNow = isRaining || (waterLevelRaw >= WATER_LEVEL_WARNING);
+    targetState = floodNow ? STATE_FLOOD : STATE_SAFE;
+  } else {
+    // Hysteresis: once in FLOOD, need to drop below WATER_LEVEL_SAFE to clear
+    bool floodNow;
+    if (alertState == STATE_FLOOD) {
+      floodNow = isRaining || (waterLevelRaw >= WATER_LEVEL_SAFE);
+    } else {
+      floodNow = isRaining || (waterLevelRaw >= WATER_LEVEL_WARNING);
+    }
+    targetState = floodNow ? STATE_FLOOD : STATE_SAFE;
+  }
+
+  // ── Confirmation debounce ─────────────────────────────────
+  // Accident bypasses debounce — immediate response for safety
+  if (targetState == STATE_ACCIDENT) {
     alertState      = STATE_ACCIDENT;
     accidentSetTime = now;
-    resetVibration();
+    pendingState    = STATE_ACCIDENT;
+    pendingStateStart = now;
     return;
   }
 
-  // Hold RED during camera capture window
-  if (alertState == STATE_ACCIDENT) {
-    if (timeSince(now, accidentSetTime) < ALERT_HOLD_MS) return;
+  // For flood/safe: only change after holding consistently for STATE_CONFIRM_MS
+  if (targetState != pendingState) {
+    // New candidate — start the confirmation timer
+    pendingState      = targetState;
+    pendingStateStart = now;
+  } else if (targetState != alertState) {
+    // Same candidate — check if it's held long enough
+    if (timeSince(now, pendingStateStart) >= STATE_CONFIRM_MS) {
+      alertState = targetState;
+    }
   }
-
-  // Flood check — rain OR water level → YELLOW
-  // Hysteresis: once YELLOW, stays until reading drops below WATER_LEVEL_SAFE
-  bool floodDetected;
-  if (alertState == STATE_FLOOD) {
-    floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_SAFE);
-  } else {
-    floodDetected = isRaining || (waterLevelRaw >= WATER_LEVEL_WARNING);
-  }
-
-  alertState = floodDetected ? STATE_FLOOD : STATE_SAFE;
 }
 
 
