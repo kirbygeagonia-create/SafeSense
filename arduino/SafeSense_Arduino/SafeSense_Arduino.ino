@@ -51,10 +51,11 @@ const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
 // Dry noise floor from serial output: 38-68 (varies)
 // With water: 75+
-// SAFE must be clearly below dry noise to avoid false clears
-// WARNING must be clearly above dry noise to avoid false triggers
-const int WATER_LEVEL_SAFE    = 35;   // Drop below this → GREEN (well below dry noise)
-const int WATER_LEVEL_WARNING = 80;   // Exceed this → YELLOW (well above dry noise)
+// WARNING: must exceed this to trigger YELLOW
+// SAFE: must drop below this to return to GREEN
+// Keep SAFE above the dry noise floor so residual moisture clears properly
+const int WATER_LEVEL_SAFE    = 72;   // Drop below this → GREEN (just above dry noise max of ~68)
+const int WATER_LEVEL_WARNING = 80;   // Exceed this → YELLOW
 
 // ── Vibration (accident detection) ───────────────────────────
 // VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
@@ -63,9 +64,11 @@ const unsigned long  VIBRATION_WINDOW  = 5000;  // within 5 seconds
 
 // ── Alert Hold Hysteresis ─────────────────────────────────────
 // How long a state must be consistently detected before it changes.
-// Prevents false triggers from brief sensor contact or noise.
-const unsigned long STATE_CONFIRM_MS = 2000;  // must hold for 2s before state changes
-const unsigned long ALERT_HOLD_MS    = 10000; // RED stays on 10s after accident clears
+// Trigger: 2s to go GREEN→YELLOW (prevents false triggers)
+// Clear:   5s to go YELLOW→GREEN (gives sensor time to fully dry)
+const unsigned long STATE_CONFIRM_MS       = 2000;  // 2s to trigger YELLOW
+const unsigned long STATE_CLEAR_CONFIRM_MS = 5000;  // 5s to clear back to GREEN
+const unsigned long ALERT_HOLD_MS          = 10000; // RED stays on 10s after accident
 
 // ── Buzzer ────────────────────────────────────────────────────
 const bool BUZZER_ENABLED = true;
@@ -326,7 +329,8 @@ void evaluateState(unsigned long now) {
     return;
   }
 
-  // For flood/safe: only commit after holding consistently for STATE_CONFIRM_MS
+  // For flood/safe: only commit after holding consistently
+  // Use longer confirmation time when clearing (YELLOW→GREEN) vs triggering (GREEN→YELLOW)
   if (targetState != pendingState) {
     // Sensor reading changed — reset the confirmation timer
     pendingState      = targetState;
@@ -335,7 +339,9 @@ void evaluateState(unsigned long now) {
   }
 
   // Same reading held — check if confirmed long enough
-  if (timeSince(now, pendingStateStart) >= STATE_CONFIRM_MS) {
+  // Clearing back to SAFE requires longer hold (sensor needs time to dry)
+  unsigned long requiredMs = (targetState == STATE_SAFE) ? STATE_CLEAR_CONFIRM_MS : STATE_CONFIRM_MS;
+  if (timeSince(now, pendingStateStart) >= requiredMs) {
     alertState = targetState;  // Confirmed — apply the state
   }
 }
