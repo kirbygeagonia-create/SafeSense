@@ -63,10 +63,14 @@
 
 // DFRobot FireBeetle 2 ESP32-S3 V1.0 needs AXP313A to power the camera.
 // Install "DFRobot_AXP313A" from Library Manager.
-// If you are on V1.1+ hardware and get compile errors, comment out the next 3 lines.
-#include "DFRobot_AXP313A.h"
-DFRobot_AXP313A axp;
-#define NEEDS_AXP_POWER 1
+// Select board: "DFRobot FireBeetle 2 ESP32-S3" in Arduino IDE.
+#ifdef ARDUINO_DFRobot_FireBeetle2_ESP32S3
+  #include "DFRobot_AXP313A.h"
+  DFRobot_AXP313A axp;
+  #define NEEDS_AXP_POWER 1
+#else
+  #define NEEDS_AXP_POWER 0
+#endif
 
 
 // ══════════════════════════════════════════════════════════════
