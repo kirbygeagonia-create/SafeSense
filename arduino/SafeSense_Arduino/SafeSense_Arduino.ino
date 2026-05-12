@@ -318,23 +318,24 @@ void evaluateState(unsigned long now) {
   // ── Confirmation debounce ─────────────────────────────────
   // Accident bypasses debounce — immediate response for safety
   if (targetState == STATE_ACCIDENT) {
-    alertState      = STATE_ACCIDENT;
-    accidentSetTime = now;
-    pendingState    = STATE_ACCIDENT;
+    alertState        = STATE_ACCIDENT;
+    accidentSetTime   = now;
+    pendingState      = STATE_ACCIDENT;
     pendingStateStart = now;
     return;
   }
 
-  // For flood/safe: only change after holding consistently for STATE_CONFIRM_MS
+  // For flood/safe: only commit after holding consistently for STATE_CONFIRM_MS
   if (targetState != pendingState) {
-    // New candidate — start the confirmation timer
+    // Sensor reading changed — reset the confirmation timer
     pendingState      = targetState;
     pendingStateStart = now;
-  } else if (targetState != alertState) {
-    // Same candidate — check if it's held long enough
-    if (timeSince(now, pendingStateStart) >= STATE_CONFIRM_MS) {
-      alertState = targetState;
-    }
+    return;  // Don't change state yet — start timing
+  }
+
+  // Same reading held — check if confirmed long enough
+  if (timeSince(now, pendingStateStart) >= STATE_CONFIRM_MS) {
+    alertState = targetState;  // Confirmed — apply the state
   }
 }
 
@@ -426,30 +427,25 @@ void triggerAccidentAlert(unsigned long now) {
 }
 
 void triggerFloodAlert(unsigned long now) {
-  // Rain only → no alert, just LED (already handled by LED state)
-  // Water level detected (with or without rain) → critical flood alert + SMS
-  if (waterLevelRaw < WATER_LEVEL_WARNING && !isRaining) return;
-
-  // Only send alert if water level is actually triggered
-  // Rain alone does NOT send an alert — only lights up YELLOW
-  if (waterLevelRaw < WATER_LEVEL_WARNING) return;
+  // Rain only → YELLOW LED lights up but NO alert sent, no SMS
+  // Water level triggered (with or without rain) → critical flood alert + SMS
+  if (waterLevelRaw < WATER_LEVEL_WARNING) {
+    // Rain only — LED already changed to YELLOW via alertState, nothing else to do
+    return;
+  }
 
   String message = "CRITICAL FLOOD WARNING: ";
-  if (isRaining && waterLevelRaw >= WATER_LEVEL_WARNING) {
-    message += "Rain and rising water detected.";
-  } else {
-    message += "Rising water level detected.";
-  }
+  message += (isRaining) ? "Rain and rising water detected." : "Rising water level detected.";
   message += " Water: " + String(waterLevelPct, 1) + "%.";
   message += " Location: " + String(LOCATION_NAME);
 
-  // critical level → RED in IoT modal
+  // Send critical alert → RED modal in IoT dashboard
   Serial.print("$SAFE,ALERT,critical,flood,");
   Serial.print(waterLevelPct, 1);
   Serial.print(",0|");
   Serial.println(message);
 
-  // SMS for flood when water level is triggered
+  // SMS
   if (timeSince(now, lastSmsTime) >= SMS_COOLDOWN_MS) {
     sendSMS(message);
     lastSmsTime = now;
