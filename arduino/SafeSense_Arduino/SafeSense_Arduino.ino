@@ -102,12 +102,12 @@ const int PIN_WATER_LEVEL   = A0;
 const int PIN_RAIN_DIGITAL  = 2;
 const int PIN_VIBRATION     = 3;  // INT1
 
-const int PIN_LED_L1_GREEN  = 4;   // D4 — Lane 1 Green
-const int PIN_LED_L1_YELLOW = 5;   // D5 — Lane 1 Yellow
-const int PIN_LED_L1_RED    = 6;   // D6 — Lane 1 Red
-const int PIN_LED_L2_GREEN  = 7;   // D7 — Lane 2 Green
-const int PIN_LED_L2_YELLOW = 8;   // D8 — Lane 2 Yellow
-const int PIN_LED_L2_RED    = 9;   // D9 — Lane 2 Red
+const int PIN_LED_L1_GREEN  = 8;   // D8 — Lane 1 Green  (hardware wired)
+const int PIN_LED_L1_YELLOW = 7;   // D7 — Lane 1 Yellow (hardware wired)
+const int PIN_LED_L1_RED    = 9;   // D9 — Lane 1 Red    (hardware wired)
+const int PIN_LED_L2_GREEN  = 5;   // D5 — Lane 2 Green  (hardware wired)
+const int PIN_LED_L2_YELLOW = 4;   // D4 — Lane 2 Yellow (hardware wired)
+const int PIN_LED_L2_RED    = 6;   // D6 — Lane 2 Red    (hardware wired)
 
 const int PIN_BUZZER = 12;
 const int PIN_GSM_RX = 10;
