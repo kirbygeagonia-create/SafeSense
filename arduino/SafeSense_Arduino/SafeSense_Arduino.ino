@@ -40,7 +40,7 @@
 
 const char* SMS_NUMBERS[] = {
   "639363195187",  // Emergency Contact 1
-  "639XXXXXXXXX",  // Emergency Contact 2 — replace before deployment
+
 };
 const int SMS_COUNT = sizeof(SMS_NUMBERS) / sizeof(SMS_NUMBERS[0]);
 
@@ -48,10 +48,11 @@ const char* DEVICE_ID     = "SAFESENSE-001";
 const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 
 // ── Water Level Thresholds (analog 0–1023) ───────────────────
-// Watch [SENSOR] in Serial Monitor. Submerge 1 cm, note raw value,
-// set WATER_LEVEL_WARNING ~10 below that reading.
-const int WATER_LEVEL_SAFE    = 10;   // Below → dry, no alert
-const int WATER_LEVEL_WARNING = 30;   // At or above → YELLOW flood warning (lowered — most sensors read 20-40 on contact)
+// Your sensor reads 64-66 in dry air (noise floor).
+// Set WATER_LEVEL_WARNING above the noise floor.
+// Submerge 1 cm and note the reading, then set WARNING ~10 below that.
+const int WATER_LEVEL_SAFE    = 70;   // Below → dry/safe (above noise floor of 64-66)
+const int WATER_LEVEL_WARNING = 80;   // At or above → YELLOW (adjust after testing with water)
 
 // ── Vibration (accident detection) ───────────────────────────
 // VIBRATION_TRIGGER hits within VIBRATION_WINDOW → RED + SMS
