@@ -27,6 +27,8 @@ const String PHONE_NUMBER    = "+639709126550";
 const int    WATER_THRESHOLD = 80;        // dry ~65-70, wet 80+
 const unsigned long BLINK_SPEED   = 300;  // ms per blink half-cycle
 const unsigned long ACCIDENT_TIME = 5000; // ms accident stays active
+const unsigned long VIB_DEBOUNCE = 200;    // ms vibration debounce
+const unsigned long POST_ACCIDENT_LOCKOUT = 3000; // ms lockout after accident
 
 // ═════════════════════ STATE ═════════════════════
 
@@ -35,6 +37,8 @@ bool smsSent         = false;
 bool vibrationTrigger = false;
 bool lastVibState    = HIGH;
 unsigned long accidentStart = 0;
+unsigned long lastVibTime = 0;
+unsigned long accidentEndTime = 0;
 
 bool blinkState   = false;
 unsigned long lastBlink = 0;
@@ -46,13 +50,15 @@ String lastSentState = "";
 
 void sendSMS(String msg) {
   Serial.println("[SMS] Sending...");
-  gsm.println("AT");          delay(300);
-  gsm.println("AT+CMGF=1");   delay(300);
+  gsm.listen();                           // ensure gsm is active receiver
+  gsm.println("AT");         wdt_reset(); delay(300);
+  gsm.println("AT+CMGF=1"); wdt_reset(); delay(300);
   gsm.print("AT+CMGS=\"");
   gsm.print(PHONE_NUMBER);
-  gsm.println("\"");          delay(500);
-  gsm.print(msg);             delay(300);
-  gsm.write(26);              delay(1000);
+  gsm.println("\"");         wdt_reset(); delay(500);
+  gsm.print(msg);            wdt_reset(); delay(300);
+  gsm.write(26);             wdt_reset(); delay(2000); // wait for +CMGS response
+  wdt_reset();
   Serial.println("[SMS] Sent");
 }
 
@@ -61,8 +67,11 @@ void sendSMS(String msg) {
 void checkVibration() {
   bool cur = digitalRead(PIN_VIBRATION);
   if (cur == LOW && lastVibState == HIGH) {
-    Serial.println("[VIB] Vibration detected!");
-    vibrationTrigger = true;
+    if (millis() - lastVibTime > VIB_DEBOUNCE) {
+      lastVibTime = millis();
+      Serial.println("[VIB] Vibration detected!");
+      vibrationTrigger = true;
+    }
   }
   lastVibState = cur;
 }
@@ -90,8 +99,9 @@ void redMode() {
 // ═════════════════════ SEND TO ESP32 (deduped) ═════════════════════
 
 void sendToESP(String state) {
-  if (state == lastSentState) return;   // no change — skip
+  if (state == lastSentState) return;
   lastSentState = state;
+  espSerial.listen();                   // ensure espSerial is TX-active
   espSerial.println(state);
   Serial.println("[ESP] Sent: " + state);
 }
@@ -136,15 +146,17 @@ void updateSystem() {
 
     // End accident mode after ACCIDENT_TIME
     if (millis() - accidentStart >= ACCIDENT_TIME) {
-      accidentActive = false;
+      accidentActive   = false;
+      accidentEndTime  = millis();
       digitalWrite(R1, LOW); digitalWrite(R2, LOW);
-      lastSentState = "";   // force re-evaluate flood/clear after accident
+      lastSentState = "";
       Serial.println("[STATE] ACCIDENT ended");
     }
     return;
   }
 
   // ── FLOOD: water level triggered → RED + flood alert ─────────────
+  if (millis() - accidentEndTime < POST_ACCIDENT_LOCKOUT) return;  // lockout after accident
   if (water > WATER_THRESHOLD) {
     redMode();
     sendToESP("FLOOD");

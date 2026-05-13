@@ -82,7 +82,8 @@ const float LONGITUDE     = 124.9282;
 const unsigned long WIFI_RECONNECT_MS = 30000;
 const unsigned long HEARTBEAT_MS      = 300000;
 const int           MAX_RETRIES       = 3;
-const unsigned long RETRY_BASE_MS     = 2000;
+const unsigned long RETRY_BASE_MS     = 5000;
+const unsigned long ACCIDENT_COOLDOWN = 10000; // 10 seconds
 
 // ══════════════════════════════════════════════════════════════
 //  GLOBALS
@@ -96,6 +97,7 @@ unsigned long lastDataRx    = 0;
 bool          deviceOnline  = false;
 int           wifiFailCount = 0;
 bool          cameraReady   = false;
+unsigned long lastAccidentMs = 0;
 
 // ══════════════════════════════════════════════════════════════
 //  FORWARD DECLARATIONS
@@ -135,9 +137,27 @@ void setup() {
   // WiFi first
   connectWiFi();
 
+  // Server wake request (cold-start prevention)
+  Serial.println("[Boot] Waking server...");
+  {
+    WiFiClientSecure wc; wc.setInsecure();
+    HTTPClient hh;
+    hh.begin(wc, String(SERVER_URL) + "/api/heartbeat");
+    hh.addHeader("Content-Type", "application/json");
+    hh.setTimeout(60000);
+    hh.POST("{\"api_key\":\"" + String(API_KEY) + "\",\"device_id\":\"" + String(DEVICE_ID) + "\",\"status\":\"boot\"}");
+    hh.end();
+    Serial.println("[Boot] Server wake sent");
+  }
+
   // Camera init
   Serial.println("[Boot] Initializing camera...");
   cameraReady = initCamera();
+  if (!cameraReady) {
+    Serial.println("[Boot] Camera retry in 1s...");
+    delay(1000);
+    cameraReady = initCamera();
+  }
   if (cameraReady) {
     Serial.println("[Boot] Camera READY ✓");
     testCameraCapture();
@@ -200,6 +220,11 @@ void loop() {
 void processCommand(String cmd) {
 
   if (cmd == "ACCIDENT") {
+    if (millis() - lastAccidentMs < ACCIDENT_COOLDOWN) {
+      Serial.println("[CMD] ACCIDENT ignored — cooldown active");
+      return;
+    }
+    lastAccidentMs = millis();
     Serial.println("[CMD] ACCIDENT — capturing image and sending alert");
 
     camera_fb_t* fb = NULL;
@@ -364,8 +389,15 @@ bool sendCameraImage(camera_fb_t* fb, String alertLevel, String eventType) {
   http.addHeader("Content-Length", String(total));
   http.setTimeout(30000);
 
-  uint8_t* buf = (uint8_t*)malloc(total);
-  if (!buf) { http.end(); return false; }
+  uint8_t* buf = psramFound()
+                 ? (uint8_t*)ps_malloc(total)
+                 : (uint8_t*)malloc(total);
+  if (!buf) {
+    Serial.printf("[Camera] Upload alloc failed — total=%d bytes, free heap=%d\n",
+                  total, ESP.getFreeHeap());
+    http.end();
+    return false;
+  }
 
   int off = 0;
   memcpy(buf + off, head.c_str(), head.length()); off += head.length();
