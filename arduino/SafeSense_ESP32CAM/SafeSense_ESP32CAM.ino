@@ -1,6 +1,6 @@
 /*
  * SafeSense IoT — ESP32-S3 WiFi Alert Gateway + Camera
- * Board : DFRobot FireBeetle 2 ESP32-S3
+ * Board : DFRobot ESP32-S3 AI Camera V1.1 (DFR1154)
  *
  * Receives plain-text commands from Arduino via Serial1:
  *   "ACCIDENT" → POST critical/accident alert + capture image
@@ -13,11 +13,18 @@
  *   GND ←→ GND  (common ground required)
  *
  * Board settings in Arduino IDE:
- *   Board            : DFRobot FireBeetle 2 ESP32-S3
- *   USB CDC On Boot  : Enabled
+ *   Board            : ESP32S3 Dev Module
+ *   USB CDC On Boot  : Enabled            ← REQUIRED for Serial output to work
  *   PSRAM            : OPI PSRAM
+ *   Flash Size       : 16MB               ← DFR1154 has 16MB flash, not 8MB
+ *   Flash Mode       : QIO 80MHz
  *   Partition Scheme : Huge APP (3MB No OTA/1MB SPIFFS)
- *   Flash Size       : 8MB
+ *   Upload Speed     : 921600
+ *   CPU Frequency    : 240MHz (WiFi)
+ *
+ * BEFORE uploading with new board settings:
+ *   Tools → Erase Flash → All Flash Contents
+ *   (removes old bootloader written by previous wrong board selection)
  *
  * Required libraries (Library Manager):
  *   ArduinoJson by Benoit Blanchon (v6.x)

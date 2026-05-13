@@ -34,6 +34,7 @@ const unsigned long POST_ACCIDENT_LOCKOUT = 3000; // ms lockout after accident
 
 bool accidentActive  = false;
 bool smsSent         = false;
+bool floodSmsSent    = false;
 bool vibrationTrigger = false;
 bool lastVibState    = HIGH;
 unsigned long accidentStart = 0;
@@ -160,16 +161,22 @@ void updateSystem() {
   if (water > WATER_THRESHOLD) {
     redMode();
     sendToESP("FLOOD");
+    if (!floodSmsSent) {
+      sendSMS("ALERT: Flood danger detected at Brgy. Crossing Palkan, Tupi! Take immediate action.");
+      floodSmsSent = true;
+    }
 
   // ── WARNING: rain only → YELLOW, no alert ─────────────────────────
   } else if (rain) {
     yellowMode();
     sendToESP("CLEAR");
+    floodSmsSent = false;   // reset: next flood event must re-send SMS
 
   // ── SAFE ──────────────────────────────────────────────────────────
   } else {
     greenMode();
     sendToESP("CLEAR");
+    floodSmsSent = false;   // reset: next flood event must re-send SMS
   }
 }
 
@@ -189,6 +196,9 @@ void setup() {
   pinMode(R1, OUTPUT); pinMode(R2, OUTPUT);
 
   greenMode();
+
+  lastVibTime = millis();  // reset debounce timer — ignores power-on vibration
+  delay(500);              // sensor settle: let SW-420 spring stop oscillating
 
   wdt_enable(WDTO_8S);
   Serial.println("[BOOT] SafeSense Arduino ready");
