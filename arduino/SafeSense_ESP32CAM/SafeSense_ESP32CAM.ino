@@ -8,8 +8,8 @@
  *   "CLEAR"    → no action (safe state)
  *
  * Arduino wiring:
- *   Arduino D12 (espSerial RX) → ESP32 GPIO13 (TX)
- *   Arduino D13 (espSerial TX) → ESP32 GPIO12 (RX)
+ *   Arduino D13 (espSerial TX) → ESP32 GPIO44 (RX)
+ *   Arduino D12 (espSerial RX) ← ESP32 GPIO43 (TX)
  *   GND ←→ GND  (common ground required)
  *
  * Board settings in Arduino IDE:
@@ -30,7 +30,8 @@
 #include "esp_camera.h"
 
 // ══════════════════════════════════════════════════════════════
-//  CAMERA PINS — DFRobot FireBeetle 2 ESP32-S3 (official)
+//  CAMERA PINS — DFRobot FireBeetle 2 ESP32-S3 (DFR0975)
+//  OV3660 FPC connector on-board
 // ══════════════════════════════════════════════════════════════
 
 #define PWDN_GPIO_NUM   -1
@@ -40,15 +41,24 @@
 #define SIOC_GPIO_NUM    2
 #define Y9_GPIO_NUM     48
 #define Y8_GPIO_NUM     46
-#define Y7_GPIO_NUM      8
-#define Y6_GPIO_NUM      7
-#define Y5_GPIO_NUM      4
-#define Y4_GPIO_NUM     41
-#define Y3_GPIO_NUM     40
-#define Y2_GPIO_NUM     39
-#define VSYNC_GPIO_NUM   6
-#define HREF_GPIO_NUM   42
-#define PCLK_GPIO_NUM    5
+#define Y7_GPIO_NUM     14
+#define Y6_GPIO_NUM     21
+#define Y5_GPIO_NUM     47
+#define Y4_GPIO_NUM     20
+#define Y3_GPIO_NUM     19
+#define Y2_GPIO_NUM     34
+#define VSYNC_GPIO_NUM  36
+#define HREF_GPIO_NUM   35
+#define PCLK_GPIO_NUM   0
+
+// ══════════════════════════════════════════════════════════════
+//  SERIAL1 PINS — must NOT conflict with camera pins above
+//  GPIO44 = RX (from Arduino TX / D13)
+//  GPIO43 = TX (to Arduino RX / D12)
+// ══════════════════════════════════════════════════════════════
+
+const int SERIAL1_RX = 44;
+const int SERIAL1_TX = 43;
 
 // ══════════════════════════════════════════════════════════════
 //  CONFIGURATION
@@ -69,12 +79,6 @@ const char* LOCATION_NAME = "Brgy. Crossing Palkan, Tupi";
 const float LATITUDE      = 8.1574;
 const float LONGITUDE     = 124.9282;
 
-// Serial1 pins — must match Arduino espSerial wiring
-// Arduino D13 (TX) → ESP32 GPIO12 (RX)
-// Arduino D12 (RX) ← ESP32 GPIO13 (TX)
-const int SERIAL1_RX = 12;
-const int SERIAL1_TX = 13;
-
 const unsigned long WIFI_RECONNECT_MS = 30000;
 const unsigned long HEARTBEAT_MS      = 300000;
 const int           MAX_RETRIES       = 3;
@@ -92,6 +96,22 @@ unsigned long lastDataRx    = 0;
 bool          deviceOnline  = false;
 int           wifiFailCount = 0;
 bool          cameraReady   = false;
+
+// ══════════════════════════════════════════════════════════════
+//  FORWARD DECLARATIONS
+// ══════════════════════════════════════════════════════════════
+
+void connectWiFi();
+bool initCamera();
+void testCameraCapture();
+camera_fb_t* captureImage();
+bool sendCameraImage(camera_fb_t* fb, String alertLevel, String eventType);
+bool sendAlert(String level, String eventType, String rainStatus,
+               float waterLevel, int vibration, String message);
+bool sendAlertWithRetry(String level, String eventType, String rainStatus,
+                        float waterLevel, int vibration, String message);
+void sendHeartbeat();
+void processCommand(String cmd);
 
 // ══════════════════════════════════════════════════════════════
 //  SETUP
@@ -112,7 +132,7 @@ void setup() {
   Serial1.begin(9600, SERIAL_8N1, SERIAL1_RX, SERIAL1_TX);
   Serial.printf("[Boot] Serial1 ready — RX=GPIO%d TX=GPIO%d\n", SERIAL1_RX, SERIAL1_TX);
 
-  // WiFi first — camera LEDC is more stable after WiFi stack is up
+  // WiFi first
   connectWiFi();
 
   // Camera init
@@ -120,7 +140,6 @@ void setup() {
   cameraReady = initCamera();
   if (cameraReady) {
     Serial.println("[Boot] Camera READY ✓");
-    // Quick capture test to confirm sensor is responding
     testCameraCapture();
   } else {
     Serial.println("[Boot] Camera FAILED — alerts will send without image");
@@ -176,7 +195,6 @@ void loop() {
 
 // ══════════════════════════════════════════════════════════════
 //  COMMAND PROCESSING
-//  Arduino sends: "ACCIDENT", "FLOOD", "CLEAR"
 // ══════════════════════════════════════════════════════════════
 
 void processCommand(String cmd) {
@@ -184,7 +202,6 @@ void processCommand(String cmd) {
   if (cmd == "ACCIDENT") {
     Serial.println("[CMD] ACCIDENT — capturing image and sending alert");
 
-    // Capture image first
     camera_fb_t* fb = NULL;
     if (cameraReady) {
       fb = captureImage();
@@ -192,13 +209,11 @@ void processCommand(String cmd) {
       else    Serial.println("[Camera] Capture failed — sending alert without image");
     }
 
-    // POST alert
     String msg = "CRITICAL: Accident/vibration detected. Camera capturing scene. Location: ";
     msg += String(LOCATION_NAME);
     bool ok = sendAlertWithRetry("critical", "accident", "none", 0.0, 1, msg);
     Serial.printf("[Alert] ACCIDENT POST → %s\n", ok ? "OK" : "FAILED");
 
-    // Upload image if captured
     if (fb) {
       sendCameraImage(fb, "critical", "accident");
       esp_camera_fb_return(fb);
@@ -213,11 +228,10 @@ void processCommand(String cmd) {
     Serial.printf("[Alert] FLOOD POST → %s\n", ok ? "OK" : "FAILED");
 
   } else if (cmd == "CLEAR") {
-    // Safe state — no alert needed
     Serial.println("[CMD] CLEAR — system safe");
 
   } else {
-    Serial.printf("[CMD] Unknown command: \"%s\"\n", cmd.c_str());
+    Serial.printf("[CMD] Unknown: \"%s\"\n", cmd.c_str());
   }
 }
 
@@ -245,7 +259,7 @@ bool initCamera() {
   config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
+  config.xclk_freq_hz = 10000000;   // 10 MHz — more stable for OV3660
   config.pixel_format = PIXFORMAT_JPEG;
 
   if (psramFound()) {
@@ -281,20 +295,18 @@ bool initCamera() {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  CAMERA TEST — runs once at boot, prints result to Serial
+//  CAMERA TEST
 // ══════════════════════════════════════════════════════════════
 
 void testCameraCapture() {
   Serial.println("[Camera] Running boot capture test...");
-
-  // Discard first frame (sensor warmup artifact)
   camera_fb_t* fb = esp_camera_fb_get();
   if (fb) { esp_camera_fb_return(fb); fb = NULL; }
   delay(100);
 
   fb = esp_camera_fb_get();
   if (fb && fb->len > 0) {
-    Serial.printf("[Camera] TEST PASSED — captured %d bytes (%dx%d)\n",
+    Serial.printf("[Camera] TEST PASSED — %d bytes (%dx%d)\n",
                   fb->len, fb->width, fb->height);
     esp_camera_fb_return(fb);
   } else {
@@ -309,8 +321,6 @@ void testCameraCapture() {
 
 camera_fb_t* captureImage() {
   if (!cameraReady) return NULL;
-
-  // Discard first frame
   camera_fb_t* fb = esp_camera_fb_get();
   if (fb) { esp_camera_fb_return(fb); fb = NULL; }
   delay(50);
